@@ -1,6 +1,6 @@
 # Dockerfile for GTEx RNA-seq pipeline. Version 0.1
 FROM ubuntu:15.10
-MAINTAINER Francois Aguet "francois@broadinstitute.org"
+MAINTAINER Francois Aguet
 ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get -qq update && apt-get install -qqy wget unzip python3 python3-pip
 
