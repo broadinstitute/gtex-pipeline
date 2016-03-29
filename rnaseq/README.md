@@ -54,5 +54,5 @@ docker run --rm -v $path_to_data:/data -t gtex_rnaseq /bin/bash -c "/src/run_STA
 docker run --rm -v $path_to_data:/data -t gtex_rnaseq /bin/bash -c "/src/run_bamsync.sh /data/$input_bam /data/star_out/$prefix.Aligned.sortedByCoord.out.bam /data/star_out/$prefix"
 
 # RSEM transcript quantification
-docker run --rm -v $path_to_data:/data -t gtex_rnaseq /bin/bash -c "/src/run_RSEM.py /data/rsem_reference /data/star_out/K-562-SM-7IGNY_chr22.Aligned.toTranscriptome.out.bam /data/K-562-SM-7IGNY_chr22 --threads 1"
+docker run --rm -v $path_to_data:/data -t gtex_rnaseq /bin/bash -c "/src/run_RSEM.py /data/rsem_reference /data/star_out/$prefix.Aligned.toTranscriptome.out.bam /data/$prefix --threads 1"
 ```
