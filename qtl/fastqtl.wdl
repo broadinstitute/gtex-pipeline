@@ -31,6 +31,7 @@ task fastqtl {
 	
 	command {
 		set -euo pipefail
+		touch ${vcf_index}  # avoid tabix "index older than vcf" error
 		# pre-processing
 		/src/normalize_expression.py ${rpkm_gct} ${reads_gct} ${annotation_gtf} ${vcf} ${prefix} ${"--expression_threshold " + expression_threshold} ${"--count_threshold " + count_threshold} ${"--min_samples " + min_samples}
 		Rscript /src/run_PEER.R ${prefix}.expression.txt ${prefix} ${num_peer}		
@@ -55,9 +56,9 @@ task fastqtl {
 	output {
 		File covariates="${prefix}.combined_covariates.txt"
 		File expression_bed="${prefix}.expression.bed.gz"
-		File expression_bed_index="${prefix}.expression.bed.gz"
+		File expression_bed_index="${prefix}.expression.bed.gz.tbi"
 		File expression_fpkm_bed="${prefix}.expression.fpkm.bed.gz"
-		File expression_fpkm_bed_index="${prefix}.expression.fpkm.bed.gz"
+		File expression_fpkm_bed_index="${prefix}.expression.fpkm.bed.gz.tbi"
 		File fastqtl_egenes="${prefix}.egenes.annotated.txt.gz"
 		File fastqtl_egenes_log="${prefix}.egenes.log"
 		File fastqtl_signifpairs="${prefix}.signifpairs.txt.gz"		
