@@ -155,7 +155,7 @@ if __name__=='__main__':
     parser.add_argument('expression_gct', help='GCT file with expression in normalized units, e.g., TPM or FPKM')
     parser.add_argument('counts_gct', help='GCT file with read counts')
     parser.add_argument('annotation_gtf', help='GTF annotation')
-    parser.add_argument('donor_vcf', help='VCF file with donor IDs')    
+    parser.add_argument('vcf', help='VCF file with donor IDs')
     parser.add_argument('prefix', help='Prefix for output file names')
     parser.add_argument('-o', '--output_dir', default='.', help='Output directory')
     parser.add_argument('--expression_threshold', type=np.double, default=0.1, help='Selects genes with > expression_threshold expression in at least min_samples')
@@ -164,7 +164,7 @@ if __name__=='__main__':
     args = parser.parse_args()
     
     print('Generating normalized expression files ... ', end='', flush=True)
-    donor_ids = get_donors_from_vcf(args.donor_vcf)    
+    donor_ids = get_donors_from_vcf(args.vcf)
     expression_df = read_gct(args.expression_gct, donor_ids)
     counts_df = read_gct(args.counts_gct, donor_ids)
 
@@ -176,16 +176,18 @@ if __name__=='__main__':
 
     bed_df = gtf2bed(args.annotation_gtf, feature='transcript')
     quant_std_df = pd.merge(bed_df, quant_std_df, left_index=True, right_index=True)
-    quant_df = pd.merge(bed_df, quant_df, left_index=True, right_index=True)    
-    
+    quant_df = pd.merge(bed_df, quant_df, left_index=True, right_index=True)
+
     # sort by start position
     chr_groups = quant_std_df.groupby('chr', sort=False, group_keys=False)
     quant_std_df = chr_groups.apply(lambda x: x.sort_values('start'))
     quant_df = quant_df.loc[quant_std_df.index]
-    
-    # exclude Y and MT
-    quant_std_df = quant_std_df[~quant_std_df.chr.isin(['MT','Y'])]
-    quant_df = quant_df[~quant_df.chr.isin(['MT','Y'])]
+
+    # exclude chromosomes
+    chrs = subprocess.check_output('tabix --list-chroms '+args.vcf, shell=True, executable='/bin/bash')
+    chrs = chrs.decode().strip().split()
+    quant_std_df = quant_std_df[quant_std_df.chr.isin(chrs)]
+    quant_df = quant_df[quant_df.chr.isin(chrs)]
 
     # header must be commented in BED format
     header_str = quant_std_df.columns.values.copy()
