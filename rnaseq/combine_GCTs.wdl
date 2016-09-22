@@ -7,7 +7,7 @@ task combine_gcts {
     Int disk_space
 
     command {
-        python3 /src/combine_GCTs.py "${sep=' ' gct_list}" ${prefix}
+        python3 /src/combine_GCTs.py ${sep=' ' gct_list} ${prefix}
     }
 
     output {
