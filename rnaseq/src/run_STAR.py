@@ -39,11 +39,11 @@ parser.add_argument('--limitSjdbInsertNsj', default='1200000')
 parser.add_argument('--outSAMstrandField', default='intronMotif')
 parser.add_argument('--outFilterIntronMotifs', default='None', help="Use 'RemoveNoncanonical' for Cufflinks compatibility")
 parser.add_argument('--alignSoftClipAtReferenceEnds', default='Yes')
-parser.add_argument('--quantMode', default='TranscriptomeSAM GeneCounts', help='Outputs read counts, and a BAM with reads in transcriptome coordinates')
-parser.add_argument('--outSAMtype', default='BAM Unsorted')
+parser.add_argument('--quantMode', default=['TranscriptomeSAM', 'GeneCounts'], nargs='+', help='Outputs read counts, and a BAM with reads in transcriptome coordinates')
+parser.add_argument('--outSAMtype', default=['BAM', 'Unsorted'], nargs='+')
 parser.add_argument('--outSAMunmapped', default='Within', help='Keep unmapped reads in output BAM')
-parser.add_argument('--outSAMattrRGline', default='ID:rg1 SM:sm1', help='Adds read group line to BAM header; required by GATK')
-parser.add_argument('--outSAMattributes', default='NH HI AS nM NM')
+parser.add_argument('--outSAMattrRGline', default=['ID:rg1', 'SM:sm1'], nargs='+', help='Adds read group line to BAM header; required by GATK')
+parser.add_argument('--outSAMattributes', default=['NH', 'HI', 'AS', 'nM', 'NM'], nargs='+')
 parser.add_argument('--chimSegmentMin', default='15', help='Minimum chimeric segment length; switches on detection of chimeric (fusion) alignments')
 parser.add_argument('--chimJunctionOverhangMin', default='15', help='Minimum overhang for a chimeric junction')
 parser.add_argument('--genomeLoad', default='NoSharedMemory')
@@ -71,7 +71,7 @@ else:
 cmd = starcmd+' --runMode alignReads --runThreadN '+args.threads+' --genomeDir '+args.index
 if args.annotation_gtf is not None:  # only needed if genome index was built w/o annotation
     cmd += ' --sjdbGTFfile '+args.annotation_gtf
-cmd += ' --twopassMode Basic --sjdbOverhang '+str(overhang)\
+cmd += ' --twopassMode Basic'\
     +' --outFilterMultimapNmax '+args.outFilterMultimapNmax\
     +' --alignSJoverhangMin '+args.alignSJoverhangMin+' --alignSJDBoverhangMin '+args.alignSJDBoverhangMin\
     +' --outFilterMismatchNmax '+args.outFilterMismatchNmax+' --outFilterMismatchNoverLmax '+args.outFilterMismatchNoverLmax\
@@ -84,11 +84,11 @@ if args.fastq1.endswith('.gz'):
     cmd += ' --readFilesCommand zcat'
 cmd += ' --outFileNamePrefix '+os.path.join(args.output_dir, args.prefix)+'.'\
     +' --outSAMstrandField '+args.outSAMstrandField+' --outFilterIntronMotifs '+args.outFilterIntronMotifs\
-    +' --alignSoftClipAtReferenceEnds '+args.alignSoftClipAtReferenceEnds+' --quantMode '+args.quantMode\
-    +' --outSAMtype '+args.outSAMtype+' --outSAMunmapped '+args.outSAMunmapped+' --genomeLoad '+args.genomeLoad
+    +' --alignSoftClipAtReferenceEnds '+args.alignSoftClipAtReferenceEnds+' --quantMode '+' '.join(args.quantMode)\
+    +' --outSAMtype '+' '.join(args.outSAMtype)+' --outSAMunmapped '+args.outSAMunmapped+' --genomeLoad '+args.genomeLoad
 if int(args.chimSegmentMin)>0:
     cmd += ' --chimSegmentMin '+args.chimSegmentMin+' --chimJunctionOverhangMin '+args.chimJunctionOverhangMin
-cmd += ' --outSAMattributes '+args.outSAMattributes+' --outSAMattrRGline '+args.outSAMattrRGline
+cmd += ' --outSAMattributes '+' '.join(args.outSAMattributes)+' --outSAMattrRGline '+' '.join(args.outSAMattrRGline)
 
 if not os.path.exists(args.output_dir):
     os.makedirs(args.output_dir )
