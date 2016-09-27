@@ -6,26 +6,26 @@ task star {
     File star_index
     
     # STAR options
-    String? outFilterMultimapNmax
-    String? alignSJoverhangMin
-    String? alignSJDBoverhangMin
-    String? outFilterMismatchNmax
-    String? outFilterMismatchNoverLmax
-    String? alignIntronMin
-    String? alignIntronMax
-    String? alignMatesGapMax
+    Int? outFilterMultimapNmax
+    Int? alignSJoverhangMin
+    Int? alignSJDBoverhangMin
+    Int? outFilterMismatchNmax
+    Float? outFilterMismatchNoverLmax
+    Int? alignIntronMin
+    Int? alignIntronMax
+    Int? alignMatesGapMax
     String? outFilterType
-    String? outFilterScoreMinOverLread
-    String? outFilterMatchNminOverLread
-    String? limitSjdbInsertNsj
+    Float? outFilterScoreMinOverLread
+    Float? outFilterMatchNminOverLread
+    Int? limitSjdbInsertNsj
     String? outSAMstrandField
     String? outFilterIntronMotifs
     String? alignSoftClipAtReferenceEnds
     String? quantMode
     String? outSAMattrRGline
     String? outSAMattributes
-    String? chimSegmentMin
-    String? chimJunctionOverhangMin
+    Int? chimSegmentMin
+    Int? chimJunctionOverhangMin
     
     Int memory
     Int disk_space
@@ -110,7 +110,7 @@ task rsem {
     Int disk_space
     Int num_threads
 
-    String? max_frag_len
+    Int? max_frag_len
     String? estimate_rspd
     String? is_stranded
 
