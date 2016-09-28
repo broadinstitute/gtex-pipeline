@@ -4,8 +4,8 @@ import argparse
 import gzip
 import os
 
-parser = argparse.ArgumentParser(description='Combine GCT files')
-parser.add_argument('input_files', nargs='+', help='GCT files')
+parser = argparse.ArgumentParser(description='Aggregate RSEM expression from multiple samples')
+parser.add_argument('input_files', nargs='+', help='RSEM output files')
 parser.add_argument('col_id', choices=['expected_count', 'TPM', 'FPKM', 'IsoPct'], help='Column header')
 parser.add_argument('output_prefix', help='Prefix for output file: ${prefix}.gct.gz')
 parser.add_argument('-o', '--output_dir', default='.', help='Output directory')

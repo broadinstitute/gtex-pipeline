@@ -1,4 +1,4 @@
-task combine_gcts {
+task aggregate_rsem_results {
 
     Array[File] rsem_isoform_results
     Array[File] rsem_gene_results
@@ -33,6 +33,6 @@ task combine_gcts {
 }
 
 
-workflow combine_gcts_workflow {
-    call combine_gcts
+workflow aggregate_rsem_results_workflow {
+    call aggregate_rsem_results
 }
