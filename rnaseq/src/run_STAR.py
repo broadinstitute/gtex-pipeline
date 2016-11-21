@@ -62,7 +62,7 @@ else:
         read_length = len(seq)
 overhang = read_length-1
 
-if read_length<=101:
+if read_length<=201:
     starcmd='STAR'
 else:
     starcmd='STARlong'
