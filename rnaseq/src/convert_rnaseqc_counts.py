@@ -1,9 +1,10 @@
+#!/usr/bin/env python3
 # Author: Francois Aguet
 import pandas as pd
 import argparse
 import os
 
-parser = argparse.ArgumentParser(description='Combine GCT files')
+parser = argparse.ArgumentParser(description='Convert read counts from RNA-SeQC to GCT')
 parser.add_argument('rpkm_gct', help='RPKM GCT from RNA-SeQC')
 parser.add_argument('exon_intron_report', help='exon_intron_report from RNA-SeQC')
 parser.add_argument('-o', '--output_dir', default='.', help='Output directory')
