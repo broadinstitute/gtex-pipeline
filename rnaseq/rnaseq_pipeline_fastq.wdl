@@ -159,7 +159,7 @@ task rnaseqc {
 
     command {
         touch ${bam_index}
-        /usr/lib/jvm/java-1.7.0-openjdk-amd64/bin/java -Xmx6g -jar /opt/RNA-SeQC_1.1.9/RNA-SeQC.jar -n 1000 \
+        /usr/lib/jvm/java-1.7.0-openjdk-amd64/bin/java -Xmx${memory}g -jar /opt/RNA-SeQC_1.1.9/RNA-SeQC.jar -n 1000 \
         -s ${prefix},${bam_file},${notes} -t ${genes_gtf} -r ${genome_fasta} -o . -noDoC -strictMode 
         mv ${prefix}/${prefix}.transcripts.rpkm.gct ${prefix}/${prefix}.gene_rpkm.gct
         python3 /src/convert_rnaseqc_counts.py ${prefix}/${prefix}.gene_rpkm.gct ${prefix}/${prefix}.exon_intron_report.txt
