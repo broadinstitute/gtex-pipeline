@@ -20,6 +20,7 @@ parser = argparse.ArgumentParser(description='Convert BAM to FASTQ using SamToFa
 parser.add_argument('bam_file', type=str, help='BAM file')
 parser.add_argument('-p', '--prefix', type=str, default='Reads', help='Prefix for output files; usually <sample_id>')
 parser.add_argument('-o', '--output_dir', default=os.getcwd(), help='Directory to which FASTQs will be written')
+parser.add_argument('--jar', default='/opt/picard-tools/picard.jar', help='Path to Picard jar')
 parser.add_argument('--gzip', type=str.lower, default='1', help='gzip compression level for FASTQs; see "man gzip"')
 parser.add_argument('--include_non_pf_reads', type=str.lower, choices=['true', 'false'], default='true', help='Sets INCLUDE_NON_PF_READS option (PF: passed filtering). SamToFastq default: false')
 parser.add_argument('--include_non_primary_alignments', type=str.lower, choices=['true', 'false'], default='false', help='Sets INCLUDE_NON_PRIMARY_ALIGNMENTS option. SamToFastq default: false')
@@ -44,7 +45,7 @@ with cd(args.output_dir):
     subprocess.check_call('gzip -'+args.gzip+' -c < read0_pipe > '+fastq0+' &', shell=True)
 
     # SamToFastq (write to pipes)
-    subprocess.check_call('java -jar -Xmx8g /opt/picard-tools/picard.jar SamToFastq INPUT='+args.bam_file\
+    subprocess.check_call('java -jar -Xmx8g '+args.jar+' SamToFastq INPUT='+args.bam_file\
         +' INCLUDE_NON_PF_READS='+args.include_non_pf_reads\
         +' INCLUDE_NON_PRIMARY_ALIGNMENTS='+args.include_non_primary_alignments\
         +' VALIDATION_STRINGENCY=SILENT FASTQ=read1_pipe SECOND_END_FASTQ=read2_pipe UNPAIRED_FASTQ=read0_pipe', shell=True)
