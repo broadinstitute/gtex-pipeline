@@ -12,6 +12,8 @@ parser.add_argument('-o', '--output_dir', default='.', help='Output directory')
 args = parser.parse_args()
 
 annotation_headers = args.annotation_headers.split(',')
+if len(annotation_headers)==1 and annotation_headers[0]=='':
+    annotation_headers = []
 assert len(args.annotation_tsvs)==len(annotation_headers)
 
 path_s = pd.read_csv(args.input_files_tsv, sep='\t', index_col=0, header=None, names=['sample_id','metrics_path'])['metrics_path']
