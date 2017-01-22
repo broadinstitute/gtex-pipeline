@@ -1,0 +1,2 @@
+unannotated_transcript_id	matching_readthrough_transcript_id
+ENST00000535193.3	ENST00000536108.5
