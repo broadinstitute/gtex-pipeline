@@ -19,8 +19,7 @@ def cd(cd_path):
 
 parser = argparse.ArgumentParser(description='Run STAR')
 parser.add_argument('index', help='Path to STAR index')
-parser.add_argument('fastq1', help='FASTQ file containing the first read mates')
-parser.add_argument('fastq2', help='FASTQ file containing the second read mates')
+parser.add_argument('fastq', nargs='+', help='FASTQ input. Format: fastq1 [fastq2], or comma-separated lists for each if multiple FASTQs/mate.')
 parser.add_argument('prefix', help='Prefix for output file names')
 parser.add_argument('-o', '--output_dir', default='./', help='Output directory')
 parser.add_argument('--annotation_gtf', default=None, help='Annotation in GTF format')
@@ -43,29 +42,20 @@ parser.add_argument('--quantMode', default=['TranscriptomeSAM', 'GeneCounts'], n
 parser.add_argument('--outSAMtype', default=['BAM', 'Unsorted'], nargs='+')
 parser.add_argument('--outSAMunmapped', default='Within', help='Keep unmapped reads in output BAM')
 parser.add_argument('--outSAMattrRGline', default=['ID:rg1', 'SM:sm1'], nargs='+', help='Adds read group line to BAM header; required by GATK')
-parser.add_argument('--outSAMattributes', default=['NH', 'HI', 'AS', 'nM', 'NM'], nargs='+')
+parser.add_argument('--outSAMattributes', default=['NH', 'HI', 'AS', 'nM', 'NM', 'ch'], nargs='+')
 parser.add_argument('--chimSegmentMin', default='15', help='Minimum chimeric segment length; switches on detection of chimeric (fusion) alignments')
 parser.add_argument('--chimJunctionOverhangMin', default='15', help='Minimum overhang for a chimeric junction')
+parser.add_argument('--chimOutType', default=['WithinBAM', 'SoftClip'], nargs='+', help='')
+parser.add_argument('--chimMainSegmentMultNmax', default='1', help='')
 parser.add_argument('--genomeLoad', default='NoSharedMemory')
+parser.add_argument('--STARlong', action='store_true', help='Use STARlong instead of STAR')
 parser.add_argument('-t', '--threads', default='4', help='Number of threads')
 args = parser.parse_args()
 
-if args.fastq1.endswith('.gz'):
-    with gzip.open(args.fastq1) as f:
-        f.readline()
-        seq = f.readline().strip()
-        read_length = len(seq)
+if args.STARlong:
+    starcmd = 'STARlong'
 else:
-    with open(args.fastq1) as f:
-        f.readline()
-        seq = f.readline().strip()
-        read_length = len(seq)
-overhang = read_length-1
-
-if read_length<=201:
-    starcmd='STAR'
-else:
-    starcmd='STARlong'
+    starcmd = 'STAR'
 
 # set up command
 cmd = starcmd+' --runMode alignReads --runThreadN '+args.threads+' --genomeDir '+args.index
@@ -79,19 +69,20 @@ cmd += ' --twopassMode Basic'\
     +' --outFilterType '+args.outFilterType\
     +' --outFilterScoreMinOverLread '+args.outFilterScoreMinOverLread+' --outFilterMatchNminOverLread '+args.outFilterMatchNminOverLread\
     +' --limitSjdbInsertNsj '+args.limitSjdbInsertNsj\
-    +' --readFilesIn '+args.fastq1+' '+args.fastq2
-if args.fastq1.endswith('.gz'):
+    +' --readFilesIn '+' '.join(args.fastq)
+if args.fastq[0].endswith('.gz'):
     cmd += ' --readFilesCommand zcat'
 cmd += ' --outFileNamePrefix '+os.path.join(args.output_dir, args.prefix)+'.'\
     +' --outSAMstrandField '+args.outSAMstrandField+' --outFilterIntronMotifs '+args.outFilterIntronMotifs\
     +' --alignSoftClipAtReferenceEnds '+args.alignSoftClipAtReferenceEnds+' --quantMode '+' '.join(args.quantMode)\
     +' --outSAMtype '+' '.join(args.outSAMtype)+' --outSAMunmapped '+args.outSAMunmapped+' --genomeLoad '+args.genomeLoad
 if int(args.chimSegmentMin)>0:
-    cmd += ' --chimSegmentMin '+args.chimSegmentMin+' --chimJunctionOverhangMin '+args.chimJunctionOverhangMin
+    cmd += ' --chimSegmentMin '+args.chimSegmentMin+' --chimJunctionOverhangMin '+args.chimJunctionOverhangMin\
+        +' --chimOutType '+' '.join(args.chimOutType)+' --chimMainSegmentMultNmax '+args.chimMainSegmentMultNmax
 cmd += ' --outSAMattributes '+' '.join(args.outSAMattributes)+' --outSAMattrRGline '+' '.join(args.outSAMattrRGline)
 
 if not os.path.exists(args.output_dir):
-    os.makedirs(args.output_dir )
+    os.makedirs(args.output_dir)
 
 # run STAR
 subprocess.check_call(cmd, shell=True, executable='/bin/bash')
