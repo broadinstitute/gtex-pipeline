@@ -20,7 +20,7 @@ parser.add_argument('--exon_report', nargs=2, default='', metavar=('exon_report'
 parser.add_argument('-o', '--output_dir', default='.', help='Output directory')
 args = parser.parse_args()
 
-sample_id = os.path.split(args.exon_intron_report)[1].split('.')[0]
+sample_id = os.path.split(args.exon_intron_report)[1].split('.exon_intron_report.txt')[0]
 print('Writing read counts to GCT format ... ', end='', flush=True)
 rpkm_df = pd.read_csv(args.rpkm_gct, sep='\t', skiprows=3, header=None, usecols=[0,1], index_col=0, names=['Name','Description'])
 reads_df = pd.read_csv(args.exon_intron_report, sep='\t', skiprows=1, header=None, usecols=[0,2], index_col=0, names=['Name', sample_id])
