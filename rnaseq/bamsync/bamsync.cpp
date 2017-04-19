@@ -131,7 +131,7 @@ try {
             cout << "done." << endl;
             
             // parse headers
-            vector<string> hd1, sq1, rg1, pg1, co1;
+            vector<string> hd1, rg1, pg1, co1;
             vector<string> hd2, sq2, rg2, pg2, co2;
                         
             boost::char_separator<char> sep("\n");
@@ -144,8 +144,8 @@ try {
                 id = (*it).substr(0,3);
                 if (id=="@HD") {
                     hd1.push_back(*it);
-                } else if (id=="@SQ") {
-                    sq1.push_back(*it);
+                // } else if (id=="@SQ") {
+                //     sq1.push_back(*it);
                 } else if (id=="@RG") {
                     rg1.push_back(*it);
                 } else if (id=="@PG") {
@@ -180,14 +180,15 @@ try {
 
             // new header:
             //   @HD line from target
-            //   @SQ, @RG lines from source
+            //   @SQ lines from target (may be different if reference changes)
+            //   @RG lines from source
             //   @PG, @CO lines from target
             string header = "";
             if (is_genome_bam) {
                 for (auto k=hd2.begin();k!=hd2.end();++k) {
                     header += *k + "\n";
                 }
-                for (auto k=sq1.begin();k!=sq1.end();++k) {
+                for (auto k=sq2.begin();k!=sq2.end();++k) {
                     header += *k + "\n";
                 }
                 for (auto k=rg1.begin();k!=rg1.end();++k) {
