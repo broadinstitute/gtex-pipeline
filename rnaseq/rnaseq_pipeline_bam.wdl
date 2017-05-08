@@ -5,6 +5,7 @@ task samtofastq {
 
     Int memory
     Int disk_space
+    Int num_preempt
 
     command {
         # make sure path is absolute
@@ -24,9 +25,10 @@ task samtofastq {
     }
 
     runtime {
-        docker: "broadinstitute/gtex_rnaseq"
+        docker: "broadinstitute/gtex_rnaseq:V8"
         memory: "${memory}GB"
         disks: "local-disk ${disk_space} HDD"
+        preemptible: "${num_preempt}"
     }
 
     meta {
@@ -63,10 +65,13 @@ task star {
     String? outSAMattributes
     Int? chimSegmentMin
     Int? chimJunctionOverhangMin
+    String? chimOutType
+    Int? chimMainSegmentMultNmax
     
     Int memory
     Int disk_space
     Int num_threads
+    Int num_preempt
     
     command {
         set -euo pipefail
@@ -108,6 +113,8 @@ task star {
             ${"--outSAMattributes " + outSAMattributes} \
             ${"--chimSegmentMin " + chimSegmentMin} \
             ${"--chimJunctionOverhangMin " + chimJunctionOverhangMin} \
+            ${"--chimOutType " + chimOutType} \
+            ${"--chimMainSegmentMultNmax " + chimMainSegmentMultNmax} \
             --threads ${num_threads}
     }
     
@@ -125,10 +132,11 @@ task star {
     }
     
     runtime {
-        docker: "broadinstitute/gtex_rnaseq"
+        docker: "broadinstitute/gtex_rnaseq:V8"
         memory: "${memory}GB"
         disks: "local-disk ${disk_space} HDD"
         cpu: "${num_threads}"
+        preemptible: "${num_preempt}"
     }
     
     meta {
@@ -146,20 +154,26 @@ task bamsync {
 
     Int memory
     Int disk_space
+    Int num_preempt
 
     command {
+        echo $(date +"[%b %d %H:%M:%S] Running bamsync")
         /src/run_bamsync.sh ${source_bam} ${target_bam} ${prefix}
+        echo $(date +"[%b %d %H:%M:%S] Running samtools flagstat")
+        samtools flagstat ${prefix}.Aligned.sortedByCoord.out.patched.bam > ${prefix}.Aligned.sortedByCoord.out.patched.bam.flagstat.txt
     }
 
     output {
         File patched_bam_file="${prefix}.Aligned.sortedByCoord.out.patched.bam"
         File patched_bam_index="${prefix}.Aligned.sortedByCoord.out.patched.bam.bai"
+        File patched_bam_flagstat="${prefix}.Aligned.sortedByCoord.out.patched.bam.flagstat.txt"
     }
 
     runtime {
-        docker: "broadinstitute/gtex_rnaseq"
+        docker: "broadinstitute/gtex_rnaseq:V8"
         memory: "${memory}GB"
         disks: "local-disk ${disk_space} HDD"
+        preemptible: "${num_preempt}"
     }
 
     meta {
@@ -177,6 +191,7 @@ task rsem {
     Int memory
     Int disk_space
     Int num_threads
+    Int num_preempt
 
     Int? max_frag_len
     String? estimate_rspd
@@ -200,10 +215,11 @@ task rsem {
     }
 
     runtime {
-        docker: "broadinstitute/gtex_rnaseq"
+        docker: "broadinstitute/gtex_rnaseq:V8"
         memory: "${memory}GB"
         disks: "local-disk ${disk_space} HDD"
         cpu: "${num_threads}"
+        preemptible: "${num_preempt}"
     }
 
     meta {
@@ -224,28 +240,41 @@ task rnaseqc {
 
     Int memory
     Int disk_space
+    Int num_preempt
 
     command {
+        set -e
         touch ${bam_index}
+        touch ${genome_fasta_index}
+
         /usr/lib/jvm/java-1.7.0-openjdk-amd64/bin/java -Xmx${memory}g -jar /opt/RNA-SeQC_1.1.9/RNA-SeQC.jar -n 1000 \
         -s ${prefix},${bam_file},${notes} -t ${genes_gtf} -r ${genome_fasta} -o . -noDoC -strictMode 
-        mv ${prefix}/${prefix}.transcripts.rpkm.gct ${prefix}/${prefix}.gene_rpkm.gct
-        python3 /src/convert_rnaseqc_counts.py ${prefix}/${prefix}.gene_rpkm.gct ${prefix}/${prefix}.exon_intron_report.txt
+        
+        # remove tmp files
+        rm genes.rpkm.gct
+        rm ${prefix}/${prefix}.metrics.tmp.txt
+        rm ${prefix}/${prefix}.metrics.txt
+        
+        mv ${prefix}/${prefix}.transcripts.rpkm.gct ${prefix}.gene_rpkm.gct
+        python3 /src/convert_rnaseqc_counts.py ${prefix}.gene_rpkm.gct ${prefix}/${prefix}.exon_intron_report.txt --exon_report ${prefix}/${prefix}.exon_report.txt ${genes_gtf} -o .
+        mv metrics.tsv ${prefix}.metrics.tsv
+        gzip ${prefix}.gene_rpkm.gct
+        tar -cvzf ${prefix}.tar.gz ${prefix}/*
     }
 
     output {
-        File rnaseqc_gene_rpkm = "${prefix}/${prefix}.gene_rpkm.gct"
-        File rnaseqc_gene_counts = "${prefix}.gene_reads.gct"
-        File rnaseqc_exon_counts = "${prefix}/${prefix}.exon_report.txt"
-        File rnaseqc_metrics = "metrics.tsv"
-        # Array[File] rnaseqc_report_files = ["report.html", "meanCoverageNorm_high.png", "meanCoverageNorm_high.txt", "meanCoverageNorm_low.png", "meanCoverageNorm_low.txt", "meanCoverageNorm_medium.png", "meanCoverageNorm_medium.txt", "meanCoverage_high.png", "meanCoverage_high.txt", "meanCoverage_low.png", "meanCoverage_low.txt", "meanCoverage_medium.png", "meanCoverage_medium.txt"]
-        Array[File] rnaseqc_outputs = ["${prefix}/${prefix}.chimericPairs.txt", "${prefix}/${prefix}.exon_intron_report.txt", "${prefix}/${prefix}.intron_report.txt", "${prefix}/${prefix}.introns.rpkm.gct", "${prefix}/${prefix}.libraryComplexity.txt", "${prefix}/${prefix}.metrics.tmp.txt", "${prefix}/${prefix}.metrics.txt", "${prefix}/${prefix}.rRNA_counts.txt", "${prefix}/${prefix}.totalExonQuantifiedReads.txt"]
+        File gene_rpkm = "${prefix}.gene_rpkm.gct.gz"
+        File gene_counts = "${prefix}.gene_reads.gct.gz"
+        File exon_counts = "${prefix}.exon_reads.gct.gz"
+        File count_metrics = "${prefix}.metrics.tsv"
+        File count_outputs = "${prefix}.tar.gz"
     }
 
     runtime {
-        docker: "broadinstitute/gtex_rnaseq"
+        docker: "broadinstitute/gtex_rnaseq:V8"
         memory: "${memory}GB"
         disks: "local-disk ${disk_space} HDD"
+        preemptible: "${num_preempt}"
     }
 
     meta {
@@ -269,38 +298,43 @@ workflow rnaseq_pipeline_bam_workflow {
 
     Int samtofastq_memory
     Int samtofastq_disk
+    Int samtofastq_preempt
 
     Int star_memory
     Int star_disk
     Int star_threads
+    Int star_preempt
 
     Int bamsync_memory
     Int bamsync_disk
+    Int bamsync_preempt
 
     Int rsem_memory
     Int rsem_disk
     Int rsem_threads
+    Int rsem_preempt
 
     Int rnaseqc_memory
     Int rnaseqc_disk
+    Int rnaseqc_preempt
 
     call samtofastq {
-        input: input_bam=input_bam, prefix=prefix, memory=samtofastq_memory, disk_space=samtofastq_disk
+        input: input_bam=input_bam, prefix=prefix, memory=samtofastq_memory, disk_space=samtofastq_disk, num_preempt=samtofastq_preempt
     }
 
     call star {
-        input: fastq1=samtofastq.fastq1, fastq2=samtofastq.fastq2, prefix=prefix, star_index=star_index, memory=star_memory, disk_space=star_disk, num_threads=star_threads
+        input: fastq1=samtofastq.fastq1, fastq2=samtofastq.fastq2, prefix=prefix, star_index=star_index, memory=star_memory, disk_space=star_disk, num_threads=star_threads, num_preempt=star_preempt
     }
 
     call bamsync {
-        input: source_bam=input_bam, target_bam=star.bam_file, target_bam_index=star.bam_index, prefix=prefix, memory=bamsync_memory, disk_space=bamsync_disk
+        input: source_bam=input_bam, target_bam=star.bam_file, target_bam_index=star.bam_index, prefix=prefix, memory=bamsync_memory, disk_space=bamsync_disk, num_preempt=bamsync_preempt
     }
 
     call rsem {
-        input: transcriptome_bam=star.transcriptome_bam, rsem_reference=rsem_reference, prefix=prefix, memory=rsem_memory, disk_space=rsem_disk, num_threads=rsem_threads
+        input: transcriptome_bam=star.transcriptome_bam, rsem_reference=rsem_reference, prefix=prefix, memory=rsem_memory, disk_space=rsem_disk, num_threads=rsem_threads, num_preempt=rsem_preempt
     }
     
     call rnaseqc {
-        input: bam_file=bamsync.patched_bam_file, bam_index=bamsync.patched_bam_index, genes_gtf=genes_gtf, genome_fasta=genome_fasta, genome_fasta_index=genome_fasta_index, prefix=prefix, notes=rnaseqc_notes, memory=rnaseqc_memory, disk_space=rnaseqc_disk
+        input: bam_file=bamsync.patched_bam_file, bam_index=bamsync.patched_bam_index, genes_gtf=genes_gtf, genome_fasta=genome_fasta, genome_fasta_index=genome_fasta_index, prefix=prefix, notes=rnaseqc_notes, memory=rnaseqc_memory, disk_space=rnaseqc_disk, num_preempt=rnaseqc_preempt
     }
 }
