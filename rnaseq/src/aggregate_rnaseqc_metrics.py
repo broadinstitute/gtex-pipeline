@@ -3,8 +3,8 @@ import pandas as pd
 import argparse
 import os
 
-parser = argparse.ArgumentParser(description='Aggregate RNA-SeQC from multiple samples')
-parser.add_argument('input_files_tsv', help='TSV file with paths to metrics')
+parser = argparse.ArgumentParser(description='Aggregate RNA-SeQC metrics from multiple samples')
+parser.add_argument('input_files_tsv', help='TSV file with paths to metrics files')
 parser.add_argument('prefix', help='Prefix for output file name')
 parser.add_argument('--annotation_headers', default='', help='Comma-separate list')
 parser.add_argument('--annotation_tsvs', nargs='+', default=[])
