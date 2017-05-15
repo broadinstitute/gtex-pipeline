@@ -161,6 +161,7 @@ task rnaseqc {
 
     String prefix
     String notes
+    String? gatk_flags
 
     Int memory
     Int disk_space
@@ -172,7 +173,7 @@ task rnaseqc {
         touch ${genome_fasta_index}
 
         /usr/lib/jvm/java-1.7.0-openjdk-amd64/bin/java -Xmx${memory}g -jar /opt/RNA-SeQC_1.1.9/RNA-SeQC.jar -n 1000 \
-        -s ${prefix},${bam_file},${notes} -t ${genes_gtf} -r ${genome_fasta} -o . -noDoC -strictMode 
+        -s ${prefix},${bam_file},${notes} -t ${genes_gtf} -r ${genome_fasta} -o . -noDoC -strictMode ${" -gatkFlags " + gatk_flags}
         
         # remove tmp files
         rm genes.rpkm.gct
