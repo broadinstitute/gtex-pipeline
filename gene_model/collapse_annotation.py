@@ -125,16 +125,30 @@ def subtract_segment(a, b):
 
 
 def add_transcript_attributes(attributes_string):
-    attr = attributes_string.split('; ')
-    gene_id = attr[0].replace('"','').split()[1]
-    gene_type = attr[1].replace('"','').split()[1]
-    gene_status = attr[2].replace('"','').split()[1]
-    gene_name = attr[3].replace('"','').split()[1]
-    attr.insert(1, 'transcript_id "'+gene_id+'"')
-    attr.insert(5, 'transcript_type "'+gene_type+'"')
-    attr.insert(6, 'transcript_status "'+gene_status+'"')
-    attr.insert(7, 'transcript_name "'+gene_name+'"')    
-    return '; '.join(attr)
+    """
+    'status' fields were dropped in Gencode 26
+    """
+    # GTF specification
+    if 'gene_status' in attributes_string:
+        attribute_order = ['gene_id', 'transcript_id', 'gene_type', 'gene_status', 'gene_name', 'transcript_type', 'transcript_status', 'transcript_name', 'level']
+        add_list = ['transcript_id', 'transcript_type', 'transcript_status', 'transcript_name']
+    else:
+        attribute_order = ['gene_id', 'transcript_id', 'gene_type', 'gene_name', 'transcript_type', 'transcript_name', 'level']
+        add_list = ['transcript_id', 'transcript_type', 'transcript_name']
+    attr = attributes_string.strip(';').split('; ')
+    req = []
+    opt = []
+    for k in attr:
+        if k.split()[0] in attribute_order:
+            req.append(k)
+        else:
+            opt.append(k)
+    attr_dict = {i.split()[0]:i.split()[1].replace(';','') for i in req}
+    for k in add_list:
+        if k not in attr_dict:
+            attr_dict[k] = attr_dict[k.replace('transcript', 'gene')]
+    
+    return '; '.join([k+' '+attr_dict[k] for k in attribute_order] + opt)+';'
 
 
 def collapse_annotation(annot, transcript_gtf, collapsed_gtf, blacklist=set()):
