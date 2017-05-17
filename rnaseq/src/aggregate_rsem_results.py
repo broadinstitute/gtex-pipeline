@@ -68,11 +68,11 @@ if __name__=='__main__':
     sample_ids = [os.path.split(i)[1].split('.')[0] for i in file_list]
 
     if np.all(['isoform' in os.path.split(i)[1] for i in file_list]):
-        prefix = args.output_prefix+'.transcripts_'
+        prefix = args.output_prefix+'.rsem_transcripts_'
         rsem_loader = load_isoform_results
         index_df = load_isoform_results(file_list[0], cols=['gene_id'])
     elif np.all(['gene' in os.path.split(i)[1] for i in file_list]):
-        prefix = args.output_prefix+'.genes_'
+        prefix = args.output_prefix+'.rsem_genes_'
         rsem_loader = load_gene_results
         index_df = load_gene_results(file_list[0], cols=['transcript_id(s)'])
     else:
