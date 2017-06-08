@@ -8,6 +8,8 @@ task samtofastq {
     Int num_preempt
 
     command {
+        set -euo pipefail
+        
         # make sure path is absolute
         input_bam_abs=${input_bam}
         if [[ $input_bam_abs != /* ]]; then
@@ -157,6 +159,7 @@ task bamsync {
     Int num_preempt
 
     command {
+        set -euo pipefail
         echo $(date +"[%b %d %H:%M:%S] Running bamsync")
         /src/run_bamsync.sh ${source_bam} ${target_bam} ${prefix}
         echo $(date +"[%b %d %H:%M:%S] Running samtools flagstat")
@@ -198,6 +201,7 @@ task rsem {
     String? is_stranded
 
     command {
+        set -euo pipefail
         mkdir rsem_reference
         tar -xvvf ${rsem_reference} -C rsem_reference --strip-components=1
 
@@ -244,7 +248,7 @@ task rnaseqc {
     Int num_preempt
 
     command {
-        set -e
+        set -euo pipefail
         touch ${bam_index}
         touch ${genome_fasta_index}
 
