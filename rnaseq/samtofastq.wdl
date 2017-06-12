@@ -8,6 +8,8 @@ task samtofastq {
     Int num_preempt
 
     command {
+        set -euo pipefail
+
         # make sure path is absolute
         input_bam_abs=${input_bam}
         if [[ $input_bam_abs != /* ]]; then

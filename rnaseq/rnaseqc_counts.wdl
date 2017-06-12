@@ -7,25 +7,22 @@ task rnaseqc_counts {
 
     String prefix
     String notes
+    String? gatk_flags
 
     Int memory
     Int disk_space
     Int num_threads
     Int num_preempt
 
-    command <<<
-        set -e
+    command {
+        set -euo pipefail
         touch ${bam_index}
         touch ${genome_fasta_index}
 
-        # pre-filter
-        echo $(date +"[%b %d %H:%M:%S] Filtering BAM")
-        cat <(samtools view -H ${bam_file}) <(samtools view -f3 -q255 ${bam_file} | grep -v "ch:A:1" | awk '{split($16,a,":"); if (a[3]<=6) {print $0}}') | samtools view -b --threads ${num_threads} > filtered.bam
-        samtools index filtered.bam
-        
         echo $(date +"[%b %d %H:%M:%S] Running RNA-SeQC")
         /usr/lib/jvm/java-1.7.0-openjdk-amd64/bin/java -Xmx${memory}g -jar /opt/RNA-SeQC_1.1.9/RNA-SeQC.jar -n 1000 \
-        -s ${prefix},filtered.bam,${notes} -t ${genes_gtf} -r ${genome_fasta} -o . -noDoC -strictMode
+        -s ${prefix},${bam_file},${notes} -t ${genes_gtf} -r ${genome_fasta} -o . -noDoC -strictMode ${" -gatkFlags " + gatk_flags}
+
         # remove tmp files
         rm genes.rpkm.gct
         rm ${prefix}/${prefix}.metrics.tmp.txt
@@ -36,14 +33,14 @@ task rnaseqc_counts {
         mv metrics.tsv ${prefix}.metrics.tsv
         gzip ${prefix}.gene_rpkm.gct
         tar -cvzf ${prefix}.tar.gz ${prefix}/*
-    >>>
+    }
 
     output {
-        File rnaseqc_gene_rpkm = "${prefix}.gene_rpkm.gct.gz"
-        File rnaseqc_gene_counts = "${prefix}.gene_reads.gct.gz"
-        File rnaseqc_exon_counts = "${prefix}.exon_reads.gct.gz"
-        File rnaseqc_count_metrics = "${prefix}.metrics.tsv"
-        File rnaseqc_count_outputs = "${prefix}.tar.gz"
+        File gene_rpkm = "${prefix}.gene_rpkm.gct.gz"
+        File gene_counts = "${prefix}.gene_reads.gct.gz"
+        File exon_counts = "${prefix}.exon_reads.gct.gz"
+        File count_metrics = "${prefix}.metrics.tsv"
+        File count_outputs = "${prefix}.tar.gz"
     }
 
     runtime {
