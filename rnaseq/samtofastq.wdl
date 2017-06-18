@@ -5,6 +5,7 @@ task samtofastq {
 
     Int memory
     Int disk_space
+    Int num_threads
     Int num_preempt
 
     command {
@@ -17,7 +18,7 @@ task samtofastq {
         fi
 
         mkdir samtofastq  # workaround for named pipes
-        python3 -u /src/run_SamToFastq.py $input_bam_abs -p ${prefix} --output_dir samtofastq
+        python3 -u /src/run_SamToFastq.py $input_bam_abs -p ${prefix} --output_dir samtofastq --memory ${memory}
         mv samtofastq/${prefix}_*.fastq.gz .
     }
 
@@ -30,6 +31,7 @@ task samtofastq {
         docker: "broadinstitute/gtex_rnaseq:V8"
         memory: "${memory}GB"
         disks: "local-disk ${disk_space} HDD"
+        cpu: "${num_threads}"
         preemptible: "${num_preempt}"
     }
 
