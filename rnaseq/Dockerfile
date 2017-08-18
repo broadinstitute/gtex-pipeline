@@ -74,13 +74,13 @@ RUN cd /opt/bamsync && make
 ENV PATH /opt/bamsync:$PATH
 
 # python modules
-RUN pip3 install --upgrade pip && pip3 install tables pandas
+RUN pip3 install --upgrade pip && pip3 install tables pandas feather-format
 
-# Salmon v0.8.2
+# kallisto v0.43.1
 RUN cd /opt && \
-    wget https://github.com/COMBINE-lab/salmon/releases/download/v0.8.2/Salmon-0.8.2_linux_x86_64.tar.gz && \
-    tar -xvf Salmon-0.8.2_linux_x86_64.tar.gz && rm Salmon-0.8.2_linux_x86_64.tar.gz
-ENV PATH $PATH:/opt/Salmon-0.8.2_linux_x86_64/bin
+    wget https://github.com/pachterlab/kallisto/releases/download/v0.43.1/kallisto_linux-v0.43.1.tar.gz && \
+    tar -xf kallisto_linux-v0.43.1.tar.gz && rm kallisto_linux-v0.43.1.tar.gz
+ENV PATH $PATH:/opt/kallisto_linux-v0.43.1
 
 # clean up
 RUN apt-get clean && \
