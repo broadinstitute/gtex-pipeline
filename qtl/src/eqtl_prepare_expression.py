@@ -8,11 +8,14 @@ import subprocess
 import scipy.stats as stats
 import argparse
 import os
+import feather
+
+import rnaseqnorm
 
 
-def gtf2bed(annotation_gtf, feature='gene', exclude_chrs=[]):
+def gtf_to_bed(annotation_gtf, feature='gene', exclude_chrs=[]):
     """
-    Parse genes from GTF, create placeholder DataFrame for BED output    
+    Parse genes from GTF, create placeholder DataFrame for BED output
     """
     chrom = []
     start = []
@@ -43,155 +46,139 @@ def gtf2bed(annotation_gtf, feature='gene', exclude_chrs=[]):
         mask = mask & (bed_df['chr']!=k)
     bed_df = bed_df[mask]
     return bed_df
-    
-    
-def normalize_quantiles(M, inplace=False):
-    """
-    Note: replicates behavior of R function normalize.quantiles from library("preprocessCore")  
-
-    Reference:
-     [1] Bolstad et al., Bioinformatics 19(2), pp. 185-193, 2003
-    
-    Adapted from https://github.com/andrewdyates/quantile_normalize
-    """
-    if not inplace:
-        M = M.copy()
-    
-    Q = M.argsort(axis=0)
-    m,n = M.shape
-
-    # compute quantile vector
-    quantiles = np.zeros(m)
-    for i in range(n):
-        quantiles += M[Q[:,i],i]
-    quantiles = quantiles / n
-    
-    for i in range(n):
-        # Get equivalence classes; unique values == 0
-        dupes = np.zeros(m, dtype=np.int)
-        for j in range(m-1):
-            if M[Q[j,i],i]==M[Q[j+1,i],i]:
-                dupes[j+1] = dupes[j]+1
-                
-        # Replace column with quantile ranks
-        M[Q[:,i],i] = quantiles
-
-        # Average together equivalence classes
-        j = m-1
-        while j >= 0:
-            if dupes[j] == 0:
-                j -= 1
-            else:
-                idxs = Q[j-dupes[j]:j+1,i]
-                M[idxs,i] = np.median(M[idxs,i])
-                j -= 1 + dupes[j]
-        assert j == -1
-    
-    if not inplace:
-        return M
-        
-
-def inverse_quantile_normalization(M):
-    """
-    After quantile normalization of samples, standardize expression of each gene
-    """
-    R = stats.mstats.rankdata(M,axis=1)  # ties are averaged
-    Q = stats.norm.ppf(R/(M.shape[1]+1))
-    return Q
-        
-        
-def get_donors_from_vcf(vcfpath):
-    """
-    Extract donor IDs from VCF
-    """
-    with gzip.open(vcfpath) as vcf:
-        for line in vcf:
-            if line.decode()[:2]=='##': continue
-            break
-    return line.decode().strip().split('\t')[9:]
 
 
-def normalize_expression(expression_df, counts_df, expression_threshold=0.1, count_threshold=5, min_samples=10):
-    """
-    Genes are thresholded based on the following expression rules:
-      >=min_samples with >expression_threshold expression values
-      >=min_samples with >count_threshold read counts
-    """
-    donor_ids = ['-'.join(i.split('-')[:2]) for i in expression_df.columns]
-    
-    # expression thresholds
-    mask = ((np.sum(expression_df>expression_threshold,axis=1)>=min_samples) & (np.sum(counts_df>count_threshold,axis=1)>=min_samples)).values
-    
-    # apply normalization
-    M = normalize_quantiles(expression_df.loc[mask].values, inplace=False)
-    R = inverse_quantile_normalization(M)
-
-    quant_std_df = pd.DataFrame(data=R, columns=donor_ids, index=expression_df.loc[mask].index)    
-    quant_df = pd.DataFrame(data=M, columns=donor_ids, index=expression_df.loc[mask].index)
-    return quant_std_df, quant_df
-
-    
-def read_gct(gct_file, donor_ids):
-    """
-    Load GCT as DataFrame
-    """    
-    df = pd.read_csv(gct_file, sep='\t', skiprows=2, index_col=0)
-    df.drop('Description', axis=1, inplace=True)
-    df.index.name = 'gene_id'
-    return df[[i for i in df.columns if '-'.join(i.split('-')[:2]) in donor_ids]]
+def prepare_bed(df, bed_template_df, chr_subset=None):
+    bed_df = pd.merge(bed_template_df, df, left_index=True, right_index=True)
+    # sort by start position
+    bed_df = bed_df.groupby('chr', sort=False, group_keys=False).apply(lambda x: x.sort_values('start'))
+    if chr_subset is not None:
+        # subset chrs from VCF
+        bed_df = bed_df[bed_df.chr.isin(chr_subset)]
+    return bed_df
 
 
-def write_bed(bed_df, header, output_name):
+def write_bed(bed_df, output_name):
     """
     Write DataFrame to BED format
     """
+    assert bed_df.columns[0]=='chr' and bed_df.columns[1]=='start' and bed_df.columns[2]=='end'
+    # header must be commented in BED format
+    header = bed_df.columns.values.copy()
+    header[0] = '#chr'
     bed_df.to_csv(output_name, sep='\t', index=False, header=header)
     subprocess.check_call('bgzip -f '+output_name, shell=True, executable='/bin/bash')
     subprocess.check_call('tabix -f '+output_name+'.gz', shell=True, executable='/bin/bash')
 
 
+def read_gct(gct_file, sample_ids=None):
+    """
+    Load GCT as DataFrame. The first two columns must be 'Name' and 'Description'
+    """
+    if sample_ids is not None:
+        sample_ids = ['Name']+list(sample_ids)
+
+    if gct_file.endswith('.gct.gz') or gct_file.endswith('.gct'):
+        df = pd.read_csv(gct_file, sep='\t', skiprows=2, usecols=sample_ids, index_col=0)
+    elif gct_file.endswith('.ft'):  # feather format
+        df = feather.read_dataframe(gct_file, columns=sample_ids)
+        df = df.set_index('Name')
+    else:
+        raise ValueError('Unsupported input format.')
+    df.index.name = 'gene_id'
+    if 'Description' in df.columns:
+        df = df.drop('Description', axis=1)
+    return df
+
+
+def prepare_expression(counts_df, tpm_df, vcf_lookup_s, sample_frac_threshold=0.2, count_threshold=6, tpm_threshold=0.1, mode='tmm'):
+    """
+    Genes are thresholded based on the following expression rules:
+      TPM > tpm_threshold in >= sample_frac_threshold*samples
+      read counts >= count_threshold in sample_frac_threshold*samples
+    
+    vcf_lookup: lookup table mapping sample IDs to VCF IDs
+    
+    Between-sample normalization modes:
+      tmm: TMM from edgeR
+      qn:  quantile normalization
+    """
+
+    ix = np.intersect1d(counts_df.columns, vcf_lookup_s.index)
+    tpm_df = tpm_df[ix]
+    counts_df = counts_df[ix]
+    ns = tpm_df.shape[1]
+
+    # expression thresholds
+    mask = (
+        (np.sum(tpm_df>=tpm_threshold,axis=1)>=sample_frac_threshold*ns) &
+        (np.sum(counts_df>=count_threshold,axis=1)>=sample_frac_threshold*ns)
+    ).values
+
+    # apply normalization
+    if mode.lower()=='tmm':
+        tmm_counts_df = rnaseqnorm.edgeR_cpm(counts_df, normalized_lib_sizes=True)
+        norm_df = rnaseqnorm.inverse_normal_transform(tmm_counts_df[mask])
+    elif mode.lower()=='qn':
+        qn_df = rnaseqnorm.normalize_quantiles(tpm_df.loc[mask])
+        norm_df = rnaseqnorm.inverse_normal_transform(qn_df)
+    else:
+        raise ValueError('Unsupported mode {}'.format(mode))
+
+    return norm_df
+
+
+
 if __name__=='__main__':
     parser = argparse.ArgumentParser(description='Generate normalized expression BED files for eQTL analyses')
-    parser.add_argument('expression_gct', help='GCT file with expression in normalized units, e.g., TPM or FPKM')
+    parser.add_argument('tpm_gct', help='GCT file with expression in normalized units, e.g., TPM or FPKM')
     parser.add_argument('counts_gct', help='GCT file with read counts')
     parser.add_argument('annotation_gtf', help='GTF annotation')
-    parser.add_argument('vcf', help='VCF file with donor IDs')
+    parser.add_argument('sample_participant_lookup', help='Lookup table linking samples to participants')
+    parser.add_argument('vcf_chr_list', help='List of chromosomes in VCF')
     parser.add_argument('prefix', help='Prefix for output file names')
     parser.add_argument('-o', '--output_dir', default='.', help='Output directory')
-    parser.add_argument('--expression_threshold', type=np.double, default=0.1, help='Selects genes with > expression_threshold expression in at least min_samples')
-    parser.add_argument('--count_threshold', type=np.int32, default=5, help='Selects genes with > count_threshold reads in at least min_samples')
-    parser.add_argument('--min_samples', type=np.int32, default=10, help='Minimum number of samples that must satisfy thresholds')
+    parser.add_argument('--sample_id_list', default=None, help='File listing sample IDs to include')
+    parser.add_argument('--convert_tpm', action='store_true', help='Convert to TPM (in case input is in RPKM/FPKM)')
+    parser.add_argument('--legacy_mode', action='store_true', help='Run in legacy mode (generates separate output for PEER factor calculation)')
+    parser.add_argument('--tpm_threshold', type=np.double, default=0.1, help='Selects genes with > expression_threshold expression in at least sample_frac_threshold')
+    parser.add_argument('--count_threshold', type=np.int32, default=6, help='Selects genes with >= count_threshold reads in at least sample_frac_threshold samples')
+    parser.add_argument('--sample_frac_threshold', type=np.double, default=0.2, help='Minimum fraction of samples that must satisfy thresholds')
+    parser.add_argument('--normalization_method', default='tmm', help='Normalization method: TMM or quantile normalization (qn)')
     args = parser.parse_args()
-    
-    print('Generating normalized expression files ... ', end='', flush=True)
-    donor_ids = get_donors_from_vcf(args.vcf)
-    expression_df = read_gct(args.expression_gct, donor_ids)
-    counts_df = read_gct(args.counts_gct, donor_ids)
 
-    quant_std_df, quant_df = normalize_expression(expression_df, counts_df,
-        expression_threshold=args.expression_threshold, count_threshold=args.count_threshold, min_samples=args.min_samples)
+    print('Loading expression data', flush=True)
+    sample_ids = None
+    if args.sample_id_list is not None:
+        with open(args.sample_id_list) as f:
+            sample_ids = f.read().strip().split('\n')
+            print('  * Loading {} samples'.format(len(sample_ids)), flush=True)
 
-    # for consistency with v6/v6p pipeline results, write unsorted expression file for PEER factor calculation
-    quant_std_df.to_csv(os.path.join(args.output_dir, args.prefix+'.expression.txt'), sep='\t')
+    counts_df = read_gct(args.counts_gct, sample_ids)
+    tpm_df = read_gct(args.tpm_gct, sample_ids)
 
-    bed_df = gtf2bed(args.annotation_gtf, feature='transcript')
-    quant_std_df = pd.merge(bed_df, quant_std_df, left_index=True, right_index=True)
-    quant_df = pd.merge(bed_df, quant_df, left_index=True, right_index=True)
+    if args.convert_tpm:
+        print('  * Converting to TPM', flush=True)
+        tpm_df = tpm_df/tpm_df.sum(0)*1e6
 
-    # sort by start position
-    chr_groups = quant_std_df.groupby('chr', sort=False, group_keys=False)
-    quant_std_df = chr_groups.apply(lambda x: x.sort_values('start'))
-    quant_df = quant_df.loc[quant_std_df.index]
+    print('Normalizing data ({})'.format(args.normalization_method), flush=True)
+    sample_participant_lookup_s = pd.read_csv(args.sample_participant_lookup, sep='\t', index_col=0, dtype=str, squeeze=True)
+    norm_df = prepare_expression(counts_df, tpm_df, sample_participant_lookup_s, sample_frac_threshold=args.sample_frac_threshold,
+        count_threshold=args.count_threshold, tpm_threshold=args.tpm_threshold, mode=args.normalization_method)
+    print('  * {} genes in input tables.'.format(counts_df.shape[0]), flush=True)
+    print('  * {} genes remain after thresholding.'.format(norm_df.shape[0]), flush=True)
 
-    # exclude chromosomes
-    chrs = subprocess.check_output('tabix --list-chroms '+args.vcf, shell=True, executable='/bin/bash')
-    chrs = chrs.decode().strip().split()
-    quant_std_df = quant_std_df[quant_std_df.chr.isin(chrs)]
-    quant_df = quant_df[quant_df.chr.isin(chrs)]
+    # change sample IDs to participant IDs
+    norm_df.rename(columns=sample_participant_lookup_s.to_dict(), inplace=True)
 
-    # header must be commented in BED format
-    header_str = quant_std_df.columns.values.copy()
-    header_str[0] = '#chr'
-    write_bed(quant_std_df, header_str, os.path.join(args.output_dir, args.prefix+'.expression.bed'))
-    write_bed(quant_df, header_str, os.path.join(args.output_dir, args.prefix+'.expression.fpkm.bed'))
-    print('done.')
+    bed_template_df = gtf_to_bed(args.annotation_gtf, feature='transcript')
+    with open(args.vcf_chr_list) as f:
+        chr_list = f.read().strip().split('\n')
+    norm_bed_df = prepare_bed(norm_df, bed_template_df, chr_subset=chr_list)
+    print('  * {} genes remain after removing contigs absent from VCF.'.format(norm_bed_df.shape[0]), flush=True)
+    print('Writing BED file', flush=True)
+    write_bed(norm_bed_df, os.path.join(args.output_dir, args.prefix+'.expression.bed'))
+
+    if args.legacy_mode:
+        # for consistency with v6/v6p pipeline results, write unsorted expression file for PEER factor calculation
+        norm_df.to_csv(os.path.join(args.output_dir, args.prefix+'.expression.txt'), sep='\t')

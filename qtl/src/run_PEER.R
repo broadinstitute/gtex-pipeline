@@ -4,11 +4,11 @@ library(peer, quietly=TRUE)  # https://github.com/PMBio/peer
 library(argparser, quietly=TRUE)
 
 WriteTable <- function(data, filename, index.name) {
-	datafile <- file(filename, open = "wt")
-	on.exit(close(datafile))
-	header <- c(index.name, colnames(data))
-	writeLines(paste0(header, collapse="\t"), con=datafile, sep="\n")
-	write.table(data, datafile, sep="\t", col.names=FALSE, quote=FALSE)
+    datafile <- file(filename, open = "wt")
+    on.exit(close(datafile))
+    header <- c(index.name, colnames(data))
+    writeLines(paste0(header, collapse="\t"), con=datafile, sep="\n")
+    write.table(data, datafile, sep="\t", col.names=FALSE, quote=FALSE)
 }
 
 p <- arg_parser("Run PEER factor estimation")
@@ -69,7 +69,7 @@ colnames(R) <- rownames(M)
 
 # write results
 cat("PEER: writing results ... ")
-WriteTable(t(X), file.path(argv$output_dir, paste0(argv$prefix, "_PEER_covariates.txt")), "ID")  # format(X, digits=6)
-WriteTable(A, file.path(argv$output_dir, paste0(argv$prefix, "_PEER_alpha.txt")), "ID")
-WriteTable(R, file.path(argv$output_dir, paste0(argv$prefix, "_PEER_residuals.txt")), "ID")
+WriteTable(t(X), file.path(argv$output_dir, paste0(argv$prefix, ".PEER_covariates.txt")), "ID")  # format(X, digits=6)
+WriteTable(A, file.path(argv$output_dir, paste0(argv$prefix, ".PEER_alpha.txt")), "ID")
+WriteTable(R, file.path(argv$output_dir, paste0(argv$prefix, ".PEER_residuals.txt")), "ID")
 cat("done.\n")
