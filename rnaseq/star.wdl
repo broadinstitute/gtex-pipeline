@@ -1,10 +1,10 @@
 task star {
-    
+
     File fastq1
-    File fastq2
+    File? fastq2
     String prefix
     File star_index
-    
+
     # STAR options
     Int? outFilterMultimapNmax
     Int? alignSJoverhangMin
@@ -28,23 +28,37 @@ task star {
     Int? chimJunctionOverhangMin
     String? chimOutType
     Int? chimMainSegmentMultNmax
-    
+
     Int memory
     Int disk_space
     Int num_threads
     Int num_preempt
-    
+
     command {
         set -euo pipefail
-        
-        # make sure paths are absolute
-        fastq1_abs=${fastq1}
-        fastq2_abs=${fastq2}
-        if [[ $fastq1_abs != /* ]]; then
-            fastq1_abs=$PWD/$fastq1_abs
-            fastq2_abs=$PWD/$fastq2_abs
+
+        if [[ ${fastq1} == *".tar" || ${fastq1} == *".tar.gz" ]]; then
+            tar -xvvf ${fastq1}
+            fastq1_abs=$(for f in *_1.fastq*; do echo "$(pwd)/$f"; done | paste -s -d ',')
+            fastq2_abs=$(for f in *_2.fastq*; do echo "$(pwd)/$f"; done | paste -s -d ',')
+            if [[ $fastq1_abs == *"*_1.fastq*" ]]; then  # no paired-end FASTQs found; check for single-end FASTQ
+                fastq1_abs=$(for f in *.fastq*; do echo "$(pwd)/$f"; done | paste -s -d ',')
+                fastq2_abs=''
+            fi
+        else
+            # make sure paths are absolute
+            fastq1_abs=${fastq1}
+            fastq2_abs=${fastq2}
+            if [[ $fastq1_abs != /* ]]; then
+                fastq1_abs=$PWD/$fastq1_abs
+                fastq2_abs=$PWD/$fastq2_abs
+            fi
         fi
-        
+
+        echo "FASTQs:"
+        echo $fastq1_abs
+        echo $fastq2_abs
+
         # extract index
         echo $(date +"[%b %d %H:%M:%S] Extracting STAR index")
         mkdir star_index
@@ -78,7 +92,7 @@ task star {
             ${"--chimMainSegmentMultNmax " + chimMainSegmentMultNmax} \
             --threads ${num_threads}
     }
-    
+
     output {
         File bam_file = "star_out/${prefix}.Aligned.sortedByCoord.out.bam"
         File bam_index = "star_out/${prefix}.Aligned.sortedByCoord.out.bam.bai"
@@ -91,7 +105,7 @@ task star {
         File junctions_pass1 = "star_out/${prefix}._STARpass1/SJ.out.tab"
         Array[File] logs = ["star_out/${prefix}.Log.final.out", "star_out/${prefix}.Log.out", "star_out/${prefix}.Log.progress.out"]
     }
-    
+
     runtime {
         docker: "broadinstitute/gtex_rnaseq:V8"
         memory: "${memory}GB"
@@ -99,7 +113,7 @@ task star {
         cpu: "${num_threads}"
         preemptible: "${num_preempt}"
     }
-    
+
     meta {
         author: "Francois Aguet"
     }
