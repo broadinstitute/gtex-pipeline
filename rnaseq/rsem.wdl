@@ -12,6 +12,7 @@ task rsem {
     Int? max_frag_len
     String? estimate_rspd
     String? is_stranded
+    String? paired_end
 
     command {
         set -euo pipefail
@@ -22,6 +23,7 @@ task rsem {
             ${"--max_frag_len " + max_frag_len} \
             ${"--estimate_rspd " + estimate_rspd} \
             ${"--is_stranded " + is_stranded} \
+            ${"--paired_end " + paired_end} \
             --threads ${num_threads} \
             rsem_reference ${transcriptome_bam} ${prefix}
     }
