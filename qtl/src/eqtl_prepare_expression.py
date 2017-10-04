@@ -94,7 +94,7 @@ def read_gct(gct_file, sample_ids=None):
 def prepare_expression(counts_df, tpm_df, vcf_lookup_s, sample_frac_threshold=0.2, count_threshold=6, tpm_threshold=0.1, mode='tmm'):
     """
     Genes are thresholded based on the following expression rules:
-      TPM > tpm_threshold in >= sample_frac_threshold*samples
+      TPM >= tpm_threshold in >= sample_frac_threshold*samples
       read counts >= count_threshold in sample_frac_threshold*samples
     
     vcf_lookup: lookup table mapping sample IDs to VCF IDs
