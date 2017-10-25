@@ -48,6 +48,7 @@ parser.add_argument('--chimJunctionOverhangMin', default='15', help='Minimum ove
 parser.add_argument('--chimOutType', default=['WithinBAM', 'SoftClip'], nargs='+', help='')
 parser.add_argument('--chimMainSegmentMultNmax', default='1', help='')
 parser.add_argument('--genomeLoad', default='NoSharedMemory')
+parser.add_argument('--sjdbFileChrStartEnd', default=None, help='SJ.out.tab file (e.g., from 1st pass). With this option, only one pass will be run')
 parser.add_argument('--STARlong', action='store_true', help='Use STARlong instead of STAR')
 parser.add_argument('-t', '--threads', default='4', help='Number of threads')
 args = parser.parse_args()
@@ -61,8 +62,9 @@ else:
 cmd = starcmd+' --runMode alignReads --runThreadN '+args.threads+' --genomeDir '+args.index
 if args.annotation_gtf is not None:  # only needed if genome index was built w/o annotation
     cmd += ' --sjdbGTFfile '+args.annotation_gtf
-cmd += ' --twopassMode Basic'\
-    +' --outFilterMultimapNmax '+args.outFilterMultimapNmax\
+if args.sjdbFileChrStartEnd is None:
+    cmd += ' --twopassMode Basic'
+cmd +=' --outFilterMultimapNmax '+args.outFilterMultimapNmax\
     +' --alignSJoverhangMin '+args.alignSJoverhangMin+' --alignSJDBoverhangMin '+args.alignSJDBoverhangMin\
     +' --outFilterMismatchNmax '+args.outFilterMismatchNmax+' --outFilterMismatchNoverLmax '+args.outFilterMismatchNoverLmax\
     +' --alignIntronMin '+args.alignIntronMin+' --alignIntronMax '+args.alignIntronMax+' --alignMatesGapMax '+args.alignMatesGapMax\
@@ -80,6 +82,8 @@ if int(args.chimSegmentMin)>0:
     cmd += ' --chimSegmentMin '+args.chimSegmentMin+' --chimJunctionOverhangMin '+args.chimJunctionOverhangMin\
         +' --chimOutType '+' '.join(args.chimOutType)+' --chimMainSegmentMultNmax '+args.chimMainSegmentMultNmax
 cmd += ' --outSAMattributes '+' '.join(args.outSAMattributes)+' --outSAMattrRGline '+' '.join(args.outSAMattrRGline)
+if args.sjdbFileChrStartEnd is not None:
+    cmd += ' --sjdbFileChrStartEnd '+args.sjdbFileChrStartEnd
 
 if not os.path.exists(args.output_dir):
     os.makedirs(args.output_dir)
