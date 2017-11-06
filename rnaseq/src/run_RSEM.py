@@ -51,7 +51,7 @@ with cd(args.output_dir):
         cmd += ' --bowtie-chunkmbs 128 <(gunzip -c '+fastq1+') <(gunzip -c '+fastq2+') '+os.path.join(args.rsem_ref_dir,'rsem_reference')+' '+args.prefix+'.rsem'
 
     # run RSEM
-    print('  * command: '+cmd)
+    print('  * command: '+cmd, flush=True)
     subprocess.check_call(cmd, shell=True, executable='/bin/bash')
 
 print('['+datetime.now().strftime("%b %d %H:%M:%S")+'] Finished RSEM', flush=True)
