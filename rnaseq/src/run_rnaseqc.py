@@ -76,7 +76,7 @@ parser.add_argument('-m', '--memory', default='4', type=str, help='Memory, in GB
 parser.add_argument('--jar', default='/opt/RNA-SeQC_1.1.9/RNA-SeQC.jar', help='Path to RNA-SeQC.jar')
 parser.add_argument('--java_path', default=None, type=str, help='Path to Java 1.7')
 parser.add_argument('--rnaseqc_flags', type=str, default=['noDoC', 'strictMode'], nargs='+', help='Optional flags for RNA-SeQC')
-parser.add_argument('--gatk_flags', type=str, default='--allow_potentially_misencoded_quality_scores', help='Optional flags for GATK')
+parser.add_argument('--gatk_flags', type=str, default=['allow_potentially_misencoded_quality_scores'], nargs='+', help='Optional flags for GATK')
 args = parser.parse_args()
 
 print('['+datetime.now().strftime("%b %d %H:%M:%S")+'] Running RNA-SeQC', flush=True)
@@ -95,7 +95,7 @@ cmd += ' -Xmx{}g'.format(args.memory)\
     + ' -o '+args.output_dir\
     + ' '+' '.join(['-'+i for i in args.rnaseqc_flags])
 if args.gatk_flags:
-    cmd += " -gatkFlags " + args.gatk_flags
+    cmd += ' -gatkFlags ' +' '.join(['--'+i for i in args.gatk_flags])
 print('  * command: "{}"'.format(cmd), flush=True)
 
 with cd(args.output_dir):
