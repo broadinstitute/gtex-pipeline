@@ -6,7 +6,6 @@ task rnaseqc_counts {
     File genome_fasta_index
 
     String prefix
-    String notes
     String? gatk_flags
 
     Int memory
@@ -18,21 +17,11 @@ task rnaseqc_counts {
         set -euo pipefail
         touch ${bam_index}
         touch ${genome_fasta_index}
-
-        echo $(date +"[%b %d %H:%M:%S] Running RNA-SeQC")
-        /usr/lib/jvm/java-1.7.0-openjdk-amd64/bin/java -Xmx${memory}g -jar /opt/RNA-SeQC_1.1.9/RNA-SeQC.jar -n 1000 \
-        -s ${prefix},${bam_file},${notes} -t ${genes_gtf} -r ${genome_fasta} -o . -noDoC -strictMode ${" -gatkFlags " + gatk_flags}
-
-        # remove tmp files
-        rm genes.rpkm.gct
-        rm ${prefix}/${prefix}.metrics.tmp.txt
-        rm ${prefix}/${prefix}.metrics.txt
-        
-        mv ${prefix}/${prefix}.transcripts.rpkm.gct ${prefix}.gene_rpkm.gct
-        python3 /src/convert_rnaseqc_counts.py ${prefix}.gene_rpkm.gct ${prefix}/${prefix}.exon_intron_report.txt --exon_report ${prefix}/${prefix}.exon_report.txt ${genes_gtf} -o .
-        mv metrics.tsv ${prefix}.metrics.tsv
-        gzip ${prefix}.gene_rpkm.gct
-        tar -cvzf ${prefix}.tar.gz ${prefix}/*
+        python3 /src/run_rnaseqc.py ${bam_file} ${genes_gtf} ${genome_fasta} ${prefix}\
+            --java /usr/lib/jvm/java-1.7.0-openjdk-amd64/bin/java\
+            --memory ${memory}\
+            --rnaseqc_flags noDoC strictMode\
+            ${" --gatk_flags " + gatk_flags}
     }
 
     output {

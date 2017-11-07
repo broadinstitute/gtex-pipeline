@@ -107,14 +107,14 @@ with cd(args.output_dir):
     os.remove('{0}/{0}.metrics.txt'.format(args.prefix))
     shutil.move('{0}/{0}.transcripts.rpkm.gct'.format(args.prefix), '{}.gene_rpkm.gct'.format(args.prefix))
     shutil.move('metrics.tsv', '{}.metrics.tsv'.format(args.prefix))
-    subprocess.call('gzip -f {}.gene_rpkm.gct'.format(args.prefix), shell=True)
+    subprocess.check_call('gzip -f {}.gene_rpkm.gct'.format(args.prefix), shell=True)
 
     convert_counts('{}.gene_rpkm.gct.gz'.format(args.prefix),
         '{0}/{0}.exon_intron_report.txt'.format(args.prefix),
         '{0}/{0}.exon_report.txt'.format(args.prefix),
         args.genes_gtf, args.prefix, output_dir=args.output_dir)
 
-    subprocess.call('tar -czf {0}.tar.gz {0}/*'.format(args.prefix), shell=True)
+    subprocess.check_call('tar -czf {0}.tar.gz {0}/*'.format(args.prefix), shell=True)
     shutil.rmtree(os.path.join(args.output_dir, args.prefix))
     for i in ['refGene.txt', 'refGene.txt.idx', 'countMetrics.html']:
         os.remove(i)
