@@ -36,4 +36,5 @@ if args.disable_drf:
 
 print('['+datetime.now().strftime("%b %d %H:%M:%S")+'] Running GATK ASEReadCounter', flush=True)
 subprocess.check_call(cmd, shell=True, executable='/bin/bash')
+subprocess.check_call('gzip {}.readcounts.txt'.format(args.prefix), shell=True)
 print('['+datetime.now().strftime("%b %d %H:%M:%S")+'] Done', flush=True)

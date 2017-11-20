@@ -151,7 +151,7 @@ def add_transcript_attributes(attributes_string):
     return '; '.join([k+' '+attr_dict[k] for k in attribute_order] + opt)+';'
 
 
-def collapse_annotation(annot, transcript_gtf, collapsed_gtf, blacklist=set()):
+def collapse_annotation(annot, transcript_gtf, collapsed_gtf, blacklist=set(), collapse_only=False):
     """
     Collapse transcripts into a single gene model; remove overlapping intervals
     """
@@ -169,44 +169,47 @@ def collapse_annotation(annot, transcript_gtf, collapsed_gtf, blacklist=set()):
         if exon_coords:
             merged_coord_dict[g.id] = interval_union(exon_coords)
 
-    # 2) build interval tree with merged domains
-    interval_trees = defaultdict()
-    for g in annot.genes:
-        if g.id in merged_coord_dict:
-            for i in merged_coord_dict[g.id]:
-                # half-open intervals [a,b)
-                interval_trees.setdefault(g.chr, IntervalTree()).add(i[0], i[1]+1, [i, g.id])
+    if not collapse_only:
+        # 2) build interval tree with merged domains
+        interval_trees = defaultdict()
+        for g in annot.genes:
+            if g.id in merged_coord_dict:
+                for i in merged_coord_dict[g.id]:
+                    # half-open intervals [a,b)
+                    interval_trees.setdefault(g.chr, IntervalTree()).add(i[0], i[1]+1, [i, g.id])
 
-    # 3) query intervals of each gene, remove overlaps
-    new_coord_dict = {}
-    for g in annot.genes:
-        if g.id in merged_coord_dict:
-            new_intervals = []
-            for i in merged_coord_dict[g.id]:  # loop merged exons
-                ints = interval_trees[g.chr].find(i[0], i[1]+1)
-                # remove self
-                ints = [r[0] for r in ints if r[1]!=g.id]
-                m = set([tuple(i)])
-                for v in ints:
-                    m = [subtract_segment(mx, v) for mx in m]
-                    # flatten
-                    m0 = []
-                    for k in m:
-                        if isinstance(k, tuple):
-                            m0.append(k)
-                        else:
-                            m0.extend(k)
-                    m = m0
-                new_intervals.extend(m)
-            if new_intervals:
-                new_coord_dict[g.id] = new_intervals
+        # 3) query intervals of each gene, remove overlaps
+        new_coord_dict = {}
+        for g in annot.genes:
+            if g.id in merged_coord_dict:
+                new_intervals = []
+                for i in merged_coord_dict[g.id]:  # loop merged exons
+                    ints = interval_trees[g.chr].find(i[0], i[1]+1)
+                    # remove self
+                    ints = [r[0] for r in ints if r[1]!=g.id]
+                    m = set([tuple(i)])
+                    for v in ints:
+                        m = [subtract_segment(mx, v) for mx in m]
+                        # flatten
+                        m0 = []
+                        for k in m:
+                            if isinstance(k, tuple):
+                                m0.append(k)
+                            else:
+                                m0.extend(k)
+                        m = m0
+                    new_intervals.extend(m)
+                if new_intervals:
+                    new_coord_dict[g.id] = new_intervals
 
-    # 4) remove genes containing single-base exons only
-    for g in annot.genes:
-        if g.id in new_coord_dict:
-            exon_lengths = np.array([i[1]-i[0]+1 for i in new_coord_dict[g.id]])
-            if np.all(exon_lengths==1):
-                new_coord_dict.pop(g.id)
+        # 4) remove genes containing single-base exons only
+        for g in annot.genes:
+            if g.id in new_coord_dict:
+                exon_lengths = np.array([i[1]-i[0]+1 for i in new_coord_dict[g.id]])
+                if np.all(exon_lengths==1):
+                    new_coord_dict.pop(g.id)
+    else:
+        new_coord_dict = merged_coord_dict
 
     # 5) write to GTF
     with open(collapsed_gtf, 'w') as output_gtf, open(transcript_gtf) as input_gtf:
@@ -240,6 +243,7 @@ if __name__=='__main__':
     parser.add_argument('transcript_gtf', help='Transcript annotation in GTF format')
     parser.add_argument('output_gtf', help='Name of the output file')
     parser.add_argument('--transcript_blacklist', help='List of transcripts to exclude (e.g., unannotated readthroughs)')
+    parser.add_argument('--collapse_only', action='store_true', help='')
     args = parser.parse_args()
 
     annotation = Annotation(args.transcript_gtf)
@@ -251,4 +255,4 @@ if __name__=='__main__':
         blacklist = set()
 
     print('Collapsing transcripts')
-    collapse_annotation(annotation, args.transcript_gtf, args.output_gtf, blacklist=blacklist)
+    collapse_annotation(annotation, args.transcript_gtf, args.output_gtf, blacklist=blacklist, collapse_only=args.collapse_only)
