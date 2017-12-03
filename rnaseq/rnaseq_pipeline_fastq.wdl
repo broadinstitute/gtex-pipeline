@@ -1,10 +1,10 @@
 task star {
-    
+
     File fastq1
-    File fastq2
+    File? fastq2
     String prefix
     File star_index
-    
+
     # STAR options
     Int? outFilterMultimapNmax
     Int? alignSJoverhangMin
@@ -28,23 +28,38 @@ task star {
     Int? chimJunctionOverhangMin
     String? chimOutType
     Int? chimMainSegmentMultNmax
-    
+    File? sjdbFileChrStartEnd
+
     Int memory
     Int disk_space
     Int num_threads
     Int num_preempt
-    
+
     command {
         set -euo pipefail
-        
-        # make sure paths are absolute
-        fastq1_abs=${fastq1}
-        fastq2_abs=${fastq2}
-        if [[ $fastq1_abs != /* ]]; then
-            fastq1_abs=$PWD/$fastq1_abs
-            fastq2_abs=$PWD/$fastq2_abs
+
+        if [[ ${fastq1} == *".tar" || ${fastq1} == *".tar.gz" ]]; then
+            tar -xvvf ${fastq1}
+            fastq1_abs=$(for f in *_1.fastq*; do echo "$(pwd)/$f"; done | paste -s -d ',')
+            fastq2_abs=$(for f in *_2.fastq*; do echo "$(pwd)/$f"; done | paste -s -d ',')
+            if [[ $fastq1_abs == *"*_1.fastq*" ]]; then  # no paired-end FASTQs found; check for single-end FASTQ
+                fastq1_abs=$(for f in *.fastq*; do echo "$(pwd)/$f"; done | paste -s -d ',')
+                fastq2_abs=''
+            fi
+        else
+            # make sure paths are absolute
+            fastq1_abs=${fastq1}
+            fastq2_abs=${fastq2}
+            if [[ $fastq1_abs != /* ]]; then
+                fastq1_abs=$PWD/$fastq1_abs
+                fastq2_abs=$PWD/$fastq2_abs
+            fi
         fi
-        
+
+        echo "FASTQs:"
+        echo $fastq1_abs
+        echo $fastq2_abs
+
         # extract index
         echo $(date +"[%b %d %H:%M:%S] Extracting STAR index")
         mkdir star_index
@@ -76,9 +91,10 @@ task star {
             ${"--chimJunctionOverhangMin " + chimJunctionOverhangMin} \
             ${"--chimOutType " + chimOutType} \
             ${"--chimMainSegmentMultNmax " + chimMainSegmentMultNmax} \
+            ${"--sjdbFileChrStartEnd " + sjdbFileChrStartEnd} \
             --threads ${num_threads}
     }
-    
+
     output {
         File bam_file = "star_out/${prefix}.Aligned.sortedByCoord.out.bam"
         File bam_index = "star_out/${prefix}.Aligned.sortedByCoord.out.bam.bai"
@@ -91,15 +107,15 @@ task star {
         File junctions_pass1 = "star_out/${prefix}._STARpass1/SJ.out.tab"
         Array[File] logs = ["star_out/${prefix}.Log.final.out", "star_out/${prefix}.Log.out", "star_out/${prefix}.Log.progress.out"]
     }
-    
+
     runtime {
-        docker: "broadinstitute/gtex_rnaseq:V8"
+        docker: "gcr.io/broad-cga-francois-gtex/gtex_rnaseq:V8"
         memory: "${memory}GB"
         disks: "local-disk ${disk_space} HDD"
         cpu: "${num_threads}"
         preemptible: "${num_preempt}"
     }
-    
+
     meta {
         author: "Francois Aguet"
     }
@@ -120,6 +136,7 @@ task rsem {
     Int? max_frag_len
     String? estimate_rspd
     String? is_stranded
+    String? paired_end
 
     command {
         set -euo pipefail
@@ -130,6 +147,7 @@ task rsem {
             ${"--max_frag_len " + max_frag_len} \
             ${"--estimate_rspd " + estimate_rspd} \
             ${"--is_stranded " + is_stranded} \
+            ${"--paired_end " + paired_end} \
             --threads ${num_threads} \
             rsem_reference ${transcriptome_bam} ${prefix}
     }
@@ -140,7 +158,7 @@ task rsem {
     }
 
     runtime {
-        docker: "broadinstitute/gtex_rnaseq:V8"
+        docker: "gcr.io/broad-cga-francois-gtex/gtex_rnaseq:V8"
         memory: "${memory}GB"
         disks: "local-disk ${disk_space} HDD"
         cpu: "${num_threads}"
@@ -161,31 +179,22 @@ task rnaseqc {
     File genome_fasta_index
 
     String prefix
-    String notes
     String? gatk_flags
 
     Int memory
     Int disk_space
+    Int num_threads
     Int num_preempt
 
     command {
         set -euo pipefail
         touch ${bam_index}
         touch ${genome_fasta_index}
-
-        /usr/lib/jvm/java-1.7.0-openjdk-amd64/bin/java -Xmx${memory}g -jar /opt/RNA-SeQC_1.1.9/RNA-SeQC.jar -n 1000 \
-        -s ${prefix},${bam_file},${notes} -t ${genes_gtf} -r ${genome_fasta} -o . -noDoC -strictMode ${" -gatkFlags " + gatk_flags}
-        
-        # remove tmp files
-        rm genes.rpkm.gct
-        rm ${prefix}/${prefix}.metrics.tmp.txt
-        rm ${prefix}/${prefix}.metrics.txt
-        
-        mv ${prefix}/${prefix}.transcripts.rpkm.gct ${prefix}.gene_rpkm.gct
-        python3 /src/convert_rnaseqc_counts.py ${prefix}.gene_rpkm.gct ${prefix}/${prefix}.exon_intron_report.txt --exon_report ${prefix}/${prefix}.exon_report.txt ${genes_gtf} -o .
-        mv metrics.tsv ${prefix}.metrics.tsv
-        gzip ${prefix}.gene_rpkm.gct
-        tar -cvzf ${prefix}.tar.gz ${prefix}/*
+        python3 /src/run_rnaseqc.py ${bam_file} ${genes_gtf} ${genome_fasta} ${prefix}\
+            --java /usr/lib/jvm/java-1.7.0-openjdk-amd64/bin/java\
+            --memory ${memory}\
+            --rnaseqc_flags noDoC strictMode\
+            ${" --gatk_flags " + gatk_flags}
     }
 
     output {
@@ -197,9 +206,10 @@ task rnaseqc {
     }
 
     runtime {
-        docker: "broadinstitute/gtex_rnaseq:V8"
+        docker: "gcr.io/broad-cga-francois-gtex/gtex_rnaseq:V8"
         memory: "${memory}GB"
         disks: "local-disk ${disk_space} HDD"
+        cpu: "${num_threads}"
         preemptible: "${num_preempt}"
     }
 
@@ -215,38 +225,15 @@ workflow rnaseq_pipeline_fastq_workflow {
     File fastq2
     String prefix
 
-    File star_index
-    File rsem_reference
-
-    File genes_gtf
-    File genome_fasta
-    File genome_fasta_index
-    String rnaseqc_notes
-
-    Int star_memory
-    Int star_disk
-    Int star_threads
-    Int star_preempt
-
-    Int rsem_memory
-    Int rsem_disk
-    Int rsem_threads
-    Int rsem_preempt
-
-    Int rnaseqc_memory
-    Int rnaseqc_disk
-    Int rnaseqc_preempt
-
-
     call star {
-        input: fastq1=fastq1, fastq2=fastq2, prefix=prefix, star_index=star_index, memory=star_memory, disk_space=star_disk, num_threads=star_threads, num_preempt=star_preempt
+        input: fastq1=fastq1, fastq2=fastq2, prefix=prefix
     }
 
     call rsem {
-        input: transcriptome_bam=star.transcriptome_bam, rsem_reference=rsem_reference, prefix=prefix, memory=rsem_memory, disk_space=rsem_disk, num_threads=rsem_threads, num_preempt=rsem_preempt
+        input: transcriptome_bam=star.transcriptome_bam, prefix=prefix
     }
-    
+
     call rnaseqc {
-        input: bam_file=star.bam_file, bam_index=star.bam_index, genes_gtf=genes_gtf, genome_fasta=genome_fasta, genome_fasta_index=genome_fasta_index, prefix=prefix, notes=rnaseqc_notes, memory=rnaseqc_memory, disk_space=rnaseqc_disk, num_preempt=rnaseqc_preempt
+        input: bam_file=star.bam_file, bam_index=star.bam_index, prefix=prefix
     }
 }

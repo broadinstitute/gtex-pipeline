@@ -109,7 +109,7 @@ task star {
     }
 
     runtime {
-        docker: "broadinstitute/gtex_rnaseq:V8"
+        docker: "gcr.io/broad-cga-francois-gtex/gtex_rnaseq:V8"
         memory: "${memory}GB"
         disks: "local-disk ${disk_space} HDD"
         cpu: "${num_threads}"
