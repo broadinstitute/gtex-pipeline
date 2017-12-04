@@ -59,7 +59,7 @@ RUN pip3 install --upgrade pip && pip3 install numpy tables pandas scipy matplot
 
 # PLINK
 RUN mkdir /opt/plink && cd /opt/plink && \
-    wget https://www.cog-genomics.org/static/bin/plink171013/plink_linux_x86_64.zip && \
+    wget https://www.cog-genomics.org/static/bin/plink171114/plink_linux_x86_64.zip && \
     unzip plink_linux_x86_64.zip && rm plink_linux_x86_64.zip
 ENV PATH $PATH:/opt/plink
 
