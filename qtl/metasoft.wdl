@@ -14,7 +14,7 @@ task combine_signif_pairs {
     }
 
     runtime {
-        docker: "broadinstitute/gtex_eqtl:V8"
+        docker: "gcr.io/broad-cga-francois-gtex/gtex_eqtl:V8"
         memory: "${memory}GB"
         disks: "local-disk ${disk_space} HDD"
         cpu: "${num_threads}"
@@ -48,7 +48,7 @@ task extract_pairs {
     }
 
     runtime {
-        docker: "broadinstitute/gtex_eqtl:V8"
+        docker: "gcr.io/broad-cga-francois-gtex/gtex_eqtl:V8"
         memory: "${memory}GB"
         disks: "local-disk ${disk_space} HDD"
         cpu: "${num_threads}"
@@ -82,7 +82,7 @@ task metasoft_prepare_input {
     }
 
     runtime {
-        docker: "broadinstitute/gtex_eqtl:V8"
+        docker: "gcr.io/broad-cga-francois-gtex/gtex_eqtl:V8"
         memory: "${memory}GB"
         disks: "local-disk ${disk_space} HDD"
         cpu: "${num_threads}"
@@ -117,7 +117,7 @@ task metasoft_scatter {
     }
 
     runtime {
-        docker: "broadinstitute/gtex_eqtl:V8"
+        docker: "gcr.io/broad-cga-francois-gtex/gtex_eqtl:V8"
         memory: "${memory}GB"
         disks: "local-disk ${disk_space} HDD"
         cpu: "${num_threads}"
@@ -152,7 +152,7 @@ task metasoft_postprocess {
     }
 
     runtime {
-        docker: "broadinstitute/gtex_eqtl:V8"
+        docker: "gcr.io/broad-cga-francois-gtex/gtex_eqtl:V8"
         memory: "${memory}GB"
         disks: "local-disk ${disk_space} HDD"
         cpu: "${num_threads}"

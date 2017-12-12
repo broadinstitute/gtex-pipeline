@@ -1,69 +1,47 @@
-task fastqtl {
+task fastqtl_nominal {
 
-    File rpkm_gct
-    File reads_gct
-    File annotation_gtf
+    File expression_bed
+    File expression_bed_index
     File vcf
-    File vcf_index	
+    File vcf_index
     String prefix
+    File covariates
 
-    String? expression_threshold
-    String? count_threshold
-    String? min_samples
-
-    String num_peer
-    File genotype_pcs
-    File? add_covariates
-
-    String chunks
-    String permutations
     String? cis_window
-    String? ma_sample_threshold
-    String? maf_threshold
-
-    String fdr
-    File variant_lookup
+    Int? ma_sample_threshold
+    Float? maf_threshold
+    Int chunks
 
     Int memory
     Int disk_space
     Int num_threads
-
+    Int num_preempt
 
     command {
         set -euo pipefail
         touch ${vcf_index}  # avoid tabix "index older than vcf" error
-        # pre-processing
-        /src/normalize_expression.py ${rpkm_gct} ${reads_gct} ${annotation_gtf} ${vcf} ${prefix} ${"--expression_threshold " + expression_threshold} ${"--count_threshold " + count_threshold} ${"--min_samples " + min_samples}
-        Rscript /src/run_PEER.R ${prefix}.expression.txt ${prefix} ${num_peer}		
-        /src/combine_covariates.py ${genotype_pcs} ${prefix}_PEER_covariates.txt ${prefix} ${"--add_covariates " + add_covariates}
+        touch ${expression_bed_index}
         # nominal pass
-        /opt/fastqtl/python/run_FastQTL_threaded.py ${vcf} ${prefix}.expression.bed.gz ${prefix} --covariates ${prefix}.combined_covariates.txt ${"--window " + cis_window} ${"--ma_sample_threshold " + ma_sample_threshold} ${"--maf_threshold " + maf_threshold} --chunks ${chunks} --threads ${num_threads}
-        # 2nd nominal pass (FPKM)
-        /opt/fastqtl/python/run_FastQTL_threaded.py ${vcf} ${prefix}.expression.fpkm.bed.gz ${prefix}.fpkm --covariates ${prefix}.combined_covariates.txt ${"--window " + cis_window} ${"--ma_sample_threshold " + ma_sample_threshold} ${"--maf_threshold " + maf_threshold} --chunks ${chunks} --threads ${num_threads}
-        # permutation pass
-        /opt/fastqtl/python/run_FastQTL_threaded.py ${vcf} ${prefix}.expression.bed.gz ${prefix} --covariates ${prefix}.combined_covariates.txt --permute ${permutations} ${"--window " + cis_window} ${"--ma_sample_threshold " + ma_sample_threshold} ${"--maf_threshold " + maf_threshold} --chunks ${chunks} --threads ${num_threads}
-        # post-processing
-        /opt/fastqtl/python/annotate_outputs.py ${prefix}.egenes.txt.gz ${fdr} ${annotation_gtf} ${variant_lookup} --nominal_results ${prefix}.allpairs.txt.gz --nominal_results_unnormalized ${prefix}.fpkm.allpairs.txt.gz fpkm
+        /opt/fastqtl/python/run_FastQTL_threaded.py ${vcf} ${expression_bed} ${prefix} \
+            --covariates ${covariates} \
+            ${"--window " + cis_window} \
+            ${"--ma_sample_threshold " + ma_sample_threshold} \
+            ${"--maf_threshold " + maf_threshold} \
+            --chunks ${chunks} \
+            --threads ${num_threads}
     }
 
     runtime {
-        docker: "broadinstitute/gtex_eqtl"
+        docker: "gcr.io/broad-cga-francois-gtex/gtex_eqtl:V8"
         memory: "${memory}GB"
         disks: "local-disk ${disk_space} HDD"
         cpu: "${num_threads}"
+        preemptible: "${num_preempt}"
     }
 
     output {
-        File covariates="${prefix}.combined_covariates.txt"
-        File expression_bed="${prefix}.expression.bed.gz"
-        File expression_bed_index="${prefix}.expression.bed.gz.tbi"
-        File expression_fpkm_bed="${prefix}.expression.fpkm.bed.gz"
-        File expression_fpkm_bed_index="${prefix}.expression.fpkm.bed.gz.tbi"
-        File fastqtl_egenes="${prefix}.egenes.annotated.txt.gz"
-        File fastqtl_egenes_log="${prefix}.egenes.log"
-        File fastqtl_signifpairs="${prefix}.signifpairs.txt.gz"		
-        File fastqtl_allpairs="${prefix}.allpairs.txt.gz"
-        File fastqtl_allpairs_log="${prefix}.allpairs.log"
+        File allpairs="${prefix}.allpairs.txt.gz"
+        File allpairs_log="${prefix}.allpairs.log"
     }
 
     meta {
@@ -71,6 +49,188 @@ task fastqtl {
     }
 }
 
+
+task fastqtl_permutations_scatter {
+
+    File expression_bed
+    File expression_bed_index
+    File vcf
+    File vcf_index
+    String prefix
+    File covariates
+
+    Int current_chunk
+    Int chunks
+    String permutations
+    String? cis_window
+    Int? ma_sample_threshold
+    Float? maf_threshold
+
+    Int memory
+    Int disk_space
+    Int num_threads
+    Int num_preempt
+
+    command {
+        set -euo pipefail
+        touch ${vcf_index}  # avoid tabix "index older than vcf" error
+        touch ${expression_bed_index}
+        # permutation pass
+        /opt/fastqtl/python/run_chunk.py ${vcf} ${expression_bed} ${prefix} ${current_chunk} ${chunks}\
+            --permute ${permutations} \
+            --covariates ${covariates} \
+            ${"--window " + cis_window} \
+            ${"--ma_sample_threshold " + ma_sample_threshold} \
+            ${"--maf_threshold " + maf_threshold}
+        mv ${prefix}_chunk*.txt.gz ${prefix}_chunk_${current_chunk}.txt.gz
+        mv ${prefix}_chunk*.log ${prefix}_chunk_${current_chunk}.log
+    }
+
+    runtime {
+        docker: "gcr.io/broad-cga-francois-gtex/gtex_eqtl:V8"
+        memory: "${memory}GB"
+        disks: "local-disk ${disk_space} HDD"
+        cpu: "${num_threads}"
+        preemptible: "${num_preempt}"
+    }
+
+    output {
+        File chunk="${prefix}_chunk_${current_chunk}.txt.gz"
+        File chunk_log="${prefix}_chunk_${current_chunk}.log"
+    }
+
+    meta {
+        author: "Francois Aguet"
+    }
+}
+
+
+task fastqtl_permutations_merge {
+
+    Array[File] chunks
+    Array[File] logs
+    String prefix
+
+    Int memory
+    Int disk_space
+    Int num_threads
+    Int num_preempt
+
+    Float? lambda_qvalue
+
+    command {
+        set -euo pipefail
+        /opt/fastqtl/python/merge_chunks.py ${write_lines(chunks)} ${write_lines(logs)} ${prefix}\
+            --permute ${"--lambda_qvalue " + lambda_qvalue}
+    }
+
+    runtime {
+        docker: "gcr.io/broad-cga-francois-gtex/gtex_eqtl:V8"
+        memory: "${memory}GB"
+        disks: "local-disk ${disk_space} HDD"
+        cpu: "${num_threads}"
+        preemptible: "${num_preempt}"
+    }
+
+    output {
+        File egenes="${prefix}.egenes.txt.gz"
+        File egenes_log="${prefix}.egenes.log"
+    }
+
+    meta {
+        author: "Francois Aguet"
+    }
+}
+
+
+task fastqtl_postprocess {
+
+    File permutations_output
+    File nominal_output
+    Float fdr
+    File annotation_gtf
+    String prefix
+    File? variant_lookup
+
+    Int memory
+    Int disk_space
+    Int num_threads
+    Int num_preempt
+
+    command {
+        set -euo pipefail
+        # post-processing
+        /opt/fastqtl/python/annotate_outputs.py ${permutations_output} ${fdr} ${annotation_gtf} \
+        --nominal_results ${nominal_output} \
+        ${"--snp_lookup " + variant_lookup}
+    }
+
+    runtime {
+        docker: "gcr.io/broad-cga-francois-gtex/gtex_eqtl:V8"
+        memory: "${memory}GB"
+        disks: "local-disk ${disk_space} HDD"
+        cpu: "${num_threads}"
+        preemptible: "${num_preempt}"
+    }
+
+    output {
+        File egenes_annotated="${prefix}.egenes.annotated.txt.gz"
+        File signifpairs="${prefix}.signifpairs.txt.gz"
+    }
+
+    meta {
+        author: "Francois Aguet"
+    }
+}
+
+
 workflow fastqtl_workflow {
-    call fastqtl
+
+    File expression_bed
+    File expression_bed_index
+    File vcf
+    File vcf_index
+    String prefix
+    File covariates
+
+    String permutations
+    Int chunks
+    String? cis_window
+    Int? ma_sample_threshold
+    Float? maf_threshold
+
+    # post-processing
+    Float fdr
+    File annotation_gtf
+    File? variant_lookup
+
+    call fastqtl_nominal {
+        input:
+            chunks=chunks, prefix=prefix,
+            expression_bed=expression_bed, expression_bed_index=expression_bed_index, 
+            vcf=vcf, vcf_index=vcf_index, 
+            covariates=covariates, cis_window=cis_window,
+            ma_sample_threshold=ma_sample_threshold, maf_threshold=maf_threshold
+    }
+
+    Array[Int] chunk_list = range(chunks)
+    scatter(i in chunk_list) {
+        call fastqtl_permutations_scatter {
+            input:
+                current_chunk=i+1, chunks=chunks, prefix=prefix, permutations=permutations,
+                expression_bed=expression_bed, expression_bed_index=expression_bed_index,
+                vcf=vcf, vcf_index=vcf_index,
+                covariates=covariates, cis_window=cis_window,
+                ma_sample_threshold=ma_sample_threshold, maf_threshold=maf_threshold
+        }
+    }
+
+    call fastqtl_permutations_merge {input: chunks=fastqtl_permutations_scatter.chunk, logs=fastqtl_permutations_scatter.chunk_log, prefix=prefix}
+
+    call fastqtl_postprocess {
+        input:
+            permutations_output=fastqtl_permutations_merge.egenes,
+            nominal_output=fastqtl_nominal.allpairs,
+            prefix=prefix, fdr=fdr, annotation_gtf=annotation_gtf, variant_lookup=variant_lookup
+    }
 }

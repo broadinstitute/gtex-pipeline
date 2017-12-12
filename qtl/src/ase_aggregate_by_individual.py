@@ -97,7 +97,7 @@ print('Adding mappability')
 mp = []
 bw = pyBigWig.open(args.mappability_bigwig)
 for c,p in zip(vcf_df['chr'], vcf_df['pos']):
-    mp.append((bw.stats('chr'+c, int(p)-1, int(p), exact=True)[0]!=1) * 1)  # BED coordinates, 0-indexed; input must be int (not numpy)
+    mp.append((bw.stats(c, int(p)-1, int(p), exact=True)[0]!=1) * 1)  # BED coordinates, 0-indexed; input must be int (not numpy)
 bw.close()
 
 vcf_snp_id_df['mapbias'] = [1 if i in simulation_bias_set else 0 for i in vcf_snp_id_df['chr']+':'+vcf_snp_id_df['coord']]
