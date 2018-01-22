@@ -4,7 +4,7 @@ This document is intended to ensure reproducibility of analyses and facilitate h
 
 All wrapper scripts are available from the GTEx pipeline repository: [https://github.com/broadinstitute/gtex-pipeline](https://github.com/broadinstitute/gtex-pipeline)
 
-The scripts and settings used for the TOPMed MESA RNA-seq pilot match commit [725a2bc](https://github.com/broadinstitute/gtex-pipeline/tree/725a2bc74f9654244065256df91b44e8f5b7e62a).
+The scripts and settings used for the TOPMed MESA RNA-seq pilot match commit [725a2bc](https://github.com/broadinstitute/gtex-pipeline/tree/725a2bc74f9654244065256df91b44e8f5b7e62a), packaged [here](https://github.com/broadinstitute/gtex-pipeline/releases/tag/TOPMed_MESA_RNAseq_pilot).
 
 *Changes to this specification may be proposed based on rigorous benchmarking, pending approval of NHLBI.*
 
