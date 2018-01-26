@@ -7,7 +7,6 @@ import os
 import itertools
 from collections import defaultdict
 import tempfile
-import feather
 
 
 def load_isoform_results(rsem_output, cols=None):
@@ -57,9 +56,9 @@ if __name__=='__main__':
     parser = argparse.ArgumentParser(description='Aggregate RSEM expression from multiple samples.')
     parser.add_argument('rsem_output_list', help='File listing RSEM output files, with format $sample_id.rsem.{genes|isoforms}.results')
     parser.add_argument('col_ids', choices=['expected_count', 'TPM', 'FPKM', 'IsoPct'], nargs='+', help='Column header')
-    parser.add_argument('output_prefix', help='Prefix for output file: ${prefix}.gct.gz')
+    parser.add_argument('output_prefix', help='Prefix for output file: ${prefix}.txt.gz')
     parser.add_argument('--chunk_size', default=500, type=int, help='Files to process simultaneously')
-    parser.add_argument('--feather', action='store_true', help='Also save output in feather format')
+    parser.add_argument('--parquet', action='store_true', help='Write to parquet format instead of txt.gz')
     parser.add_argument('-o', '--output_dir', default='.', help='Output directory')
     args = parser.parse_args()
 
@@ -91,7 +90,7 @@ if __name__=='__main__':
             df_dict[c].to_hdf(tmp_store.name, '{0:s}{1:d}'.format(c,k))
         print()
 
-    # aggregate chunks
+    # aggregate chunks for each output type
     for c in args.col_ids:
         dfs = [index_df]
         for k in range(nchunks):
@@ -100,15 +99,15 @@ if __name__=='__main__':
         print()
         dfs = pd.concat(dfs, axis=1)
 
-        if args.feather:
-            fname = prefix+c.lower()+'.ft'
+        if args.parquet:
+            fname = prefix+c.lower()+'.parquet'
             print('Writing {}'.format(fname))
-            feather.write_dataframe(dfs.reset_index(), os.path.join(args.output_dir, fname))
+            dfs.to_parquet(os.path.join(args.output_dir, fname))
 
-        # write table
-        fname = prefix+c.lower()+'.txt.gz'
-        print('Writing {}'.format(fname))
-        with gzip.open(os.path.join(args.output_dir, fname), 'wt', compresslevel=6) as f:
-            dfs.to_csv(f, sep='\t', float_format='%.5g')
+        else:  # txt.gz
+            fname = prefix+c.lower()+'.txt.gz'
+            print('Writing {}'.format(fname))
+            with gzip.open(os.path.join(args.output_dir, fname), 'wt', compresslevel=6) as f:
+                dfs.to_csv(f, sep='\t', float_format='%.5g')
 
     tmp_store.close()
