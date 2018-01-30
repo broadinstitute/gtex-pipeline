@@ -19,7 +19,7 @@ echo "VCF column for $sample_id: $col_num"
 cat <( zcat $vcf | head -n $((line_num-2)) )\
     <( echo "${col_header}" | cut -f1-9,$col_num )\
     <( zcat $vcf | awk -F"\t" -v start=${line_num} -v col=${col_num} 'NR>start && ($col=="0|1"||$col=="1|0") {print $1,$2,$3,$4,$5,$6,$7,$8,$9,$col} {OFS="\t"}' ) |\
-    bcftools view -v snps -t ^X | bgzip -c > $sample_id.hets.vcf.gz
+    bcftools view -v snps -t ^X -t ^chrX | bgzip -c > $sample_id.hets.vcf.gz
 
 tabix $sample_id.hets.vcf.gz
 date +"[%b %d %H:%M:%S] Done"
