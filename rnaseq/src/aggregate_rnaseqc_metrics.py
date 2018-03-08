@@ -17,6 +17,9 @@ if len(annotation_headers)==1 and annotation_headers[0]=='':
 assert len(args.annotation_tsvs)==len(annotation_headers)
 
 path_s = pd.read_csv(args.input_files_tsv, sep='\t', index_col=0, header=None, names=['sample_id','metrics_path'], squeeze=True)
+if path_s.isnull().all():  # ID not provided
+    path_s = pd.Series(path_s.index, index=[os.path.split(i)[1].split('.metrics.tsv')[0] for i in path_s.index])
+
 # check format
 df = pd.read_csv(path_s.iloc[0], sep='\t', header=None)
 if df.shape[0]==2:  # RNA-SeQC v1.1.9
