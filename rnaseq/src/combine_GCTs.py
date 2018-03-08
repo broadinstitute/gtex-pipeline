@@ -36,7 +36,7 @@ else:
 
 gct_df = pd.DataFrame(0, index=df.index, columns=['Description']+list(sample_ids), dtype=dtype)
 gct_df['Description'] = df['Description']
-gct_df[sample_ids[0]] = df[sample_ids[0]]
+gct_df[sample_ids[0]] = df[sample_ids[0]].astype(dtype)
 for k,(i,p) in enumerate(zip(sample_ids[1:], paths[1:])):
     print('\rProcessing {}/{}'.format(k+2, len(paths)), end='', flush=True)
     df = pd.read_csv(p, sep='\t', skiprows=3, header=None, usecols=[0,2], index_col=0, names=['Name',i], dtype={'Name':str, i:dtype})
