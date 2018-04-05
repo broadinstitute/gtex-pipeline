@@ -60,7 +60,15 @@ ${prefix}.expression.bed.gz.tbi
 ```bash
 Rscript run_PEER.R ${prefix}.expression.bed.gz ${prefix} ${num_peer}
 ```
-This will generate 3 files:
+The number of PEER factors was selected as function of sample size (N):
+- 15 factors for N < 150
+- 30 factors for 150 ≤ N < 250
+- 45 factors for 250 ≤ N < 350
+- 60 factors for N ≥ 350
+
+For information on how these thresholds were determined, please see the [Supplementary Information](https://media.nature.com/original/nature-assets/nature/journal/v550/n7675/extref/nature24277-s1.pdf) of [[GTEx Consortium, 2017](https://www.nature.com/articles/nature24277)].
+
+This step will generate 3 files:
 ```bash
 ${prefix}.PEER_residuals.txt
 ${prefix}.PEER_alpha.txt
