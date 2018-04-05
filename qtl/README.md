@@ -1,14 +1,14 @@
 <!-- Author: Francois Aguet -->
 # eQTL discovery pipeline for the [GTEx Consortium](www.gtexportal.org)
 
-This repository contains all components of the eQTL discovery pipeline used by the GTEx Consortium, including data normalization, QTL mapping, and annotation steps.
+This repository contains all components of the eQTL discovery pipeline used by the GTEx Consortium, including data normalization, QTL mapping, and annotation steps. This document describes the pipeline used for the V7 and V8 data releases; for settings specific to the V6p analyses presented in [[GTEx Consortium, 2017](https://www.nature.com/articles/nature24277)], please see the last section.
 
 ## Docker image
 The GTEx eQTL pipeline components are provided in a Docker image, available at https://hub.docker.com/r/broadinstitute/gtex_eqtl/
 
 To download the image, run:
 ```bash
-docker pull broadinstitute/gtex_eqtl
+docker pull broadinstitute/gtex_eqtl:V8
 ```
 
 #### Image contents and pipeline components
@@ -21,8 +21,8 @@ The following tools are included in the Docker image:
 ## Prerequisites
 The following input files are needed:
 
-* VCF file with genotype information. Must be bgzip compressed and tabix indexed.
-* Expression tables in GCT format. Two tables are needed: read counts and normalized (e.g., FPKM or TPM).
+* VCF file with genotype information. Must be bgzip compressed and indexed with tabix.
+* Expression tables in GCT format. Two tables are needed: read counts and normalized (FPKM or TPM).
 * Gene annotation in GTF format.
 
 
@@ -30,35 +30,49 @@ The following input files are needed:
 Additional [documentation](http://gtexportal.org/home/documentationPage#staticTextAnalysisMethods) and details about parameter choices are provided on the [GTEx Portal](gtexportal.org).
 
 #### 1) Generate normalized expression in BED format
-The expression data are normalized as follows: (i) expression values are quantile normalized to the average empirical distribution observed across samples; (ii) for each gene, expression values are inverse quantile normalized to a standard normal distribution across samples.
+The expression data are normalized as follows: 
+1. Read counts are normalized between samples using TMM ([Robinson & Oshlack, Genome Biology, 2010](https://genomebiology.biomedcentral.com/articles/10.1186/gb-2010-11-3-r25))
+2. Genes are selected based on the following exression thresholds: 
+   - ≥0.1 TPM in ≥20% samples AND
+   - ≥6 reads (unnormalized) in ≥20% samples
+3. Each gene is inverse normal transformed across samples.
 ```bash
-normalize_expression.py ${normalized_gct} ${counts_gct} ${annotation_gtf} ${vcf} ${prefix} --expression_threshold 0.1 --count_threshold 5 --min_samples 10
+eqtl_prepare_expression.py ${tpm_gct} ${counts_gct} ${annotation_gtf} \
+    ${sample_participant_lookup} ${vcf_chr_list} ${prefix} \
+    --tpm_threshold 0.1 \
+    --count_threshold 6 \
+    --sample_frac_threshold 0.2 \
+    --normalization_method tmm
 ```
-Using these settings, genes are selected based on expression thresholds of >0.1 RPKM in ≥10 samples and >5 reads in ≥10 samples. This step will generate 5 files:
+The file `${vcf_chr_list}` lists the chromosomes in the VCF, and can be generated using
+```
+tabix --list-chroms ${vcf} > ${vcf_chr_list}
+```
+The file `${sample_participant_lookup}` must contain two columns, `sample_id` and `participant_id`, mapping IDs in the expression files to IDs in the VCF (these can be the same).
 
+This step generates the following BED file and index:
 ```bash
 ${prefix}.expression.bed.gz
 ${prefix}.expression.bed.gz.tbi
-${prefix}.expression.fpkm.bed.gz
-${prefix}.expression.fpkm.bed.gz.tbi
-${prefix}.expression.txt
 ```
 
 #### 2) Calculate PEER factors
 ```bash
-Rscript run_PEER.R ${prefix}.expression.txt ${prefix} ${num_peer}
+Rscript run_PEER.R ${prefix}.expression.bed.gz ${prefix} ${num_peer}
 ```
 This will generate 3 files:
 ```bash
-${prefix}_PEER_residuals.txt
-${prefix}_PEER_alpha.txt
-${prefix}_PEER_covariates.txt
+${prefix}.PEER_residuals.txt
+${prefix}.PEER_alpha.txt
+${prefix}.PEER_covariates.txt
 ```
 
 #### 3) Combine covariates
 This step generates a combined covariates file, containing genotype PCs, PEER factors, and additional explicit covariates (e.g., genotyping platform).
 ```bash
-combine_covariates.py ${genotype_pcs} ${prefix}_PEER_covariates.txt ${prefix} --add_covariates ${explicit_cov}
+combine_covariates.py ${prefix}.PEER_covariates.txt ${prefix} \
+    --genotype_pcs ${genotype_pcs} \
+    --add_covariates ${add_covariates}
 ```
 The covariate files should have one covariate per row, with an identifier in the first column, and a header line with sample identifiers. This step will generate the file `${prefix}.combined_covariates.txt`
 
@@ -66,10 +80,15 @@ The covariate files should have one covariate per row, with an identifier in the
 A wrapper script for multithreaded execution is provided in the docker image (`/opt/fastqtl/python/run_FastQTL_threaded.py`) and at https://github.com/francois-a/fastqtl
 ```bash
 # nominal pass
-run_FastQTL_threaded.py ${vcf} ${prefix}.expression.bed.gz ${prefix} --covariates ${prefix}.combined_covariates.txt --window 1e6 --ma_sample_threshold 10 --maf_threshold 0.01 --chunks 100 --threads 12
+run_FastQTL_threaded.py ${vcf} ${prefix}.expression.bed.gz ${prefix} \
+    --covariates ${prefix}.combined_covariates.txt \
+    --window 1e6 --chunks 100 --threads 16
 
 # permutation pass
-run_FastQTL_threaded.py ${vcf} ${prefix}.expression.bed.gz ${prefix} --covariates ${prefix}.combined_covariates.txt --permute 1000 10000 --window 1e6 --ma_sample_threshold 10 --maf_threshold 0.01 --chunks 100 --threads 16
+run_FastQTL_threaded.py ${vcf} ${prefix}.expression.bed.gz ${prefix} \
+    --covariates ${prefix}.combined_covariates.txt \
+    --window 1e6 --chunks 100 --threads 16 \
+    --permute 1000 10000 
 ```
 The following files will be generated:
 ```bash
@@ -78,9 +97,21 @@ ${prefix}.egenes.txt.gz
 ```
 
 ### Using docker
-The steps described above can be run using docker. Note that the `$path_to_data` directory should the required input files.
-
+The steps described above can be run using docker. This assumes that the `$path_to_data` directory contains all required input files.
 ```bash
 # Docker command for step 1:
-docker run --rm -v $path_to_data:/data -t broadinstitute/gtex_eqtl /bin/bash -c "/src/normalize_expression.py /data/${normalized_gct} /data/${counts_gct} /data/${annotation_gtf} /data/${vcf} ${prefix} --expression_threshold 0.1 --count_threshold 5 --min_samples 10"
+docker run --rm -v $path_to_data:/data -t broadinstitute/gtex_eqtl:V8 /bin/bash \
+    -c "/src/eqtl_prepare_expression.py /data/${tpm_gct} /data/${counts_gct} \
+        /data/${annotation_gtf} /data/${sample_participant_lookup} /data/${vcf_chr_list} ${prefix} \
+        --tpm_threshold 0.1 --count_threshold 6 --sample_frac_threshold 0.2 --normalization_method tmm"        
 ```
+
+### V6p pipeline settings
+
+#### Expression normalization
+The expression data were normalized as follows: 
+1. Genes were selected based on the following exression thresholds: 
+   - >0.1 RPKM in ≥10 samples AND
+   - ≥6 reads (unnormalized) in ≥10 samples
+2. RPKMs were normalized between samples using quantile normalization
+3. Each gene was inverse normal transformed across samples.
