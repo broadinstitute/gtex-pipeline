@@ -111,7 +111,7 @@ docker run --rm -v $path_to_data:/data -t broadinstitute/gtex_eqtl:V8 /bin/bash 
 #### Expression normalization
 The expression data were normalized as follows: 
 1. Genes were selected based on the following exression thresholds: 
-   - >0.1 RPKM in ≥10 samples AND
-   - ≥6 reads (unnormalized) in ≥10 samples
+   * &gt;0.1 RPKM in ≥10 samples AND
+   * ≥6 reads (unnormalized) in ≥10 samples
 2. RPKMs were normalized between samples using quantile normalization
 3. Each gene was inverse normal transformed across samples.
