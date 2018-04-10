@@ -32,7 +32,7 @@ Additional [documentation](http://gtexportal.org/home/documentationPage#staticTe
 #### 1) Generate normalized expression in BED format
 The expression data are normalized as follows: 
 1. Read counts are normalized between samples using TMM ([Robinson & Oshlack, Genome Biology, 2010](https://genomebiology.biomedcentral.com/articles/10.1186/gb-2010-11-3-r25))
-2. Genes are selected based on the following exression thresholds: 
+2. Genes are selected based on the following expression thresholds: 
    - ≥0.1 TPM in ≥20% samples AND
    - ≥6 reads (unnormalized) in ≥20% samples
 3. Each gene is inverse normal transformed across samples.
