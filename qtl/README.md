@@ -29,6 +29,8 @@ The following input files are needed:
 ## Running the pipeline
 Additional [documentation](http://gtexportal.org/home/documentationPage#staticTextAnalysisMethods) and details about parameter choices are provided on the [GTEx Portal](gtexportal.org).
 
+This pipeline requires gene-level expression data. A collapsed reference GTF can be generated for this purpose using the [`collapse_annotation.py`](https://github.com/broadinstitute/gtex-pipeline/blob/master/gene_model/collapse_annotation.py) script available in the [gene model](https://github.com/broadinstitute/gtex-pipeline/tree/master/gene_model) directory. In the code below, it is assumed that `${annotation_gtf}` was generated using this script.
+
 #### 1) Generate normalized expression in BED format
 The expression data are normalized as follows: 
 1. Read counts are normalized between samples using TMM ([Robinson & Oshlack, Genome Biology, 2010](https://genomebiology.biomedcentral.com/articles/10.1186/gb-2010-11-3-r25))
