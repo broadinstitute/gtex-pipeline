@@ -19,7 +19,7 @@ def cd(cd_path):
 parser = argparse.ArgumentParser(description='Convert BAM to FASTQ using SamToFastq from Picard.')
 parser.add_argument('input_bam', type=str, help='BAM file')
 parser.add_argument('prefix', type=str, help='Prefix for output files; usually <sample_id>')
-parser.add_argument('-o', '--output_dir', default=os.getcwd(), help='Directory to which FASTQs will be written')
+parser.add_argument('-o', '--output_dir', default=os.getcwd(), help='Output directory')
 parser.add_argument('-m', '--memory', default='3', type=str, help='Memory, in GB')
 parser.add_argument('--optical_duplicate_pixel_distance', default=100, help='Maximum offset between two duplicate clusters. 100 (default) is appropriate for unpatterned, 2500 recommended for patterned flowcells.')
 parser.add_argument('--jar', default='/opt/picard-tools/picard.jar', help='Path to Picard jar')

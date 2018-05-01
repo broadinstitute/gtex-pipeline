@@ -116,12 +116,12 @@ task fastqtl_permutations_merge {
     Int num_threads
     Int num_preempt
 
-    Float? lambda_qvalue
+    Float? qvalue_lambda
 
     command {
         set -euo pipefail
         /opt/fastqtl/python/merge_chunks.py ${write_lines(chunks)} ${write_lines(logs)} ${prefix}\
-            --permute ${"--lambda_qvalue " + lambda_qvalue}
+            --permute ${"--qvalue_lambda " + qvalue_lambda}
     }
 
     runtime {
@@ -133,8 +133,8 @@ task fastqtl_permutations_merge {
     }
 
     output {
-        File egenes="${prefix}.egenes.txt.gz"
-        File egenes_log="${prefix}.egenes.log"
+        File genes="${prefix}.genes.txt.gz"
+        File genes_log="${prefix}.genes.log"
     }
 
     meta {
@@ -174,7 +174,7 @@ task fastqtl_postprocess {
     }
 
     output {
-        File egenes_annotated="${prefix}.egenes.annotated.txt.gz"
+        File genes_annotated="${prefix}.genes.annotated.txt.gz"
         File signifpairs="${prefix}.signifpairs.txt.gz"
     }
 
@@ -229,7 +229,7 @@ workflow fastqtl_workflow {
 
     call fastqtl_postprocess {
         input:
-            permutations_output=fastqtl_permutations_merge.egenes,
+            permutations_output=fastqtl_permutations_merge.genes,
             nominal_output=fastqtl_nominal.allpairs,
             prefix=prefix, fdr=fdr, annotation_gtf=annotation_gtf, variant_lookup=variant_lookup
     }

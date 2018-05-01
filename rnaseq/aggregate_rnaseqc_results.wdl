@@ -11,25 +11,12 @@ task aggregate_rnaseqc_results {
     Int num_preempt
 
     command {
-        # workaround for broken 'write_lines'
-        echo $(date +"[%b %d %H:%M:%S] Writing inputs to file")
-        python3 <<CODE
-with open("rpkm_gct_paths.tsv", "w") as f:
-    for p in '${sep="," rnaseqc_rpkm_gcts}'.split(","):
-        f.write(p+'\n')
-with open("count_gct_paths.tsv", "w") as f:
-    for p in '${sep="," rnaseqc_count_gcts}'.split(","):
-        f.write(p+'\n')
-with open("exon_count_gct_paths.tsv", "w") as f:
-    for p in '${sep="," rnaseqc_exon_count_gcts}'.split(","):
-        f.write(p+'\n')
-CODE
         echo $(date +"[%b %d %H:%M:%S] Combining RPKM GCTs")
-        python3 /src/combine_GCTs.py rpkm_gct_paths.tsv "${prefix}.rnaseqc_rpkm"
+        python3 /src/combine_GCTs.py ${write_lines(rnaseqc_rpkm_gcts)} "${prefix}.rnaseqc_rpkm"
         echo $(date +"[%b %d %H:%M:%S] Combining count GCTs")
-        python3 /src/combine_GCTs.py count_gct_paths.tsv "${prefix}.rnaseqc_counts"
+        python3 /src/combine_GCTs.py ${write_lines(rnaseqc_count_gcts)} "${prefix}.rnaseqc_counts"
         echo $(date +"[%b %d %H:%M:%S] Combining exon count GCTs")
-        python3 /src/combine_GCTs.py exon_count_gct_paths.tsv "${prefix}.rnaseqc_exon_counts"
+        python3 /src/combine_GCTs.py ${write_lines(rnaseqc_exon_count_gcts)} "${prefix}.rnaseqc_exon_counts"
     }
 
     output {
