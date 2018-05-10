@@ -15,6 +15,7 @@ p <- arg_parser("Run PEER factor estimation")
 p <- add_argument(p, "expr.file", help="")
 p <- add_argument(p, "prefix", help="")
 p <- add_argument(p, "n", help="Number of hidden confounders to estimate")
+p <- add_argument(p, "--covariates", help="Observed covariates")
 p <- add_argument(p, "--alphaprior_a", help="", default=0.001)
 p <- add_argument(p, "--alphaprior_b", help="", default=0.01)
 p <- add_argument(p, "--epsprior_a", help="", default=0.1)
@@ -47,9 +48,12 @@ invisible(PEER_setPhenoMean(model, M))
 invisible(PEER_setPriorAlpha(model, argv$alphaprior_a, argv$alphaprior_b))
 invisible(PEER_setPriorEps(model, argv$epsprior_a, argv$epsprior_b))
 invisible(PEER_setNmax_iterations(model, argv$max_iter))
-# if(!is.null(covs)) {
-#   invisible(PEER_setCovariates(model, covs))
-# }
+if (!is.null(argv$covariates) && !is.na(argv$covariates)) {
+    covar.df <- read.table(argv$covariates, sep="\t", header=TRUE, row.names=1, as.is=TRUE)
+    covar.df <- sapply(covar.df, as.numeric)
+    cat(paste0("  * including ", dim(covar.df)[2], " covariates", "\n"))
+    invisible(PEER_setCovariates(model, as.matrix(covar.df)))  # samples x covariates
+}
 time <- system.time(PEER_update(model))
 
 X <- PEER_getX(model)  # samples x PEER factors
