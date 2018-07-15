@@ -1,4 +1,4 @@
-task aggregate_rsem_results {
+task rsem_aggregate_results {
 
     Array[File] rsem_isoforms
     Array[File] rsem_genes
@@ -38,6 +38,6 @@ task aggregate_rsem_results {
 }
 
 
-workflow aggregate_rsem_results_workflow {
-    call aggregate_rsem_results
+workflow rsem_aggregate_results_workflow {
+    call rsem_aggregate_results
 }

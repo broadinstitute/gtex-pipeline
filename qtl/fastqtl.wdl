@@ -63,6 +63,7 @@ task fastqtl_permutations_scatter {
     Int chunks
     String permutations
     String? cis_window
+    File? phenotype_groups
     Int? ma_sample_threshold
     Float? maf_threshold
 
@@ -80,6 +81,7 @@ task fastqtl_permutations_scatter {
             --permute ${permutations} \
             --covariates ${covariates} \
             ${"--window " + cis_window} \
+            ${"--phenotype_groups " + phenotype_groups} \
             ${"--ma_sample_threshold " + ma_sample_threshold} \
             ${"--maf_threshold " + maf_threshold}
         mv ${prefix}_chunk*.txt.gz ${prefix}_chunk_${current_chunk}.txt.gz
