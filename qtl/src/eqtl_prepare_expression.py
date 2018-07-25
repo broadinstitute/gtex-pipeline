@@ -71,15 +71,27 @@ def write_bed(bed_df, output_name):
     subprocess.check_call('tabix -f '+output_name+'.gz', shell=True, executable='/bin/bash')
 
 
-def read_gct(gct_file, sample_ids=None):
+def read_gct(gct_file, sample_ids=None, dtype=None):
     """
-    Load GCT as DataFrame. The first two columns must be 'Name' and 'Description'
+    Load GCT as DataFrame. The first two columns must be 'Name' and 'Description'.
     """
     if sample_ids is not None:
         sample_ids = ['Name']+list(sample_ids)
 
     if gct_file.endswith('.gct.gz') or gct_file.endswith('.gct'):
-        df = pd.read_csv(gct_file, sep='\t', skiprows=2, usecols=sample_ids, index_col=0)
+        if dtype is not None:
+            with gzip.open(gct_file, 'rt') as gct:
+                gct.readline()
+                gct.readline()
+                sample_ids = gct.readline().strip().split()
+            dtypes = {i:dtype for i in sample_ids[2:]}
+            dtypes['Name'] = str
+            dtypes['Description'] = str
+            df = pd.read_csv(gct_file, sep='\t', skiprows=2, usecols=sample_ids, index_col=0, dtype=dtypes)
+        else:
+            df = pd.read_csv(gct_file, sep='\t', skiprows=2, usecols=sample_ids, index_col=0)
+    elif gct_file.endswith('.parquet'):
+        df = pd.read_parquet(gct_file, columns=sample_ids)
     elif gct_file.endswith('.ft'):  # feather format
         df = feather.read_dataframe(gct_file, columns=sample_ids)
         df = df.set_index('Name')
