@@ -25,7 +25,7 @@ for c in args.add_covariates:
     combined_df = pd.concat([combined_df, additional_df[expression_df.columns]], axis=0)
 
 # identify and drop colinear covariates
-C = combined_df.T
+C = combined_df.astype(np.float64).T
 Q,R = np.linalg.qr(C-np.mean(C, axis=0))
 colinear_ix = np.abs(np.diag(R)) < np.finfo(np.float64).eps * C.shape[1]
 if np.any(colinear_ix):
