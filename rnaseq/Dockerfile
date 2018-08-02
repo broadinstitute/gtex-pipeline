@@ -30,14 +30,16 @@ RUN apt-get update && apt-get install -y software-properties-common && add-apt-r
 
 # htslib
 RUN cd /opt && \
-    wget --no-check-certificate https://github.com/samtools/htslib/releases/download/1.6/htslib-1.6.tar.bz2 && \
-    tar -xf htslib-1.6.tar.bz2 && rm htslib-1.6.tar.bz2 && cd htslib-1.6 && make && make install && make clean
+    wget --no-check-certificate https://github.com/samtools/htslib/releases/download/1.8/htslib-1.8.tar.bz2 && \
+    tar -xf htslib-1.8.tar.bz2 && rm htslib-1.8.tar.bz2 && cd htslib-1.8 && \
+    ./configure --enable-libcurl --enable-s3 --enable-plugins --enable-gcs && \
+    make && make install && make clean
 
 # samtools
 RUN cd /opt && \
-    wget --no-check-certificate https://github.com/samtools/samtools/releases/download/1.6/samtools-1.6.tar.bz2 && \
-    tar -xf samtools-1.6.tar.bz2 && rm samtools-1.6.tar.bz2 && cd samtools-1.6 && \
-    ./configure --with-htslib=/opt/htslib-1.6 && make && make install && make clean
+    wget --no-check-certificate https://github.com/samtools/samtools/releases/download/1.8/samtools-1.8.tar.bz2 && \
+    tar -xf samtools-1.8.tar.bz2 && rm samtools-1.8.tar.bz2 && cd samtools-1.8 && \
+    ./configure --with-htslib=/opt/htslib-1.8 && make && make install && make clean
 
 # bamtools
 RUN cd /opt && \
@@ -74,8 +76,8 @@ RUN cd /opt/bamsync && make
 ENV PATH /opt/bamsync:$PATH
 
 # python modules
-RUN pip3 install --upgrade pip && pip3 install tables numpy pandas feather-format
-RUN pip3 install pyBigWig
+RUN pip3 install --upgrade pip
+RUN pip3 install tables numpy pandas feather-format pyBigWig
 
 # kallisto v0.43.1
 RUN cd /opt && \
@@ -85,8 +87,8 @@ ENV PATH $PATH:/opt/kallisto_linux-v0.43.1
 
 # bedtools
 RUN cd /opt && \
-    wget --no-check-certificate https://github.com/arq5x/bedtools2/releases/download/v2.26.0/bedtools-2.26.0.tar.gz && \
-    tar -xf bedtools-2.26.0.tar.gz && rm bedtools-2.26.0.tar.gz && \
+    wget --no-check-certificate https://github.com/arq5x/bedtools2/releases/download/v2.27.1/bedtools-2.27.1.tar.gz && \
+    tar -xf bedtools-2.27.1.tar.gz && rm bedtools-2.27.1.tar.gz && \
     cd bedtools2 && make && make install && make clean
 
 # UCSC tools
@@ -95,6 +97,12 @@ RUN mkdir /opt/ucsc && \
     wget --no-check-certificate -P /opt/ucsc/ http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64/bedGraphToBigWig && \
     chmod 755 /opt/ucsc/*
 ENV PATH /opt/ucsc:$PATH
+
+# gcloud
+RUN export CLOUD_SDK_REPO="cloud-sdk-$(lsb_release -c -s)" && \
+    echo "deb http://packages.cloud.google.com/apt $CLOUD_SDK_REPO main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list && \
+    curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - && \
+    apt-get update -y && apt-get install google-cloud-sdk -y
 
 # clean up
 RUN apt-get clean && \
