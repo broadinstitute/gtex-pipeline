@@ -34,6 +34,7 @@ with cd(args.output_dir):
     subprocess.check_call('java -jar -Xmx'+args.memory+'g '+args.jar\
         +' MarkDuplicates I='+args.input_bam\
         +' O='+os.path.split(args.input_bam)[1].replace('.bam', '.md.bam')\
+        +' PROGRAM_RECORD_ID=null'\
         +' M='+args.prefix+'.marked_dup_metrics.txt'+' ASSUME_SORT_ORDER=coordinate OPTICAL_DUPLICATE_PIXEL_DISTANCE='+str(args.optical_duplicate_pixel_distance), shell=True)
 
 print('['+datetime.now().strftime("%b %d %H:%M:%S")+'] Finished MarkDuplicates', flush=True)
