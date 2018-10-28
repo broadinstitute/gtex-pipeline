@@ -77,7 +77,9 @@ ENV PATH /opt/bamsync:$PATH
 
 # python modules
 RUN pip3 install --upgrade pip
-RUN pip3 install tables numpy pandas feather-format pyBigWig
+RUN pip3 install tables numpy pandas feather-format
+# numpy dependencies:
+RUN pip3 install pyBigWig
 
 # kallisto v0.43.1
 RUN cd /opt && \
