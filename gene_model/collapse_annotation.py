@@ -38,23 +38,21 @@ class Gene:
 
 class Annotation:
     def __init__(self, gtfpath):
-        """
-        Parse GTF and construct gene/transcript/exon hierarchy
-        """
+        """Parse GTF and construct gene/transcript/exon hierarchy"""
         self.genes = []
-            
+
         with open(gtfpath, 'r') as gtf:
-            for (i,row) in enumerate(gtf):
+            for row in gtf:
                 row = row.strip().split('\t')
-                
+
                 if row[0][0]=='#': continue # skip header
-                
+
                 chrom = row[0]
                 annot_type = row[2]
                 start_pos = int(row[3])
                 end_pos  = int(row[4])
                 strand = row[6]
-                
+
                 attributes = defaultdict()
                 for a in row[8].replace('"', '').split(';')[:-1]:
                     kv = a.strip().split(' ')
@@ -62,7 +60,7 @@ class Annotation:
                         attributes[kv[0]] = kv[1]
                     else:
                         attributes.setdefault('tags', []).append(kv[1])
-                
+
                 if annot_type=='gene':
                     gene_id = attributes['gene_id']
                     g = Gene(gene_id, attributes['gene_name'], attributes['gene_type'], chrom, strand, start_pos, end_pos)
@@ -70,10 +68,11 @@ class Annotation:
                     g.phase = row[7]
                     g.attributes_string = row[8]
                     self.genes.append(g)
-               
+
                 elif annot_type=='transcript':
                     transcript_id = attributes['transcript_id']
-                    t = Transcript(attributes.pop('transcript_id'), attributes.pop('transcript_name'), attributes.pop('transcript_type'), g, start_pos, end_pos)
+                    t = Transcript(attributes.pop('transcript_id'), attributes.pop('transcript_name'),
+                                   attributes.pop('transcript_type'), g, start_pos, end_pos)
                     t.attributes = attributes
                     g.transcripts.append(t)
 
@@ -87,7 +86,7 @@ class Annotation:
                 if np.mod(len(self.genes),1000)==0:
                     print('Parsing GTF: {0:d} genes processed\r'.format(len(self.genes)), end='\r')
             print('Parsing GTF: {0:d} genes processed\r'.format(len(self.genes)))
-        
+
         self.genes = np.array(self.genes)
 
 
@@ -130,7 +129,8 @@ def add_transcript_attributes(attributes_string):
     """
     # GTF specification
     if 'gene_status' in attributes_string:
-        attribute_order = ['gene_id', 'transcript_id', 'gene_type', 'gene_status', 'gene_name', 'transcript_type', 'transcript_status', 'transcript_name', 'level']
+        attribute_order = ['gene_id', 'transcript_id', 'gene_type', 'gene_status', 'gene_name',
+                           'transcript_type', 'transcript_status', 'transcript_name', 'level']
         add_list = ['transcript_id', 'transcript_type', 'transcript_status', 'transcript_name']
     else:
         attribute_order = ['gene_id', 'transcript_id', 'gene_type', 'gene_name', 'transcript_type', 'transcript_name', 'level']
@@ -147,7 +147,7 @@ def add_transcript_attributes(attributes_string):
     for k in add_list:
         if k not in attr_dict:
             attr_dict[k] = attr_dict[k.replace('transcript', 'gene')]
-    
+
     return '; '.join([k+' '+attr_dict[k] for k in attribute_order] + opt)+';'
 
 
@@ -232,13 +232,14 @@ def collapse_annotation(annot, transcript_gtf, collapsed_gtf, blacklist=set(), c
                 output_gtf.write('\t'.join([g.chr, g.source, 'transcript', start_pos, end_pos, '.', g.strand, g.phase, attr])+'\n')
                 if g.strand=='-':
                     new_coord_dict[g.id] = new_coord_dict[g.id][::-1]
-                for k,i in enumerate(new_coord_dict[g.id]):
-                    output_gtf.write('\t'.join([g.chr, g.source, 'exon', str(i[0]), str(i[1]), '.', g.strand, g.phase,
-                        attr+' exon_id "'+g.id+'_{0:d}; exon_number {0:d}";'.format(k+1)])+'\n')
+                for k,i in enumerate(new_coord_dict[g.id], 1):
+                    output_gtf.write('\t'.join([
+                        g.chr, g.source, 'exon', str(i[0]), str(i[1]), '.', g.strand, g.phase,
+                        attr+' exon_id "'+g.id+'_{0:d}; exon_number {0:d}";'.format(k)])+'\n')
 
 
 if __name__=='__main__':
-    
+
     parser = argparse.ArgumentParser(description='Collapse isoforms into single transcript per gene and remove overlapping intervals between genes')
     parser.add_argument('transcript_gtf', help='Transcript annotation in GTF format')
     parser.add_argument('output_gtf', help='Name of the output file')
