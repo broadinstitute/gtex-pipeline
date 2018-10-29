@@ -25,7 +25,7 @@ task rsem_aggregate_results {
     }
 
     runtime {
-        docker: "gcr.io/broad-cga-francois-gtex/gtex_rnaseq:V8"
+        docker: "gcr.io/broad-cga-francois-gtex/gtex_rnaseq:V9"
         memory: "${memory}GB"
         disks: "local-disk ${disk_space} HDD"
         cpu: "${num_threads}"
