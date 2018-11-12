@@ -31,7 +31,7 @@ Reference indexes for STAR and RSEM are needed to run the pipeline.
 
 GTEx releases up to V7 were based on the GRCh37/hg19 genome reference ([download](http://www.broadinstitute.org/ftp/pub/seq/references/Homo_sapiens_assembly19.fasta)). Releases from V8 onward are based on GRCh38/hg38. Please see [TOPMed_RNAseq_pipeline.md](https://github.com/broadinstitute/gtex-pipeline/blob/master/TOPMed_RNAseq_pipeline.md) for details and links for this reference.
 
-Releases V6/V6p and V7 were based on the [GENCODE v19](https://www.gencodegenes.org/releases/19.html) annotation; release V8 will be based on [GENCODE v26](https://www.gencodegenes.org/releases/26.html).
+Releases V6/V6p and V7 were based on the [GENCODE v19](https://www.gencodegenes.org/human/release_19.html) annotation; release V8 will be based on [GENCODE v26](https://www.gencodegenes.org/human/release_26.html).
 
 For hg19-based analyses, the GENCODE annotation should be patched to use Ensembl chromosome names:
 ```
