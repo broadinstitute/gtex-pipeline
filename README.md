@@ -1,4 +1,4 @@
-# Analysis pipelines for the [GTEx Consortium](www.gtexportal.org) and [TOPMed](https://www.nhlbi.nih.gov/science/trans-omics-precision-medicine-topmed-program)
+# Analysis pipelines for the [GTEx Consortium](https://www.gtexportal.org) and [TOPMed](https://www.nhlbi.nih.gov/science/trans-omics-precision-medicine-topmed-program)
 
 This repository contains analysis pipelines for:
 
