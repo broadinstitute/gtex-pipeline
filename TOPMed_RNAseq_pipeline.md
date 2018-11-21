@@ -84,7 +84,9 @@ The reference annotations were prepared as follows:
 
 2. For gene-level quantifications, the annotation was collapsed with the [script](https://github.com/broadinstitute/gtex-pipeline/blob/master/gene_model/collapse_annotation.py) used in the [GTEx pipeline](https://github.com/broadinstitute/gtex-pipeline/tree/master/gene_model):
     ```bash
-    python3 collapse_annotation.py  --collapse_only gencode.v29.GRCh38.annotation.gtf gencode.v29.GRCh38.genes.collapsed_only.gtf
+    python3 collapse_annotation.py \
+        --collapse_only gencode.v29.GRCh38.annotation.gtf \
+        gencode.v29.GRCh38.genes.collapsed_only.gtf
     ```
 3. Gene- and transcript-level attributes were added to the ERCC GTF with the following Python code:
     ```python
