@@ -21,8 +21,8 @@ The TOPMed RNA-Seq pipeline generates, for each sample:
 This document also describes the generation of the reference files required for each pipeline component.
 
 ### Pipeline components
-* Alignment: [STAR 2.6.1c](https://github.com/alexdobin/STAR)
-  * Post-processing: [Picard 2.18.15](https://github.com/broadinstitute/picard) [MarkDuplicates](https://broadinstitute.github.io/picard/command-line-overview.html#MarkDuplicates)
+* Alignment: [STAR 2.6.1d](https://github.com/alexdobin/STAR)
+  * Post-processing: [Picard 2.18.17](https://github.com/broadinstitute/picard) [MarkDuplicates](https://broadinstitute.github.io/picard/command-line-overview.html#MarkDuplicates)
 * Gene quantification and quality control: [RNA-SeQC 2.0](https://github.com/broadinstitute/rnaseqc)
 * Transcript quantification: [RSEM 1.3.1](https://deweylab.github.io/RSEM/)
 * Utilities: [SAMtools 1.9](https://github.com/samtools/samtools/releases) and [HTSlib 1.9](https://github.com/samtools/htslib/releases)
@@ -84,7 +84,9 @@ The reference annotations were prepared as follows:
 
 2. For gene-level quantifications, the annotation was collapsed with the [script](https://github.com/broadinstitute/gtex-pipeline/blob/master/gene_model/collapse_annotation.py) used in the [GTEx pipeline](https://github.com/broadinstitute/gtex-pipeline/tree/master/gene_model):
     ```bash
-    python3 collapse_annotation.py  --collapse_only gencode.v29.GRCh38.annotation.gtf gencode.v29.GRCh38.genes.collapsed_only.gtf
+    python3 collapse_annotation.py \
+        --collapse_only gencode.v29.GRCh38.annotation.gtf \
+        gencode.v29.GRCh38.genes.collapsed_only.gtf
     ```
 3. Gene- and transcript-level attributes were added to the ERCC GTF with the following Python code:
     ```python
@@ -148,22 +150,22 @@ rsem-prepare-reference --num-threads 10 \
 ### Installation of pipeline components
 This section lists the source repositories and installation instructions for the pipeline components. The instruction replicate those in the pipeline [Dockerfile](https://github.com/broadinstitute/gtex-pipeline/blob/master/rnaseq/Dockerfile).
 
-1. STAR v2.6.1c:
+1. STAR v2.6.1d:
     ```
     cd /opt && \
-    wget --no-check-certificate https://github.com/alexdobin/STAR/archive/2.6.1c.tar.gz && \
-    tar -xf 2.6.1c.tar.gz && rm 2.6.1c.tar.gz && \
-    make STAR -C STAR-2.6.1c/source && make STARlong -C STAR-2.6.1c/source && \
-    mv STAR-2.6.1c/source/STAR* STAR-2.6.1c/bin/Linux_x86_64/
-    PATH /opt/STAR-2.6.1c/bin/Linux_x86_64:$PATH
+    wget --no-check-certificate https://github.com/alexdobin/STAR/archive/2.6.1d.tar.gz && \
+    tar -xf 2.6.1d.tar.gz && rm 2.6.1d.tar.gz && \
+    make STAR -C STAR-2.6.1d/source && make STARlong -C STAR-2.6.1d/source && \
+    mv STAR-2.6.1d/source/STAR* STAR-2.6.1d/bin/Linux_x86_64/
+    PATH /opt/STAR-2.6.1d/bin/Linux_x86_64:$PATH
     ```
 
-2. Picard v2.18.15 or later (for MarkDuplicates):
+2. Picard v2.18.17 or later (for MarkDuplicates):
     ```
     mkdir /opt/picard-tools && \
     wget --no-check-certificate \
         -P /opt/picard-tools/ \
-        https://github.com/broadinstitute/picard/releases/download/2.18.15/picard.jar
+        https://github.com/broadinstitute/picard/releases/download/2.18.17/picard.jar
     ```
 
 3. RSEM v1.3.1:
