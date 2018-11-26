@@ -2,18 +2,18 @@
 FROM ubuntu:16.04
 MAINTAINER Francois Aguet
 
-RUN apt-get update && apt-get install -y software-properties-common && add-apt-repository -y ppa:openjdk-r/ppa && \
+RUN apt-get update && apt-get install -y software-properties-common && \
     apt-get update && apt-get install -y \
         build-essential \
         cmake \
         curl \
+        git \
         libboost-all-dev \
         libbz2-dev \
         libcurl3-dev \
         liblzma-dev \
         libncurses5-dev \
         libssl-dev \
-        openjdk-7-jdk \
         openjdk-8-jdk \
         python3 \
         python3-pip \
@@ -48,24 +48,19 @@ RUN cd /opt && \
 RUN mkdir /opt/picard-tools && \
     wget --no-check-certificate -P /opt/picard-tools/ https://github.com/broadinstitute/picard/releases/download/2.18.15/picard.jar
 
-# STAR v2.6.1c
+# STAR v2.6.1d
 RUN cd /opt && \
-    wget --no-check-certificate https://github.com/alexdobin/STAR/archive/2.6.1c.tar.gz && \
-    tar -xf 2.6.1c.tar.gz && rm 2.6.1c.tar.gz && \
-    make STAR -C STAR-2.6.1c/source && make STARlong -C STAR-2.6.1c/source && \
-    mv STAR-2.6.1c/source/STAR* STAR-2.6.1c/bin/Linux_x86_64/
-ENV PATH /opt/STAR-2.6.1c/bin/Linux_x86_64:$PATH
+    wget --no-check-certificate https://github.com/alexdobin/STAR/archive/2.6.1d.tar.gz && \
+    tar -xf 2.6.1d.tar.gz && rm 2.6.1d.tar.gz && \
+    make STAR -C STAR-2.6.1d/source && make STARlong -C STAR-2.6.1d/source && \
+    mv STAR-2.6.1d/source/STAR* STAR-2.6.1d/bin/Linux_x86_64/
+ENV PATH /opt/STAR-2.6.1d/bin/Linux_x86_64:$PATH
 
 # RSEM v1.3.1
 RUN cd /opt && \
     wget --no-check-certificate https://github.com/deweylab/RSEM/archive/v1.3.1.tar.gz && \
     tar -xvf v1.3.1.tar.gz && rm v1.3.1.tar.gz && cd RSEM-1.3.1 && make
 ENV PATH /opt/RSEM-1.3.1:$PATH
-
-# RNA-SeQC
-RUN cd /opt && \
-    wget --no-check-certificate https://github.com/francois-a/rnaseqc/releases/download/v1.1.9/RNA-SeQC_1.1.9.zip && \
-    unzip RNA-SeQC_1.1.9.zip -d RNA-SeQC_1.1.9 && rm RNA-SeQC_1.1.9.zip
 
 # bamtools
 RUN cd /opt && \
@@ -78,17 +73,11 @@ COPY bamsync /opt/bamsync
 RUN cd /opt/bamsync && make
 ENV PATH /opt/bamsync:$PATH
 
-# python modules
-RUN pip3 install --upgrade pip
-RUN pip3 install tables numpy pandas feather-format
-# numpy dependencies:
-RUN pip3 install pyBigWig
-
-# kallisto v0.44.0
+# kallisto v0.45.0
 RUN cd /opt && \
-    wget https://github.com/pachterlab/kallisto/releases/download/v0.44.0/kallisto_linux-v0.44.0.tar.gz && \
-    tar -xf kallisto_linux-v0.44.0.tar.gz && rm kallisto_linux-v0.44.0.tar.gz
-ENV PATH $PATH:/opt/kallisto_linux-v0.44.0
+    wget https://github.com/pachterlab/kallisto/releases/download/v0.45.0/kallisto_linux-v0.45.0.tar.gz && \
+    tar -xf kallisto_linux-v0.45.0.tar.gz && rm kallisto_linux-v0.45.0.tar.gz
+ENV PATH $PATH:/opt/kallisto_linux-v0.45.0
 
 # bedtools
 RUN cd /opt && \
@@ -102,6 +91,18 @@ RUN mkdir /opt/ucsc && \
     wget --no-check-certificate -P /opt/ucsc/ http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64/bedGraphToBigWig && \
     chmod 755 /opt/ucsc/*
 ENV PATH /opt/ucsc:$PATH
+
+# python modules
+RUN pip3 install --upgrade pip
+RUN pip3 install tables numpy pandas feather-format
+# numpy dependencies:
+RUN pip3 install pyBigWig
+
+# RNA-SeQC
+RUN cd /opt && \
+    git clone --recursive https://github.com/broadinstitute/rnaseqc.git && \
+    cd rnaseqc && make && make clean
+ENV PATH /opt/rnaseqc:$PATH
 
 # gcloud
 RUN export CLOUD_SDK_REPO="cloud-sdk-$(lsb_release -c -s)" && \
