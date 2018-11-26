@@ -6,9 +6,10 @@ All wrapper scripts are available from the GTEx pipeline repository: [https://gi
 
 The current scripts and settings used for TOPMed RNA-seq match commit [XXXXX](), packaged [here]().
 
-The scripts and settings used for the TOPMed MESA RNA-seq pilot match commit [725a2bc](https://github.com/broadinstitute/gtex-pipeline/tree/725a2bc74f9654244065256df91b44e8f5b7e62a), packaged [here](https://github.com/broadinstitute/gtex-pipeline/releases/tag/TOPMed_MESA_RNAseq_pilot).
-
 *Changes to this specification may be proposed based on rigorous benchmarking, pending approval of NHLBI.*
+
+#### Previous versions
+The scripts and settings used for the TOPMed MESA RNA-seq pilot match commit [725a2bc](https://github.com/broadinstitute/gtex-pipeline/tree/725a2bc74f9654244065256df91b44e8f5b7e62a), packaged [here](https://github.com/broadinstitute/gtex-pipeline/releases/tag/TOPMed_MESA_RNAseq_pilot).
 
 ### Pipeline summary
 The TOPMed RNA-Seq pipeline generates, for each sample:
@@ -177,12 +178,12 @@ This section lists the source repositories and installation instructions for the
     PATH /opt/RSEM-1.3.1:$PATH
     ```
 
-4. RNA-SeQC v1.1.9:
+4. RNA-SeQC v2.0.0:
     ```
     cd /opt && \
-    wget --no-check-certificate \
-        https://github.com/francois-a/rnaseqc/releases/download/v1.1.9/RNA-SeQC_1.1.9.zip && \
-    unzip RNA-SeQC_1.1.9.zip -d RNA-SeQC_1.1.9 && rm RNA-SeQC_1.1.9.zip
+    git clone --recursive https://github.com/broadinstitute/rnaseqc.git && \
+    cd rnaseqc && make && make clean
+    PATH /opt/rnaseqc:$PATH
     ```
 
 ### Pipeline parameters
@@ -255,14 +256,8 @@ The following variables must be defined:
     ```
 4. RNA-SeQC
     ```bash
-    java -jar RNA-SeQC.jar \
-        -n 1000 \
-        -s ${sample_id},${md_bam_file},${sample_id} \
-        -t ${genes_gtf} \
-        -r ${genome_fasta} \
-        -noDoC \
-        -strictMode \
-        -gatkFlags --allow_potentially_misencoded_quality_scores
+    rnaseqc ${genes_gtf} ${bam_file} . \
+        -s ${sample_id} --stranded rf -vv
     ```
 
 ### Appendix: wrapper scripts from the GTEx pipeline
@@ -276,7 +271,7 @@ The following variables must be defined:
 * `genome_fasta`: path to the reference genome (`Homo_sapiens_assembly38_noALT_noHLA_noDecoy_ERCC.fasta` as described above)
 * `genes_gtf`: path to the collapsed, gene-level GTF (`gencode.v29.GRCh38.ERCC.genes.gtf` as described above)
 
-1. STAR ([run_STAR.py](https://github.com/broadinstitute/gtex-pipeline/blob/master/rnaseq/src/run_STAR.py))
+1. STAR ([run_STAR.py](rnaseq/src/run_STAR.py))
     ```bash
     python3 run_STAR.py \
         ${star_index} ${fastq1} ${fastq2} ${sample_id} \
@@ -305,11 +300,11 @@ The following variables must be defined:
         --chimMainSegmentMultNmax 1 \
         --threads 8
     ```
-2. MarkDuplicates ([run_MarkDuplicates.py](https://github.com/broadinstitute/gtex-pipeline/blob/master/rnaseq/src/run_MarkDuplicates.py))
+2. MarkDuplicates ([run_MarkDuplicates.py](rnaseq/src/run_MarkDuplicates.py))
     ```bash
     python3 -u run_MarkDuplicates.py ${sample_id}.Aligned.sortedByCoord.out.bam ${sample_id}
     ```
-3. RSEM ([run_RSEM.py](https://github.com/broadinstitute/gtex-pipeline/blob/master/rnaseq/src/run_RSEM.py))
+3. RSEM ([run_RSEM.py](rnaseq/src/run_RSEM.py))
     ```bash
     python3 run_RSEM.py \
         --max_frag_len 1000 \
@@ -318,9 +313,11 @@ The following variables must be defined:
         --threads 2 \
         ${rsem_reference} ${sample_id}.Aligned.toTranscriptome.out.bam ${sample_id}
     ```
-4. RNA-SeQC ([run_rnaseqc.py](https://github.com/broadinstitute/gtex-pipeline/blob/master/rnaseq/src/run_rnaseqc.py))
+4. RNA-SeQC ([run_rnaseqc.py](rnaseq/src/run_rnaseqc.py))
     ```bash
-    python3 run_rnaseqc.py ${sample_id}.Aligned.sortedByCoord.out.md.bam \
-        ${genes_gtf} ${genome_fasta} ${sample_id} \
-        --rnaseqc_flags noDoC strictMode
+    python3 run_rnaseqc.py \
+        ${genes_gtf}
+        ${sample_id}.Aligned.sortedByCoord.out.md.bam \
+        ${sample_id} \
+        --stranded rf
     ```
