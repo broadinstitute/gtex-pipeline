@@ -1,6 +1,6 @@
-task rnaseqc_aggregate {
+task rnaseqc2_aggregate {
 
-    Array[File] rpkm_gcts
+    Array[File] tpm_gcts
     Array[File] count_gcts
     Array[File] exon_count_gcts
     Array[File] metrics_tsvs
@@ -13,8 +13,8 @@ task rnaseqc_aggregate {
 
     command {
         set -euo pipefail
-        echo $(date +"[%b %d %H:%M:%S] Combining RPKM GCTs")
-        python3 /src/combine_GCTs.py ${write_lines(rpkm_gcts)} "${prefix}.rnaseqc_rpkm"
+        echo $(date +"[%b %d %H:%M:%S] Combining TPM GCTs")
+        python3 /src/combine_GCTs.py ${write_lines(tpm_gcts)} "${prefix}.rnaseqc_tpm"
         echo $(date +"[%b %d %H:%M:%S] Combining count GCTs")
         python3 /src/combine_GCTs.py ${write_lines(count_gcts)} "${prefix}.rnaseqc_counts"
         echo $(date +"[%b %d %H:%M:%S] Combining exon count GCTs")
@@ -24,14 +24,14 @@ task rnaseqc_aggregate {
     }
 
     output {
-        File rpkm_gct="${prefix}.rnaseqc_rpkm.gct.gz"
+        File tpm_gct="${prefix}.rnaseqc_tpm.gct.gz"
         File count_gct="${prefix}.rnaseqc_counts.gct.gz"
         File exon_count_gct="${prefix}.rnaseqc_exon_counts.gct.gz"
         File metrics="${prefix}.metrics.tsv"
     }
 
     runtime {
-        docker: "gcr.io/broad-cga-francois-gtex/gtex_rnaseq:V8"
+        docker: "gcr.io/broad-cga-francois-gtex/gtex_rnaseq:V9"
         memory: "${memory}GB"
         disks: "local-disk ${disk_space} HDD"
         cpu: "${num_threads}"
@@ -44,6 +44,6 @@ task rnaseqc_aggregate {
 }
 
 
-workflow rnaseqc_aggregate_workflow {
-    call rnaseqc_aggregate
+workflow rnaseqc2_aggregate_workflow {
+    call rnaseqc2_aggregate
 }
