@@ -72,6 +72,7 @@ task star {
         touch star_out/${prefix}.Aligned.toTranscriptome.out.bam
         touch star_out/${prefix}.Chimeric.out.sorted.bam
         touch star_out/${prefix}.Chimeric.out.sorted.bam.bai
+        touch star_out/${prefix}.ReadsPerGene.out.tab.gz
 
         /src/run_STAR.py \
             star_index $fastq1_abs $fastq2_abs ${prefix} \
@@ -94,7 +95,7 @@ task star {
             ${"--quantMode " + quantMode} \
             ${"--outSAMattrRGline " + outSAMattrRGline} \
             ${"--outSAMattributes " + outSAMattributes} \
-            ${"--varVCFfile <(zcat " + varVCFfile + ")"} \
+            ${"--varVCFfile " + varVCFfile} \
             ${"--waspOutputMode " + waspOutputMode} \
             ${"--chimSegmentMin " + chimSegmentMin} \
             ${"--chimJunctionOverhangMin " + chimJunctionOverhangMin} \
