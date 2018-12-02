@@ -81,9 +81,9 @@ cmd += ' --outFileNamePrefix '+os.path.join(args.output_dir, args.prefix)+'.'\
     +' --alignSoftClipAtReferenceEnds '+args.alignSoftClipAtReferenceEnds+' --quantMode '+' '.join(args.quantMode)\
     +' --outSAMtype '+' '.join(args.outSAMtype)+' --outSAMunmapped '+args.outSAMunmapped+' --genomeLoad '+args.genomeLoad
 if args.waspOutputMode=='SAMtag' and args.varVCFfile is not None:
-    assert args.varVCFfile.endswith('.vcf')  # must be uncompressed
+    assert args.varVCFfile.endswith('.vcf.gz')
     # only SNVs are currently supported
-    cmd += ' --waspOutputMode SAMtag --varVCFfile {}'.format(args.varVCFfile)
+    cmd += ' --waspOutputMode SAMtag --varVCFfile <(zcat {})'.format(args.varVCFfile)
     if 'vw' not in args.outSAMattributes:
         args.outSAMattributes.append('vW')
         print("  * adding 'vW' tag to outSAMattributes", flush=True)
