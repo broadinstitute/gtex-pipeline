@@ -4,7 +4,7 @@ This document is intended to ensure reproducibility of analyses and facilitate h
 
 All wrapper scripts are available from the GTEx pipeline repository: [https://github.com/broadinstitute/gtex-pipeline](https://github.com/broadinstitute/gtex-pipeline)
 
-The current scripts and settings used for TOPMed RNA-seq match commit [XXXXX](), packaged [here]().
+The current scripts and settings used for TOPMed RNA-seq match commit [1731ed9](https://github.com/broadinstitute/gtex-pipeline/tree/1731ed9c81c9ae301c6f16d6d1c6719d272fd861), packaged [here](https://github.com/broadinstitute/gtex-pipeline/releases/tag/TOPMed_MESA_RNAseq_pilot).
 
 *Changes to this specification may be proposed based on rigorous benchmarking, pending approval of NHLBI.*
 
@@ -24,7 +24,7 @@ This document also describes the generation of the reference files required for 
 ### Pipeline components
 * Alignment: [STAR 2.6.1d](https://github.com/alexdobin/STAR)
   * Post-processing: [Picard 2.18.17](https://github.com/broadinstitute/picard) [MarkDuplicates](https://broadinstitute.github.io/picard/command-line-overview.html#MarkDuplicates)
-* Gene quantification and quality control: [RNA-SeQC 2.0](https://github.com/broadinstitute/rnaseqc)
+* Gene quantification and quality control: [RNA-SeQC 2.1.0](https://github.com/broadinstitute/rnaseqc)
 * Transcript quantification: [RSEM 1.3.1](https://deweylab.github.io/RSEM/)
 * Utilities: [SAMtools 1.9](https://github.com/samtools/samtools/releases) and [HTSlib 1.9](https://github.com/samtools/htslib/releases)
 
