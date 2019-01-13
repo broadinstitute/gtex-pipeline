@@ -178,7 +178,7 @@ This section lists the source repositories and installation instructions for the
     PATH /opt/RSEM-1.3.1:$PATH
     ```
 
-4. RNA-SeQC v2.0.0:
+4. RNA-SeQC v2.1.0:
     ```
     cd /opt && \
     git clone --recursive https://github.com/broadinstitute/rnaseqc.git && \
