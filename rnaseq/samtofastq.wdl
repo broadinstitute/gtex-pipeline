@@ -1,7 +1,8 @@
 task samtofastq {
 
-    File input_bam
+    File input_bam_cram
     String prefix
+    File? reference_fasta
 
     Int memory
     Int disk_space
@@ -12,13 +13,13 @@ task samtofastq {
         set -euo pipefail
 
         # make sure path is absolute
-        input_bam_abs=${input_bam}
+        input_bam_abs=${input_bam_cram}
         if [[ $input_bam_abs != /* ]]; then
             input_bam_abs=$PWD/$input_bam_abs
         fi
 
         mkdir samtofastq  # workaround for named pipes
-        python3 -u /src/run_SamToFastq.py $input_bam_abs -p ${prefix} --output_dir samtofastq --memory ${memory}
+        python3 -u /src/run_SamToFastq.py $input_bam_abs -p ${prefix} ${"--reference_fasta " + reference_fasta} --output_dir samtofastq --memory ${memory}
         mv samtofastq/${prefix}_*.fastq.gz .
     }
 
