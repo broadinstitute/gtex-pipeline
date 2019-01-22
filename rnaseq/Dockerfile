@@ -46,7 +46,7 @@ RUN cd /opt && \
 
 # Picard tools
 RUN mkdir /opt/picard-tools && \
-    wget --no-check-certificate -P /opt/picard-tools/ https://github.com/broadinstitute/picard/releases/download/2.18.15/picard.jar
+    wget --no-check-certificate -P /opt/picard-tools/ https://github.com/broadinstitute/picard/releases/download/2.18.24/picard.jar
 
 # STAR v2.6.1d
 RUN cd /opt && \
@@ -99,9 +99,9 @@ RUN pip3 install tables numpy pandas feather-format
 RUN pip3 install pyBigWig
 
 # RNA-SeQC
-RUN cd /opt && \
-    git clone --recursive https://github.com/broadinstitute/rnaseqc.git && \
-    cd rnaseqc && make && make clean
+RUN mkdir /opt/rnaseqc && cd /opt/rnaseqc && \
+    wget https://github.com/broadinstitute/rnaseqc/releases/download/v2.1.0/rnaseqc.v2.1.0.linux.gz && \
+    gunzip rnaseqc.v2.1.0.linux.gz && mv rnaseqc.v2.1.0.linux rnaseqc && chmod 775 rnaseqc
 ENV PATH /opt/rnaseqc:$PATH
 
 # gcloud
