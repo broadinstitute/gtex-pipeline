@@ -2,6 +2,7 @@ task markduplicates {
 
     File input_bam
     String prefix
+    Int? max_records_in_ram
 
     Int memory
     Int disk_space
@@ -12,7 +13,7 @@ task markduplicates {
 
     command {
         set -euo pipefail
-        python3 -u /src/run_MarkDuplicates.py ${input_bam} ${prefix} --memory ${memory}
+        python3 -u /src/run_MarkDuplicates.py ${input_bam} ${prefix} --memory ${memory} ${"--max_records_in_ram " + max_records_in_ram}
         samtools index ${output_bam}
     }
 
