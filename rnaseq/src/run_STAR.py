@@ -49,6 +49,7 @@ parser.add_argument('--chimSegmentMin', default='15', help='Minimum chimeric seg
 parser.add_argument('--chimJunctionOverhangMin', default='15', help='Minimum overhang for a chimeric junction')
 parser.add_argument('--chimOutType', default=['Junctions', 'WithinBAM', 'SoftClip'], nargs='+', help='')
 parser.add_argument('--chimMainSegmentMultNmax', default='1', help='')
+parser.add_argument('--chimOutJunctionFormat', default='0', help='Formatting for Chimeric.out.junction')
 parser.add_argument('--genomeLoad', default='NoSharedMemory')
 parser.add_argument('--sjdbFileChrStartEnd', default=None, help='SJ.out.tab file (e.g., from 1st pass). With this option, only one pass will be run')
 parser.add_argument('--STARlong', action='store_true', help='Use STARlong instead of STAR')
@@ -89,7 +90,8 @@ if args.waspOutputMode=='SAMtag' and args.varVCFfile is not None:
         print("  * adding 'vW' tag to outSAMattributes", flush=True)
 if int(args.chimSegmentMin)>0:
     cmd += ' --chimSegmentMin '+args.chimSegmentMin+' --chimJunctionOverhangMin '+args.chimJunctionOverhangMin\
-        +' --chimOutType '+' '.join(args.chimOutType)+' --chimMainSegmentMultNmax '+args.chimMainSegmentMultNmax
+        +' --chimOutType '+' '.join(args.chimOutType)+' --chimMainSegmentMultNmax '+args.chimMainSegmentMultNmax\
+        +' --chimOutJunctionFormat {}'.format(args.chimOutJunctionFormat)
 cmd += ' --outSAMattributes '+' '.join(args.outSAMattributes)+' --outSAMattrRGline '+' '.join(args.outSAMattrRGline)
 if args.sjdbFileChrStartEnd is not None:
     cmd += ' --sjdbFileChrStartEnd '+args.sjdbFileChrStartEnd

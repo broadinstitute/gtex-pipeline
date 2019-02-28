@@ -30,6 +30,7 @@ task star {
     Int? chimJunctionOverhangMin
     String? chimOutType
     Int? chimMainSegmentMultNmax
+    Int? chimOutJunctionFormat
     File? sjdbFileChrStartEnd
 
     Int memory
@@ -101,6 +102,7 @@ task star {
             ${"--chimJunctionOverhangMin " + chimJunctionOverhangMin} \
             ${"--chimOutType " + chimOutType} \
             ${"--chimMainSegmentMultNmax " + chimMainSegmentMultNmax} \
+            ${"--chimOutJunctionFormat " + chimOutJunctionFormat} \
             ${"--sjdbFileChrStartEnd " + sjdbFileChrStartEnd} \
             --threads ${num_threads}
     }
