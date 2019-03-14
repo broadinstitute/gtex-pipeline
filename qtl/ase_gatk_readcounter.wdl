@@ -1,4 +1,4 @@
-task ase_gatk_readcounter {
+    task ase_gatk_readcounter {
 
     File gatk_jar
     File genome_fasta
@@ -9,6 +9,7 @@ task ase_gatk_readcounter {
     File bam_file
     File bam_index
     String prefix
+    Boolean? filter_wasp = false
 
     Int memory
     Int disk_space
@@ -17,11 +18,16 @@ task ase_gatk_readcounter {
 
     command <<<
         set -euo pipefail
-        echo $(date +"[%b %d %H:%M:%S] Filtering out reads with allelic mapping bias")
-        samtools view -h ${bam_file} | grep -v "vW:i:[2-7]" | samtools view -1 > filtered.bam
-        samtools index filtered.bam
+        if [[ ${filter_wasp} = "true" ]]
+        then
+            echo $(date +"[%b %d %H:%M:%S] Filtering out reads with allelic mapping bias")
+            samtools view -h ${bam_file} | grep -v "vW:i:[2-7]" | samtools view -1 > filtered.bam
+            samtools index filtered.bam
+            python3 /src/run_GATK_ASEReadCounter.py ${gatk_jar} ${genome_fasta} ${het_vcf} filtered.bam ${prefix}
+        else
+            python3 /src/run_GATK_ASEReadCounter.py ${gatk_jar} ${genome_fasta} ${het_vcf} ${bam_file} ${prefix}
+        fi
 
-        python3 /src/run_GATK_ASEReadCounter.py ${gatk_jar} ${genome_fasta} ${het_vcf} filtered.bam ${prefix}
         # filter out chrX
         mv ${prefix}.readcounts.txt.gz ${prefix}.readcounts.all.txt.gz
         zcat ${prefix}.readcounts.all.txt.gz | awk '$1!="chrX" && $1!="X" {print $0}' | gzip -c > ${prefix}.readcounts.txt.gz
