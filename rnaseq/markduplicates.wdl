@@ -3,6 +3,7 @@ task markduplicates {
     File input_bam
     String prefix
     Int? max_records_in_ram
+    Float? sorting_collection_size_ratio
 
     Int memory
     Int disk_space
@@ -13,7 +14,10 @@ task markduplicates {
 
     command {
         set -euo pipefail
-        python3 -u /src/run_MarkDuplicates.py ${input_bam} ${prefix} --memory ${memory} ${"--max_records_in_ram " + max_records_in_ram}
+        python3 -u /src/run_MarkDuplicates.py ${input_bam} ${prefix} \
+            --memory ${memory} \
+            ${"--max_records_in_ram " + max_records_in_ram} \
+            ${"--sorting_collection_size_ratio " + sorting_collection_size_ratio}
         samtools index ${output_bam}
     }
 

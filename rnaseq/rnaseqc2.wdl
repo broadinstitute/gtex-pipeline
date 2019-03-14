@@ -5,6 +5,7 @@ task rnaseqc2 {
     String sample_id
     String? strandedness 
     File? intervals_bed
+    String? flags
 
     Int memory
     Int disk_space
@@ -15,7 +16,7 @@ task rnaseqc2 {
         set -euo pipefail
         echo $(date +"[%b %d %H:%M:%S] Running RNA-SeQC 2")
         touch ${sample_id}.fragmentSizes.txt
-        rnaseqc ${genes_gtf} ${bam_file} . -s ${sample_id} ${"--bed " + intervals_bed} ${"--stranded " + strandedness} -vv
+        rnaseqc ${genes_gtf} ${bam_file} . -s ${sample_id} ${"--bed " + intervals_bed} ${"--stranded " + strandedness} -vv ${flags}
         echo "  * compressing outputs"
         gzip *.gct
         echo $(date +"[%b %d %H:%M:%S] done")
