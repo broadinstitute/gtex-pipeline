@@ -100,7 +100,7 @@ RUN pip3 install pyBigWig
 
 # RNA-SeQC
 RUN mkdir /opt/rnaseqc && cd /opt/rnaseqc && \
-    wget https://github.com/broadinstitute/rnaseqc/releases/download/v2.3.0/rnaseqc.v2.3.1.linux.gz && \
+    wget https://github.com/broadinstitute/rnaseqc/releases/download/v2.3.1/rnaseqc.v2.3.1.linux.gz && \
     gunzip rnaseqc.v2.3.1.linux.gz && mv rnaseqc.v2.3.1.linux rnaseqc && chmod 775 rnaseqc
 ENV PATH /opt/rnaseqc:$PATH
 
