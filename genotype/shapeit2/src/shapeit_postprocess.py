@@ -6,25 +6,28 @@ from datetime import datetime
 
 
 def gt_dosage(gt):
-    """
-    Convert unphased genotype to dosage
-    """
+    """Convert unphased genotype to dosage"""
     x = gt.split(b'/')
     return int(x[0])+int(x[1])
 
 
 def pgt_dosage(gt):
-    """
-    Convert phased genotype to dosage
-    """
+    """Convert phased genotype to dosage"""
     x = gt.split(b'|')
     return int(x[0])+int(x[1])
+
+
+def calculate_missingness(miss_buf):
+    if len(miss_buf)==1:
+        pct_missing = sum(miss_buf[0]) / len(miss_buf[0])
+    else:
+        pct_missing = np.all(miss_buf, axis=0).sum() / len(miss_buf[0])
+    return pct_missing
 
 
 def patch_phased_vcf(vcf_file, phased_vcf_file, patched_vcf_file, missingness_threshold=0.15):
     """
     Patches phased VCF produced by SHAPEIT2
-    
     - if the dosage is different between the phased and unphased VCF, assigns to missing
     - for split biallelic sites, assigns to missing if ALT site is different (e.g., 0|2)
     - filters out sites with missingness > missingness_threshold
@@ -34,7 +37,12 @@ def patch_phased_vcf(vcf_file, phased_vcf_file, patched_vcf_file, missingness_th
 
     pgt_set = set([b'.|.', b'0|0', b'0|1', b'1|0', b'1|1'])
 
+    num_var = int(subprocess.check_output('zcat {} | grep -v "#" | wc -l'.format(phased_vcf_file), shell=True).decode())
+    print('  * parsing {} sites'.format(num_var))
+
     bgzip = subprocess.Popen('bgzip -c > '+patched_vcf_file, stdin=subprocess.PIPE, shell=True)
+    nwritten = 0
+    ndropped = 0
     with gzip.open(vcf_file) as vcf, gzip.open(phased_vcf_file) as phased_vcf, open(log_file, 'w') as log:
         # skip header of unphased VCF
         for line in vcf:
@@ -53,7 +61,7 @@ def patch_phased_vcf(vcf_file, phased_vcf_file, patched_vcf_file, missingness_th
         buf = []
         miss_buf = []
         previous_pos = None
-        for k, (line, pline) in enumerate(zip(vcf, phased_vcf)):
+        for k, (line, pline) in enumerate(zip(vcf, phased_vcf), 1):
             line = line.strip().split(b'\t')
             s = pline.strip().split(b'\t')
             assert line[2]==s[2]  # same variant
@@ -62,18 +70,15 @@ def patch_phased_vcf(vcf_file, phased_vcf_file, patched_vcf_file, missingness_th
 
             # if new site, write previous
             if pos != previous_pos and previous_pos is not None:
-                # 1) calculate missingness
-                if len(miss_buf)==1:
-                    pct_missing = sum(miss_buf[0]) / len(miss_buf[0])
-                else:
-                    pct_missing = np.all(miss_buf, axis=0).sum() / len(miss_buf[0])
-
-                # 2) write site
+                # calculate missingness and write site
+                pct_missing = calculate_missingness(miss_buf)
                 if pct_missing <= missingness_threshold:
                     for b in buf:
                         bgzip.stdin.write(b'\t'.join(b)+b'\n')
+                    nwritten += len(buf)
                 else:
-                    log.write('{}: missingness {:.4f}, removed.\n'.format(previous_pos, pct_missing))
+                    log.write('{}: missingness {:.4f}, removed (n = {}).\n'.format(previous_pos.decode(), pct_missing, len(buf)))
+                    ndropped += len(buf)
 
                 # reset buffers
                 buf = []
@@ -103,9 +108,23 @@ def patch_phased_vcf(vcf_file, phased_vcf_file, patched_vcf_file, missingness_th
             previous_pos = pos
 
             if np.mod(k, 10000)==0:
-                print('\r  * variants processed: {}'.format(k), end='', flush=True)
+                print('\r    * variants processed: {}'.format(k), end='', flush=True)
+        print('\r    * variants processed: {}'.format(k), end='', flush=True)
         print()
+
+        # last site: calculate missingness and write site
+        pct_missing = calculate_missingness(miss_buf)
+        if pct_missing <= missingness_threshold:
+            for b in buf:
+                bgzip.stdin.write(b'\t'.join(b)+b'\n')
+            nwritten += len(buf)
+        else:
+            log.write('{}: missingness {:.4f}, removed (n = {}).\n'.format(previous_pos.decode(), pct_missing, len(buf)))
+            ndropped += len(buf)
+
     stdout, stderr = bgzip.communicate()
+    print('  * wrote {} sites'.format(nwritten))
+    print('  * dropped {} sites'.format(ndropped))
 
 
 if __name__=='__main__':
@@ -123,3 +142,5 @@ if __name__=='__main__':
     # index
     print('['+datetime.now().strftime("%b %d %H:%M:%S")+'] Indexing patched VCF', flush=True)
     subprocess.check_call('tabix '+args.patched_vcf_file, shell=True)
+    n = int(subprocess.check_output('bcftools index -n {}'.format(args.patched_vcf_file), shell=True).decode().strip())
+    print('  * {} sites remaining'.format(n))
