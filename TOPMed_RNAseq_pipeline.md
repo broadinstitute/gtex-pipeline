@@ -251,6 +251,7 @@ The following variables must be defined:
         --paired-end \
         --estimate-rspd \
         --strand-specific \
+        --forward-prob 0.0 \
         --bam ${sample_id}.Aligned.toTranscriptome.out.bam \
         ${rsem_reference} ${sample_id}
     ```
