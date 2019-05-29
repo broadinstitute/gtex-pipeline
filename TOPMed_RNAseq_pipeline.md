@@ -24,7 +24,7 @@ This document also describes the generation of the reference files required for 
 ### Pipeline components
 * Alignment: [STAR 2.6.1d](https://github.com/alexdobin/STAR)
   * Post-processing: [Picard 2.18.17](https://github.com/broadinstitute/picard) [MarkDuplicates](https://broadinstitute.github.io/picard/command-line-overview.html#MarkDuplicates)
-* Gene quantification and quality control: [RNA-SeQC 2.1.0](https://github.com/broadinstitute/rnaseqc)
+* Gene quantification and quality control: [RNA-SeQC 2.3.3](https://github.com/broadinstitute/rnaseqc)
 * Transcript quantification: [RSEM 1.3.1](https://deweylab.github.io/RSEM/)
 * Utilities: [SAMtools 1.9](https://github.com/samtools/samtools/releases) and [HTSlib 1.9](https://github.com/samtools/htslib/releases)
 
@@ -178,7 +178,7 @@ This section lists the source repositories and installation instructions for the
     PATH /opt/RSEM-1.3.1:$PATH
     ```
 
-4. RNA-SeQC v2.1.0:
+4. RNA-SeQC v2.3.3:
     ```
     cd /opt && \
     git clone --recursive https://github.com/broadinstitute/rnaseqc.git && \
