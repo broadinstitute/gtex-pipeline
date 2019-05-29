@@ -29,13 +29,13 @@ This document also describes the generation of the reference files required for 
 * Utilities: [SAMtools 1.9](https://github.com/samtools/samtools/releases) and [HTSlib 1.9](https://github.com/samtools/htslib/releases)
 
 ### Reference files
-This section describes the GRCh38 reference genome and GENCODE 29 annotation used, including the addition of ERCC spike-in annotations.
+This section describes the GRCh38 reference genome and GENCODE 30 annotation used, including the addition of ERCC spike-in annotations.
 
 The reference files described in this section can be obtained through the following links:
 * Reference genome for RNA-seq alignment (contains .fasta, .fai, and .dict files): [Homo_sapiens_assembly38_noALT_noHLA_noDecoy_ERCC.tar.gz](https://personal.broadinstitute.org/francois/topmed/Homo_sapiens_assembly38_noALT_noHLA_noDecoy_ERCC.tar.gz)
-* Collapsed gene model: [gencode.v29.GRCh38.ERCC.genes.collapsed_only.gtf.gz](https://personal.broadinstitute.org/francois/topmed/gencode.v29.GRCh38.ERCC.genes.collapsed_only.gtf.gz)
-* STAR index: [STAR_genome_GRCh38_noALT_noHLA_noDecoy_ERCC_v29_oh100.tar.gz](https://personal.broadinstitute.org/francois/topmed/STAR_genome_GRCh38_noALT_noHLA_noDecoy_ERCC_v29_oh100.tar.gz)
-* RSEM reference: [rsem_reference_GRCh38_gencode29_ercc.tar.gz](https://personal.broadinstitute.org/francois/topmed/rsem_reference_GRCh38_gencode29_ercc.tar.gz)
+* Collapsed gene model: [gencode.v30.GRCh38.ERCC.genes.collapsed_only.gtf.gz](https://personal.broadinstitute.org/francois/topmed/gencode.v30.GRCh38.ERCC.genes.collapsed_only.gtf.gz)
+* STAR index: [STAR_genome_GRCh38_noALT_noHLA_noDecoy_ERCC_v30_oh100.tar.gz](https://personal.broadinstitute.org/francois/topmed/STAR_genome_GRCh38_noALT_noHLA_noDecoy_ERCC_v30_oh100.tar.gz)
+* RSEM reference: [rsem_reference_GRCh38_gencode30_ercc.tar.gz](https://personal.broadinstitute.org/francois/topmed/rsem_reference_GRCh38_gencode30_ercc.tar.gz)
 
 *Note: the reference genome is based on the Broad Institute's GRCh38 reference, which is used for aligning TOPMed whole genome sequence data.*
 
@@ -81,13 +81,13 @@ For RNA-seq analyses, a reference FASTA excluding ALT, HLA, and Decoy contigs wa
 
 #### Reference annotation
 The reference annotations were prepared as follows:
-1. The [GENCODE 29](https://www.gencodegenes.org/human/release_29.html) annotation was downloaded from the GENCODE  [FTP](ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_29/gencode.v29.annotation.gtf.gz).
+1. The [GENCODE 30](https://www.gencodegenes.org/human/release_30.html) annotation was downloaded from the GENCODE  [FTP](ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_30/gencode.v30.annotation.gtf.gz).
 
 2. For gene-level quantifications, the annotation was collapsed with the [script](https://github.com/broadinstitute/gtex-pipeline/blob/master/gene_model/collapse_annotation.py) used in the [GTEx pipeline](https://github.com/broadinstitute/gtex-pipeline/tree/master/gene_model):
     ```bash
     python3 collapse_annotation.py \
-        --collapse_only gencode.v29.GRCh38.annotation.gtf \
-        gencode.v29.GRCh38.genes.collapsed_only.gtf
+        --collapse_only gencode.v30.GRCh38.annotation.gtf \
+        gencode.v30.GRCh38.genes.collapsed_only.gtf
     ```
 3. Gene- and transcript-level attributes were added to the ERCC GTF with the following Python code:
     ```python
@@ -124,26 +124,26 @@ The reference annotations were prepared as follows:
 
 4. The ERCC annotation was appended to the reference GTFs:
     ```bash
-    cat gencode.v29.GRCh38.annotation.gtf ERCC92.genes.patched.gtf \
-        > gencode.v29.GRCh38.annotation.ERCC.gtf
-    cat gencode.v29.GRCh38.genes.gtf ERCC92.genes.patched.gtf \
-        > gencode.v29.GRCh38.ERCC.genes.gtf
+    cat gencode.v30.GRCh38.annotation.gtf ERCC92.genes.patched.gtf \
+        > gencode.v30.GRCh38.annotation.ERCC.gtf
+    cat gencode.v30.GRCh38.genes.gtf ERCC92.genes.patched.gtf \
+        > gencode.v30.GRCh38.ERCC.genes.gtf
     ```
 
 #### STAR index
 All RNA-seq samples were sequenced as 2x101bp paired-end, and the STAR index was generated accordingly:
 ```bash
 STAR --runMode genomeGenerate \
-    --genomeDir STAR_genome_GRCh38_noALT_noHLA_noDecoy_ERCC_v29_oh100 \
+    --genomeDir STAR_genome_GRCh38_noALT_noHLA_noDecoy_ERCC_v30_oh100 \
     --genomeFastaFiles Homo_sapiens_assembly38_noALT_noHLA_noDecoy.fasta ERCC92.patched.fa \
-    --sjdbGTFfile gencode.v29.GRCh38.annotation.ERCC92.gtf \
+    --sjdbGTFfile gencode.v30.GRCh38.annotation.ERCC92.gtf \
     --sjdbOverhang 100 --runThreadN 10
 ```
 #### RSEM reference
 The RSEM references were generated using:
 ```bash
 rsem-prepare-reference --num-threads 10 \
-    --gtf gencode.v29.GRCh38.annotation.ERCC92.gtf \
+    --gtf gencode.v30.GRCh38.annotation.ERCC92.gtf \
     Homo_sapiens_assembly38_noALT_noHLA_noDecoy.fasta,ERCC92.patched.fa \
     rsem_reference
 ```
@@ -195,7 +195,7 @@ The following variables must be defined:
 * `sample_id`: sample identifier; this will be prepended to output files
 * `rsem_reference`: path to the directory containing the RSEM reference
 * `genome_fasta`: path to the reference genome (`Homo_sapiens_assembly38_noALT_noHLA_noDecoy_ERCC.fasta` as described above)
-* `genes_gtf`: path to the collapsed, gene-level GTF (`gencode.v29.GRCh38.ERCC.genes.gtf` as described above)
+* `genes_gtf`: path to the collapsed, gene-level GTF (`gencode.v30.GRCh38.ERCC.genes.gtf` as described above)
 * `star_bam_file`: name/file path of the BAM generated by the STAR aligner, by default `${sample_id}.Aligned.sortedByCoord.out.bam`.
 * `md_bam_file`: name of the BAM generated by Picard MarkDuplicates.
 
@@ -269,7 +269,7 @@ The following variables must be defined:
 * `sample_id`: sample identifier; this will be prepended to output files
 * `rsem_reference`: path to the directory containing the RSEM reference
 * `genome_fasta`: path to the reference genome (`Homo_sapiens_assembly38_noALT_noHLA_noDecoy_ERCC.fasta` as described above)
-* `genes_gtf`: path to the collapsed, gene-level GTF (`gencode.v29.GRCh38.ERCC.genes.gtf` as described above)
+* `genes_gtf`: path to the collapsed, gene-level GTF (`gencode.v30.GRCh38.ERCC.genes.gtf` as described above)
 
 1. STAR ([run_STAR.py](rnaseq/src/run_STAR.py))
     ```bash
