@@ -46,7 +46,7 @@ RUN cd /opt && \
 
 # Picard tools
 RUN mkdir /opt/picard-tools && \
-    wget --no-check-certificate -P /opt/picard-tools/ https://github.com/broadinstitute/picard/releases/download/2.18.24/picard.jar
+    wget --no-check-certificate -P /opt/picard-tools/ https://github.com/broadinstitute/picard/releases/download/2.20.2/picard.jar
 
 # STAR v2.6.1d
 RUN cd /opt && \
@@ -73,16 +73,16 @@ COPY bamsync /opt/bamsync
 RUN cd /opt/bamsync && make
 ENV PATH /opt/bamsync:$PATH
 
-# kallisto v0.45.0
+# kallisto
 RUN cd /opt && \
-    wget https://github.com/pachterlab/kallisto/releases/download/v0.45.0/kallisto_linux-v0.45.0.tar.gz && \
-    tar -xf kallisto_linux-v0.45.0.tar.gz && rm kallisto_linux-v0.45.0.tar.gz
-ENV PATH $PATH:/opt/kallisto_linux-v0.45.0
+    wget https://github.com/pachterlab/kallisto/releases/download/v0.46.0/kallisto_linux-v0.46.0.tar.gz && \
+    tar -xf kallisto_linux-v0.46.0.tar.gz && rm kallisto_linux-v0.46.0.tar.gz
+ENV PATH $PATH:/opt/kallisto_linux-v0.46.0
 
 # bedtools
 RUN cd /opt && \
-    wget --no-check-certificate https://github.com/arq5x/bedtools2/releases/download/v2.27.1/bedtools-2.27.1.tar.gz && \
-    tar -xf bedtools-2.27.1.tar.gz && rm bedtools-2.27.1.tar.gz && \
+    wget --no-check-certificate https://github.com/arq5x/bedtools2/releases/download/v2.28.0/bedtools-2.28.0.tar.gz && \
+    tar -xf bedtools-2.28.0.tar.gz && rm bedtools-2.28.0.tar.gz && \
     cd bedtools2 && make && make install && make clean
 
 # UCSC tools
@@ -100,8 +100,8 @@ RUN pip3 install pyBigWig
 
 # RNA-SeQC
 RUN mkdir /opt/rnaseqc && cd /opt/rnaseqc && \
-    wget https://github.com/broadinstitute/rnaseqc/releases/download/v2.3.3/rnaseqc.v2.3.3.linux.gz && \
-    gunzip rnaseqc.v2.3.3.linux.gz && mv rnaseqc.v2.3.3.linux rnaseqc && chmod 775 rnaseqc
+    wget https://github.com/broadinstitute/rnaseqc/releases/download/v2.3.4/rnaseqc.v2.3.4.linux.gz && \
+    gunzip rnaseqc.v2.3.4.linux.gz && mv rnaseqc.v2.3.4.linux rnaseqc && chmod 775 rnaseqc
 ENV PATH /opt/rnaseqc:$PATH
 
 # gcloud

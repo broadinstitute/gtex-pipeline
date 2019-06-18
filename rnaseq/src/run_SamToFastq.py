@@ -47,7 +47,7 @@ with cd(args.output_dir):
     subprocess.check_call('gzip -'+args.gzip+' -c < read0_pipe > '+fastq0+' &', shell=True)
 
     # SamToFastq (write to pipes)
-    cmd = 'java -jar -Xmx'+args.memory+'g '+args.jar+' SamToFastq INPUT='+args.bam_file\
+    cmd = 'java -jar -Xmx'+str(int(args.memory))+'g '+args.jar+' SamToFastq INPUT='+args.bam_file\
         +' INCLUDE_NON_PF_READS='+args.include_non_pf_reads\
         +' INCLUDE_NON_PRIMARY_ALIGNMENTS='+args.include_non_primary_alignments\
         +' VALIDATION_STRINGENCY=SILENT FASTQ=read1_pipe SECOND_END_FASTQ=read2_pipe UNPAIRED_FASTQ=read0_pipe'
