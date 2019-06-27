@@ -5,7 +5,8 @@ task markduplicates {
     Int? max_records_in_ram
     Float? sorting_collection_size_ratio
 
-    Int memory
+    Float memory
+    Int java_memory = floor(memory - 0.5)
     Int disk_space
     Int num_threads
     Int num_preempt
@@ -15,7 +16,7 @@ task markduplicates {
     command {
         set -euo pipefail
         python3 -u /src/run_MarkDuplicates.py ${input_bam} ${prefix} \
-            --memory ${memory} \
+            --memory ${java_memory} \
             ${"--max_records_in_ram " + max_records_in_ram} \
             ${"--sorting_collection_size_ratio " + sorting_collection_size_ratio}
         samtools index ${output_bam}
