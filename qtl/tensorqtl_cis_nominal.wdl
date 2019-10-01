@@ -10,7 +10,6 @@ task tensorqtl_cis_nominal {
 
     File? interaction
     File? phenotype_groups
-    Int? batch_size
 
     Int memory
     Int disk_space
@@ -25,8 +24,7 @@ task tensorqtl_cis_nominal {
             --mode cis_nominal \
             --covariates ${covariates} \
             ${"--interaction " + interaction} \
-            ${"--phenotype_groups " + phenotype_groups} \
-            ${"--batch_size " + batch_size}
+            ${"--phenotype_groups " + phenotype_groups}
     }
 
     runtime {

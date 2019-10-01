@@ -9,7 +9,6 @@ task tensorqtl_cis {
     String prefix
 
     File? phenotype_groups
-    Int? batch_size
     Float? fdr
     Float? qvalue_lambda
 
@@ -26,7 +25,6 @@ task tensorqtl_cis {
             --mode cis \
             --covariates ${covariates} \
             ${"--phenotype_groups " + phenotype_groups} \
-            ${"--batch_size " + batch_size} \
             ${"--fdr " + fdr} \
             ${"--qvalue_lambda " + qvalue_lambda}
     }
