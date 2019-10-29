@@ -1,4 +1,4 @@
-task tensorqtl_cis {
+task tensorqtl_cis_permutations {
 
     File plink_bed
     File plink_bim
@@ -51,6 +51,6 @@ task tensorqtl_cis {
     }
 }
 
-workflow tensorqtl_cis_workflow {
-    call tensorqtl_cis
+workflow tensorqtl_cis_permutations_workflow {
+    call tensorqtl_cis_permutations
 }
