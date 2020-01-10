@@ -26,11 +26,12 @@ task rsem {
             ${"--paired_end " + paired_end} \
             --threads ${num_threads} \
             rsem_reference ${transcriptome_bam} ${prefix}
+        gzip *.results
     }
 
     output {
-        File genes="${prefix}.rsem.genes.results"
-        File isoforms="${prefix}.rsem.isoforms.results"
+        File genes="${prefix}.rsem.genes.results.gz"
+        File isoforms="${prefix}.rsem.isoforms.results.gz"
     }
 
     runtime {
