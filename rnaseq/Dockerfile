@@ -1,5 +1,5 @@
 # Dockerfile for GTEx RNA-seq pipeline
-FROM ubuntu:16.04
+FROM ubuntu:18.04
 MAINTAINER Francois Aguet
 
 RUN apt-get update && apt-get install -y software-properties-common && \
@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y software-properties-common && \
         libboost-all-dev \
         libbz2-dev \
         libcurl3-dev \
+        libhdf5-serial-dev \
         liblzma-dev \
         libncurses5-dev \
         libssl-dev \
@@ -44,10 +45,6 @@ RUN cd /opt && \
     tar -xf samtools-1.9.tar.bz2 && rm samtools-1.9.tar.bz2 && cd samtools-1.9 && \
     ./configure --with-htslib=/opt/htslib-1.9 && make && make install && make clean
 
-# Picard tools
-RUN mkdir /opt/picard-tools && \
-    wget --no-check-certificate -P /opt/picard-tools/ https://github.com/broadinstitute/picard/releases/download/2.20.2/picard.jar
-
 # STAR v2.6.1d
 RUN cd /opt && \
     wget --no-check-certificate https://github.com/alexdobin/STAR/archive/2.6.1d.tar.gz && \
@@ -73,16 +70,20 @@ COPY bamsync /opt/bamsync
 RUN cd /opt/bamsync && make
 ENV PATH /opt/bamsync:$PATH
 
+# Picard tools
+RUN mkdir /opt/picard-tools && \
+    wget --no-check-certificate -P /opt/picard-tools/ https://github.com/broadinstitute/picard/releases/download/2.21.4/picard.jar
+
 # kallisto
 RUN cd /opt && \
-    wget https://github.com/pachterlab/kallisto/releases/download/v0.46.0/kallisto_linux-v0.46.0.tar.gz && \
-    tar -xf kallisto_linux-v0.46.0.tar.gz && rm kallisto_linux-v0.46.0.tar.gz
-ENV PATH $PATH:/opt/kallisto_linux-v0.46.0
+    wget https://github.com/pachterlab/kallisto/releases/download/v0.46.1/kallisto_linux-v0.46.1.tar.gz && \
+    tar -xf kallisto_linux-v0.46.1.tar.gz && rm kallisto_linux-v0.46.1.tar.gz
+ENV PATH $PATH:/opt/kallisto_linux-v0.46.1
 
 # bedtools
 RUN cd /opt && \
-    wget --no-check-certificate https://github.com/arq5x/bedtools2/releases/download/v2.28.0/bedtools-2.28.0.tar.gz && \
-    tar -xf bedtools-2.28.0.tar.gz && rm bedtools-2.28.0.tar.gz && \
+    wget --no-check-certificate https://github.com/arq5x/bedtools2/releases/download/v2.29.0/bedtools-2.29.0.tar.gz && \
+    tar -xf bedtools-2.29.0.tar.gz && rm bedtools-2.29.0.tar.gz && \
     cd bedtools2 && make && make install && make clean
 
 # UCSC tools
@@ -93,8 +94,8 @@ RUN mkdir /opt/ucsc && \
 ENV PATH /opt/ucsc:$PATH
 
 # python modules
-RUN pip3 install --upgrade pip
-RUN pip3 install tables numpy pandas feather-format
+RUN pip3 install --upgrade pip setuptools
+RUN pip3 install tables numpy pandas
 # numpy dependencies:
 RUN pip3 install pyBigWig
 
