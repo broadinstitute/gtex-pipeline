@@ -168,13 +168,19 @@ if __name__=='__main__':
 
     counts_df = read_gct(args.counts_gct, sample_ids)
     tpm_df = read_gct(args.tpm_gct, sample_ids)
+    sample_participant_lookup_s = pd.read_csv(args.sample_participant_lookup, sep='\t', index_col=0, dtype=str, squeeze=True)
+
+    # check inputs
+    if not np.all(counts_df.columns == tpm_df.columns):
+        raise ValueError('Sample IDs in the TPM and read counts files must match.')
+    if not np.all(counts_df.columns.isin(sample_participant_lookup_s.index)):
+        raise ValueError('Sample IDs in expression files and participant lookup table must match.')
 
     if args.convert_tpm:
         print('  * Converting to TPM', flush=True)
         tpm_df = tpm_df/tpm_df.sum(0)*1e6
 
     print('Normalizing data ({})'.format(args.normalization_method), flush=True)
-    sample_participant_lookup_s = pd.read_csv(args.sample_participant_lookup, sep='\t', index_col=0, dtype=str, squeeze=True)
     norm_df = prepare_expression(counts_df, tpm_df, sample_participant_lookup_s, sample_frac_threshold=args.sample_frac_threshold,
         count_threshold=args.count_threshold, tpm_threshold=args.tpm_threshold, mode=args.normalization_method)
     print('  * {} genes in input tables.'.format(counts_df.shape[0]), flush=True)
