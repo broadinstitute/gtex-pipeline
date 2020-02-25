@@ -69,6 +69,9 @@ class Annotation:
                         attributes.setdefault('tags', []).append(kv[1])
 
                 if annot_type=='gene':
+                    assert 'gene_id' in attributes
+                    if 'gene_name' not in attributes:
+                        attributes['gene_name'] = attributes['gene_id']
                     gene_id = attributes['gene_id']
                     g = Gene(gene_id, attributes['gene_name'], attributes['gene_type'], chrom, strand, start_pos, end_pos)
                     g.source = row[1]
@@ -77,6 +80,9 @@ class Annotation:
                     self.genes.append(g)
 
                 elif annot_type=='transcript':
+                    assert 'transcript_id' in attributes
+                    if 'transcript_name' not in attributes:
+                        attributes['transcript_name'] = attributes['transcript_id']
                     transcript_id = attributes['transcript_id']
                     t = Transcript(attributes.pop('transcript_id'), attributes.pop('transcript_name'),
                                    attributes.pop('transcript_type'), g, start_pos, end_pos)
@@ -132,7 +138,10 @@ def subtract_segment(a, b):
 
 def add_transcript_attributes(attributes_string):
     """
-    'status' fields were dropped in Gencode 26
+    Adds transcript attributes if they were missing
+    (see https://www.gencodegenes.org/pages/data_format.html)
+
+    'status' fields were dropped in Gencode 26 and later
     """
     # GTF specification
     if 'gene_status' in attributes_string:
@@ -154,6 +163,10 @@ def add_transcript_attributes(attributes_string):
         else:
             opt.append(k)
     attr_dict = {i.split()[0]:i.split()[1].replace(';','') for i in req}
+    if 'gene_name' not in attr_dict:
+        attr_dict['gene_name'] = attr_dict['gene_id']
+    if 'transcript_id' not in attr_dict:
+        attr_dict['transcript_id'] = attr_dict['gene_id']
     for k in add_list:
         if k not in attr_dict:
             attr_dict[k] = attr_dict[k.replace('transcript', 'gene')]
