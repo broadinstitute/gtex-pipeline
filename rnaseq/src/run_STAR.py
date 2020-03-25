@@ -43,10 +43,13 @@ parser.add_argument('--outSAMtype', default=['BAM', 'Unsorted'], nargs='+')
 parser.add_argument('--outSAMunmapped', default='Within', help='Keep unmapped reads in output BAM')
 parser.add_argument('--outSAMattrRGline', default=['ID:rg1', 'SM:sm1'], nargs='+', help='Adds read group line to BAM header; required by GATK')
 parser.add_argument('--outSAMattributes', default=['NH', 'HI', 'AS', 'nM', 'NM', 'ch'], nargs='+')
+parser.add_argument('--varVCFfile', default=None, help='VCF for the input sample; currently supports SNPs only')
+parser.add_argument('--waspOutputMode', default='SAMtag')
 parser.add_argument('--chimSegmentMin', default='15', help='Minimum chimeric segment length; switches on detection of chimeric (fusion) alignments')
 parser.add_argument('--chimJunctionOverhangMin', default='15', help='Minimum overhang for a chimeric junction')
-parser.add_argument('--chimOutType', default=['WithinBAM', 'SoftClip'], nargs='+', help='')
+parser.add_argument('--chimOutType', default=['Junctions', 'WithinBAM', 'SoftClip'], nargs='+', help='')
 parser.add_argument('--chimMainSegmentMultNmax', default='1', help='')
+parser.add_argument('--chimOutJunctionFormat', default='0', help='Formatting for Chimeric.out.junction')
 parser.add_argument('--genomeLoad', default='NoSharedMemory')
 parser.add_argument('--sjdbFileChrStartEnd', default=None, help='SJ.out.tab file (e.g., from 1st pass). With this option, only one pass will be run')
 parser.add_argument('--STARlong', action='store_true', help='Use STARlong instead of STAR')
@@ -78,9 +81,17 @@ cmd += ' --outFileNamePrefix '+os.path.join(args.output_dir, args.prefix)+'.'\
     +' --outSAMstrandField '+args.outSAMstrandField+' --outFilterIntronMotifs '+args.outFilterIntronMotifs\
     +' --alignSoftClipAtReferenceEnds '+args.alignSoftClipAtReferenceEnds+' --quantMode '+' '.join(args.quantMode)\
     +' --outSAMtype '+' '.join(args.outSAMtype)+' --outSAMunmapped '+args.outSAMunmapped+' --genomeLoad '+args.genomeLoad
+if args.waspOutputMode=='SAMtag' and args.varVCFfile is not None:
+    assert args.varVCFfile.endswith('.vcf.gz')
+    # only SNVs are currently supported
+    cmd += ' --waspOutputMode SAMtag --varVCFfile <(zcat {})'.format(args.varVCFfile)
+    if 'vw' not in args.outSAMattributes:
+        args.outSAMattributes.append('vW')
+        print("  * adding 'vW' tag to outSAMattributes", flush=True)
 if int(args.chimSegmentMin)>0:
     cmd += ' --chimSegmentMin '+args.chimSegmentMin+' --chimJunctionOverhangMin '+args.chimJunctionOverhangMin\
-        +' --chimOutType '+' '.join(args.chimOutType)+' --chimMainSegmentMultNmax '+args.chimMainSegmentMultNmax
+        +' --chimOutType '+' '.join(args.chimOutType)+' --chimMainSegmentMultNmax '+args.chimMainSegmentMultNmax\
+        +' --chimOutJunctionFormat {}'.format(args.chimOutJunctionFormat)
 cmd += ' --outSAMattributes '+' '.join(args.outSAMattributes)+' --outSAMattrRGline '+' '.join(args.outSAMattrRGline)
 if args.sjdbFileChrStartEnd is not None:
     cmd += ' --sjdbFileChrStartEnd '+args.sjdbFileChrStartEnd
@@ -115,10 +126,22 @@ with cd(args.output_dir):
     subprocess.check_call(cmd, shell=True, executable='/bin/bash')
     print('['+datetime.now().strftime("%b %d %H:%M:%S")+'] Finished indexing BAM', flush=True)
 
+    # rename and compress outputs
+    subprocess.check_call('gzip '+args.prefix+'.SJ.out.tab', shell=True, executable='/bin/bash')
+    with cd(args.prefix+'._STARpass1'):
+        os.rename('SJ.out.tab', args.prefix+'.SJ.pass1.out.tab')
+        subprocess.check_call('gzip '+args.prefix+'.SJ.pass1.out.tab', shell=True, executable='/bin/bash')
+
+    if os.path.exists(args.prefix+'.ReadsPerGene.out.tab'):
+        subprocess.check_call('gzip '+args.prefix+'.ReadsPerGene.out.tab', shell=True, executable='/bin/bash')
+
     # sort and index chimeric BAM
-    if int(args.chimSegmentMin)>0:
+    if os.path.exists(args.prefix+'.Chimeric.out.sam'):
         cmd = 'samtools sort --threads '+args.threads+' -o '+args.prefix+'.Chimeric.out.sorted.bam '+args.prefix+'.Chimeric.out.sam'
         subprocess.check_call(cmd, shell=True, executable='/bin/bash')
         cmd = 'samtools index '+args.prefix+'.Chimeric.out.sorted.bam'
         subprocess.check_call(cmd, shell=True, executable='/bin/bash')
         os.remove(args.prefix+'.Chimeric.out.sam')
+
+    if os.path.exists(args.prefix+'.Chimeric.out.junction'):
+        subprocess.check_call('gzip '+args.prefix+'.Chimeric.out.junction', shell=True, executable='/bin/bash')

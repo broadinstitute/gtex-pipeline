@@ -49,10 +49,13 @@ invisible(PEER_setPriorAlpha(model, argv$alphaprior_a, argv$alphaprior_b))
 invisible(PEER_setPriorEps(model, argv$epsprior_a, argv$epsprior_b))
 invisible(PEER_setNmax_iterations(model, argv$max_iter))
 if (!is.null(argv$covariates) && !is.na(argv$covariates)) {
+    has.cov <- TRUE
     covar.df <- read.table(argv$covariates, sep="\t", header=TRUE, row.names=1, as.is=TRUE)
-    covar.df <- sapply(covar.df, as.numeric)
+    covar.df[] <- sapply(covar.df, as.numeric)
     cat(paste0("  * including ", dim(covar.df)[2], " covariates", "\n"))
-    invisible(PEER_setCovariates(model, as.matrix(covar.df)))  # samples x covariates
+    invisible(PEER_setCovariates(model, as.matrix(covar.df[rownames(M), ])))  # samples x covariates
+} else {
+    has.cov <- FALSE
 }
 time <- system.time(PEER_update(model))
 
@@ -61,10 +64,14 @@ A <- PEER_getAlpha(model)  # PEER factors x 1
 R <- t(PEER_getResiduals(model))  # genes x samples
 
 # add relevant row/column names
-c <- paste0("InferredCov",1:ncol(X))
+if (has.cov) {
+    cols <- c(colnames(covar.df), paste0("InferredCov",1:(ncol(X)-dim(covar.df)[2])))
+} else {
+    cols <- paste0("InferredCov",1:ncol(X))
+}
 rownames(X) <- rownames(M)
-colnames(X) <- c
-rownames(A) <- c
+colnames(X) <- cols
+rownames(A) <- cols
 colnames(A) <- "Alpha"
 A <- as.data.frame(A)
 A$Relevance <- 1.0 / A$Alpha

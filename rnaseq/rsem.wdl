@@ -26,15 +26,16 @@ task rsem {
             ${"--paired_end " + paired_end} \
             --threads ${num_threads} \
             rsem_reference ${transcriptome_bam} ${prefix}
+        gzip *.results
     }
 
     output {
-        File genes="${prefix}.rsem.genes.results"
-        File isoforms="${prefix}.rsem.isoforms.results"
+        File genes="${prefix}.rsem.genes.results.gz"
+        File isoforms="${prefix}.rsem.isoforms.results.gz"
     }
 
     runtime {
-        docker: "gcr.io/broad-cga-francois-gtex/gtex_rnaseq:V8"
+        docker: "gcr.io/broad-cga-francois-gtex/gtex_rnaseq:V9"
         memory: "${memory}GB"
         disks: "local-disk ${disk_space} HDD"
         cpu: "${num_threads}"

@@ -6,6 +6,8 @@ from collections import defaultdict
 from bx.intervals.intersection import IntervalTree
 import argparse
 import os
+import gzip
+
 
 class Exon:
     def __init__(self, exon_id, number, transcript, start_pos, end_pos):
@@ -38,42 +40,52 @@ class Gene:
 
 class Annotation:
     def __init__(self, gtfpath):
-        """
-        Parse GTF and construct gene/transcript/exon hierarchy
-        """
+        """Parse GTF and construct gene/transcript/exon hierarchy"""
+
+        if gtfpath.endswith('.gtf.gz'):
+            opener = gzip.open(gtfpath, 'rt')
+        else:
+            opener = open(gtfpath, 'r')
+
         self.genes = []
-            
-        with open(gtfpath, 'r') as gtf:
-            for (i,row) in enumerate(gtf):
+        with opener as gtf:
+            for row in gtf:
                 row = row.strip().split('\t')
-                
+
                 if row[0][0]=='#': continue # skip header
-                
+
                 chrom = row[0]
                 annot_type = row[2]
                 start_pos = int(row[3])
                 end_pos  = int(row[4])
                 strand = row[6]
-                
+
                 attributes = defaultdict()
-                for a in row[8].replace('"', '').split(';')[:-1]:
+                for a in row[8].replace('"', '').replace('_biotype', '_type').split(';')[:-1]:
                     kv = a.strip().split(' ')
                     if kv[0]!='tag':
                         attributes[kv[0]] = kv[1]
                     else:
                         attributes.setdefault('tags', []).append(kv[1])
-                
+
                 if annot_type=='gene':
+                    assert 'gene_id' in attributes
+                    if 'gene_name' not in attributes:
+                        attributes['gene_name'] = attributes['gene_id']
                     gene_id = attributes['gene_id']
                     g = Gene(gene_id, attributes['gene_name'], attributes['gene_type'], chrom, strand, start_pos, end_pos)
                     g.source = row[1]
                     g.phase = row[7]
-                    g.attributes_string = row[8]
+                    g.attributes_string = row[8].replace('_biotype', '_type')
                     self.genes.append(g)
-               
+
                 elif annot_type=='transcript':
+                    assert 'transcript_id' in attributes
+                    if 'transcript_name' not in attributes:
+                        attributes['transcript_name'] = attributes['transcript_id']
                     transcript_id = attributes['transcript_id']
-                    t = Transcript(attributes.pop('transcript_id'), attributes.pop('transcript_name'), attributes.pop('transcript_type'), g, start_pos, end_pos)
+                    t = Transcript(attributes.pop('transcript_id'), attributes.pop('transcript_name'),
+                                   attributes.pop('transcript_type'), g, start_pos, end_pos)
                     t.attributes = attributes
                     g.transcripts.append(t)
 
@@ -87,7 +99,7 @@ class Annotation:
                 if np.mod(len(self.genes),1000)==0:
                     print('Parsing GTF: {0:d} genes processed\r'.format(len(self.genes)), end='\r')
             print('Parsing GTF: {0:d} genes processed\r'.format(len(self.genes)))
-        
+
         self.genes = np.array(self.genes)
 
 
@@ -126,15 +138,22 @@ def subtract_segment(a, b):
 
 def add_transcript_attributes(attributes_string):
     """
-    'status' fields were dropped in Gencode 26
+    Adds transcript attributes if they were missing
+    (see https://www.gencodegenes.org/pages/data_format.html)
+
+    'status' fields were dropped in Gencode 26 and later
     """
     # GTF specification
     if 'gene_status' in attributes_string:
-        attribute_order = ['gene_id', 'transcript_id', 'gene_type', 'gene_status', 'gene_name', 'transcript_type', 'transcript_status', 'transcript_name', 'level']
+        attribute_order = ['gene_id', 'transcript_id', 'gene_type', 'gene_status', 'gene_name',
+                           'transcript_type', 'transcript_status', 'transcript_name']
         add_list = ['transcript_id', 'transcript_type', 'transcript_status', 'transcript_name']
     else:
-        attribute_order = ['gene_id', 'transcript_id', 'gene_type', 'gene_name', 'transcript_type', 'transcript_name', 'level']
+        attribute_order = ['gene_id', 'transcript_id', 'gene_type', 'gene_name', 'transcript_type', 'transcript_name']
         add_list = ['transcript_id', 'transcript_type', 'transcript_name']
+    if 'level' in attributes_string:
+        attribute_order += ['level']
+
     attr = attributes_string.strip(';').split('; ')
     req = []
     opt = []
@@ -144,10 +163,14 @@ def add_transcript_attributes(attributes_string):
         else:
             opt.append(k)
     attr_dict = {i.split()[0]:i.split()[1].replace(';','') for i in req}
+    if 'gene_name' not in attr_dict:
+        attr_dict['gene_name'] = attr_dict['gene_id']
+    if 'transcript_id' not in attr_dict:
+        attr_dict['transcript_id'] = attr_dict['gene_id']
     for k in add_list:
         if k not in attr_dict:
             attr_dict[k] = attr_dict[k.replace('transcript', 'gene')]
-    
+
     return '; '.join([k+' '+attr_dict[k] for k in attribute_order] + opt)+';'
 
 
@@ -212,14 +235,20 @@ def collapse_annotation(annot, transcript_gtf, collapsed_gtf, blacklist=set(), c
         new_coord_dict = merged_coord_dict
 
     # 5) write to GTF
-    with open(collapsed_gtf, 'w') as output_gtf, open(transcript_gtf) as input_gtf:
+    if transcript_gtf.endswith('.gtf.gz'):
+        opener = gzip.open(transcript_gtf, 'rt')
+    else:
+        opener = open(transcript_gtf, 'r')
+
+    with open(collapsed_gtf, 'w') as output_gtf, opener as input_gtf:
         # copy header
         for line in input_gtf:
-            if line[:2]=='##':
+            if line[:2]=='##' or line[:2]=='#!':
                 output_gtf.write(line)
+                comment = line[:2]
             else:
                 break
-        output_gtf.write('##collapsed version generated by GTEx LDACC\n')
+        output_gtf.write(comment+'collapsed version generated by GTEx pipeline\n')
         for g in annot.genes:
             if g.id in new_coord_dict:
                 start_pos = str(np.min([i[0] for i in new_coord_dict[g.id]]))
@@ -232,13 +261,14 @@ def collapse_annotation(annot, transcript_gtf, collapsed_gtf, blacklist=set(), c
                 output_gtf.write('\t'.join([g.chr, g.source, 'transcript', start_pos, end_pos, '.', g.strand, g.phase, attr])+'\n')
                 if g.strand=='-':
                     new_coord_dict[g.id] = new_coord_dict[g.id][::-1]
-                for k,i in enumerate(new_coord_dict[g.id]):
-                    output_gtf.write('\t'.join([g.chr, g.source, 'exon', str(i[0]), str(i[1]), '.', g.strand, g.phase,
-                        attr+' exon_id "'+g.id+'_{0:d}; exon_number {0:d}";'.format(k+1)])+'\n')
+                for k,i in enumerate(new_coord_dict[g.id], 1):
+                    output_gtf.write('\t'.join([
+                        g.chr, g.source, 'exon', str(i[0]), str(i[1]), '.', g.strand, g.phase,
+                        attr+' exon_id "'+g.id+'_{0:d}; exon_number {0:d}";'.format(k)])+'\n')
 
 
 if __name__=='__main__':
-    
+
     parser = argparse.ArgumentParser(description='Collapse isoforms into single transcript per gene and remove overlapping intervals between genes')
     parser.add_argument('transcript_gtf', help='Transcript annotation in GTF format')
     parser.add_argument('output_gtf', help='Name of the output file')

@@ -16,11 +16,12 @@ def cd(cd_path):
     os.chdir(saved_path)
 
 
-parser = argparse.ArgumentParser(description='Convert BAM to FASTQ using SamToFastq from Picard.')
-parser.add_argument('bam_file', type=str, help='BAM file')
+parser = argparse.ArgumentParser(description='Convert BAM/CRAM to FASTQ using Picard SamToFastq.')
+parser.add_argument('bam_file', type=str, help='BAM or CRAM file')
 parser.add_argument('-p', '--prefix', type=str, default='Reads', help='Prefix for output files; usually <sample_id>')
 parser.add_argument('-o', '--output_dir', default=os.getcwd(), help='Directory to which FASTQs will be written')
 parser.add_argument('-m', '--memory', default='8', type=str, help='Memory, in GB')
+parser.add_argument('--reference_fasta', default=None, help='Path to reference sequence FASTA (required if input is CRAM)')
 parser.add_argument('--jar', default='/opt/picard-tools/picard.jar', help='Path to Picard jar')
 parser.add_argument('--gzip', type=str.lower, default='1', help='gzip compression level for FASTQs; see "man gzip"')
 parser.add_argument('--include_non_pf_reads', type=str.lower, choices=['true', 'false'], default='true', help='Sets INCLUDE_NON_PF_READS option (PF: passed filtering). SamToFastq default: false')
@@ -46,10 +47,13 @@ with cd(args.output_dir):
     subprocess.check_call('gzip -'+args.gzip+' -c < read0_pipe > '+fastq0+' &', shell=True)
 
     # SamToFastq (write to pipes)
-    subprocess.check_call('java -jar -Xmx'+args.memory+'g '+args.jar+' SamToFastq INPUT='+args.bam_file\
+    cmd = 'java -jar -Xmx'+str(int(args.memory))+'g '+args.jar+' SamToFastq INPUT='+args.bam_file\
         +' INCLUDE_NON_PF_READS='+args.include_non_pf_reads\
         +' INCLUDE_NON_PRIMARY_ALIGNMENTS='+args.include_non_primary_alignments\
-        +' VALIDATION_STRINGENCY=SILENT FASTQ=read1_pipe SECOND_END_FASTQ=read2_pipe UNPAIRED_FASTQ=read0_pipe', shell=True)
+        +' VALIDATION_STRINGENCY=SILENT FASTQ=read1_pipe SECOND_END_FASTQ=read2_pipe UNPAIRED_FASTQ=read0_pipe'
+    if args.reference_fasta is not None:
+        cmd += ' REFERENCE_SEQUENCE={}'.format(args.reference_fasta)
+    subprocess.check_call(cmd, shell=True)
 
     # Delete named pipes
     subprocess.check_call('rm read1_pipe read2_pipe read0_pipe', shell=True)

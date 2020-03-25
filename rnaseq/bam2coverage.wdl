@@ -1,8 +1,9 @@
-task rsem_reference {
+task bam_to_coverage {
 
-    File reference_fasta
-    File annotation_gtf
+    File bam_file
+    File chr_sizes
     String prefix
+    File? intervals_bed
 
     Int memory
     Int disk_space
@@ -10,13 +11,12 @@ task rsem_reference {
     Int num_preempt
 
     command {
-        mkdir ${prefix} && cd ${prefix}
-        rsem-prepare-reference ${reference_fasta} rsem_reference --gtf ${annotation_gtf} --num-threads ${num_threads}
-        cd .. && tar -cvzf ${prefix}.tar.gz ${prefix}
+        set -euo pipefail
+        python3 /src/bam2coverage.py ${bam_file} ${chr_sizes} ${prefix} ${"--intersect " + intervals_bed}
     }
 
     output {
-        File rsem_reference = "${prefix}.tar.gz"
+        File coverage_file = "${prefix}.coverage.gz"
     }
 
     runtime {
@@ -33,6 +33,6 @@ task rsem_reference {
 }
 
 
-workflow rsem_reference_workflow {
-    call rsem_reference
+workflow bam_to_coverage_workflow {
+    call bam_to_coverage
 }
