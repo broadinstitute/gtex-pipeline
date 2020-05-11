@@ -27,11 +27,11 @@ Version in V7 pipeline:
 
 ##  Setup steps
 #### Reference genome and annotation
-Reference indexes for STAR and RSEM are needed to run the pipeline.
+Reference indexes for STAR and RSEM are needed to run the pipeline. All reference files are available at [gs://gtex-resources](https://console.cloud.google.com/storage/browser/gtex-resources).
 
-GTEx releases up to V7 were based on the GRCh37/hg19 genome reference ([download](http://www.broadinstitute.org/ftp/pub/seq/references/Homo_sapiens_assembly19.fasta)). Releases from V8 onward are based on GRCh38/hg38. Please see [TOPMed_RNAseq_pipeline.md](https://github.com/broadinstitute/gtex-pipeline/blob/master/TOPMed_RNAseq_pipeline.md) for details and links for this reference.
+GTEx releases from V8 onward are based on the GRCh38/hg38 reference genome. Please see [TOPMed_RNAseq_pipeline.md](https://github.com/broadinstitute/gtex-pipeline/blob/master/TOPMed_RNAseq_pipeline.md) for details and links for this reference. Releases up to V7 were based on the GRCh37/hg19 reference genome ([download](http://www.broadinstitute.org/ftp/pub/seq/references/Homo_sapiens_assembly19.fasta)). 
 
-Releases V6/V6p and V7 were based on the [GENCODE v19](https://www.gencodegenes.org/human/release_19.html) annotation; release V8 will be based on [GENCODE v26](https://www.gencodegenes.org/human/release_26.html).
+Release V8 uses the [GENCODE v26](https://www.gencodegenes.org/human/release_26.html) annotation. Releases V6/V6p and V7 used [GENCODE v19](https://www.gencodegenes.org/human/release_19.html).
 
 For hg19-based analyses, the GENCODE annotation should be patched to use Ensembl chromosome names:
 ```
@@ -40,7 +40,7 @@ zcat gencode.v19.annotation.gtf.gz | \
 ```
 
 #### Building the indexes
-The STAR index should be built to match the sequencing read length, specified by the _sjdbOverhang_ parameter. GTEx samples were sequenced using a 2x76 bp paired-end sequencing protocol, and the matching _sjdbOverhang_ is 75.
+The STAR index should be built to match the sequencing read length, specified by the `sjdbOverhang` parameter. GTEx samples were sequenced using a 2x76 bp paired-end sequencing protocol, and the matching `sjdbOverhang` is 75.
 
 ```bash
 # build the STAR index:
@@ -49,17 +49,17 @@ docker run --rm -v $path_to_references:/data -t broadinstitute/gtex_rnaseq:V8 \
     /bin/bash -c "STAR \
         --runMode genomeGenerate \
         --genomeDir /data/star_index_oh75 \
-        --genomeFastaFiles /data/Homo_sapiens_assembly19.fasta \
-        --sjdbGTFfile /data/gencode.v19.annotation.patched_contigs.gtf \
+        --genomeFastaFiles /data/Homo_sapiens_assembly38_noALT_noHLA_noDecoy.fasta \
+        --sjdbGTFfile /data/gencode.v26.GRCh38.annotation.gtf \
         --sjdbOverhang 75 \
         --runThreadN 4"
 
 # build the RSEM index:
 docker run --rm -v $path_to_references:/data -t broadinstitute/gtex_rnaseq:V8 \
     /bin/bash -c "rsem-prepare-reference \
-        /data/Homo_sapiens_assembly19.fasta \
+        /data/Homo_sapiens_assembly38_noALT_noHLA_noDecoy.fasta \
         /data/rsem_reference/rsem_reference \
-        --gtf /data/gencode.v19.annotation.patched_contigs.gtf \
+        --gtf /data/gencode.v26.GRCh38.annotation.gtf \
         --num-threads 4"
 ```
 
