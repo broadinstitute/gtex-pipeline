@@ -34,30 +34,30 @@ RUN apt-get update && apt-get install -y software-properties-common && \
 
 # htslib
 RUN cd /opt && \
-    wget --no-check-certificate https://github.com/samtools/htslib/releases/download/1.9/htslib-1.9.tar.bz2 && \
-    tar -xf htslib-1.9.tar.bz2 && rm htslib-1.9.tar.bz2 && cd htslib-1.9 && \
+    wget --no-check-certificate https://github.com/samtools/htslib/releases/download/1.10.2/htslib-1.10.2.tar.bz2 && \
+    tar -xf htslib-1.10.2.tar.bz2 && rm htslib-1.10.2.tar.bz2 && cd htslib-1.10.2 && \
     ./configure --enable-libcurl --enable-s3 --enable-plugins --enable-gcs && \
     make && make install && make clean
 
 # samtools
 RUN cd /opt && \
-    wget --no-check-certificate https://github.com/samtools/samtools/releases/download/1.9/samtools-1.9.tar.bz2 && \
-    tar -xf samtools-1.9.tar.bz2 && rm samtools-1.9.tar.bz2 && cd samtools-1.9 && \
-    ./configure --with-htslib=/opt/htslib-1.9 && make && make install && make clean
+    wget --no-check-certificate https://github.com/samtools/samtools/releases/download/1.10/samtools-1.10.tar.bz2 && \
+    tar -xf samtools-1.10.tar.bz2 && rm samtools-1.10.tar.bz2 && cd samtools-1.10 && \
+    ./configure --with-htslib=/opt/htslib-1.10 && make && make install && make clean
 
-# STAR v2.6.1d
+# STAR v2.7.5a
 RUN cd /opt && \
-    wget --no-check-certificate https://github.com/alexdobin/STAR/archive/2.6.1d.tar.gz && \
-    tar -xf 2.6.1d.tar.gz && rm 2.6.1d.tar.gz && \
-    make STAR -C STAR-2.6.1d/source && make STARlong -C STAR-2.6.1d/source && \
-    mv STAR-2.6.1d/source/STAR* STAR-2.6.1d/bin/Linux_x86_64/
-ENV PATH /opt/STAR-2.6.1d/bin/Linux_x86_64:$PATH
+    wget --no-check-certificate https://github.com/alexdobin/STAR/archive/2.7.5a.tar.gz && \
+    tar -xf 2.7.5a.tar.gz && rm 2.7.5a.tar.gz
+    # make STAR -C STAR-2.7.5a/source && make STARlong -C STAR-2.7.5a/source && \
+    # mv STAR-2.7.5a/source/STAR* STAR-2.7.5a/bin/Linux_x86_64/
+ENV PATH /opt/STAR-2.7.5a/bin/Linux_x86_64_static:$PATH
 
 # RSEM v1.3.1
 RUN cd /opt && \
-    wget --no-check-certificate https://github.com/deweylab/RSEM/archive/v1.3.1.tar.gz && \
-    tar -xvf v1.3.1.tar.gz && rm v1.3.1.tar.gz && cd RSEM-1.3.1 && make
-ENV PATH /opt/RSEM-1.3.1:$PATH
+    wget --no-check-certificate https://github.com/deweylab/RSEM/archive/v1.3.3.tar.gz && \
+    tar -xvf v1.3.3.tar.gz && rm v1.3.3.tar.gz && cd RSEM-1.3.3 && make
+ENV PATH /opt/RSEM-1.3.3:$PATH
 
 # bamtools
 RUN cd /opt && \
@@ -72,18 +72,18 @@ ENV PATH /opt/bamsync:$PATH
 
 # Picard tools
 RUN mkdir /opt/picard-tools && \
-    wget --no-check-certificate -P /opt/picard-tools/ https://github.com/broadinstitute/picard/releases/download/2.21.4/picard.jar
+    wget --no-check-certificate -P /opt/picard-tools/ https://github.com/broadinstitute/picard/releases/download/2.23.3/picard.jar
 
 # kallisto
 RUN cd /opt && \
-    wget https://github.com/pachterlab/kallisto/releases/download/v0.46.1/kallisto_linux-v0.46.1.tar.gz && \
-    tar -xf kallisto_linux-v0.46.1.tar.gz && rm kallisto_linux-v0.46.1.tar.gz
-ENV PATH $PATH:/opt/kallisto_linux-v0.46.1
+    wget https://github.com/pachterlab/kallisto/releases/download/v0.46.2/kallisto_linux-v0.46.2.tar.gz && \
+    tar -xf kallisto_linux-v0.46.2.tar.gz && rm kallisto_linux-v0.46.2.tar.gz
+ENV PATH $PATH:/opt/kallisto_linux-v0.46.2
 
 # bedtools
 RUN cd /opt && \
-    wget --no-check-certificate https://github.com/arq5x/bedtools2/releases/download/v2.29.0/bedtools-2.29.0.tar.gz && \
-    tar -xf bedtools-2.29.0.tar.gz && rm bedtools-2.29.0.tar.gz && \
+    wget --no-check-certificate https://github.com/arq5x/bedtools2/releases/download/v2.29.2/bedtools-2.29.2.tar.gz && \
+    tar -xf bedtools-2.29.2.tar.gz && rm bedtools-2.29.2.tar.gz && \
     cd bedtools2 && make && make install && make clean
 
 # UCSC tools
