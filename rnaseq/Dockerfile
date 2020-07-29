@@ -43,7 +43,7 @@ RUN cd /opt && \
 RUN cd /opt && \
     wget --no-check-certificate https://github.com/samtools/samtools/releases/download/1.10/samtools-1.10.tar.bz2 && \
     tar -xf samtools-1.10.tar.bz2 && rm samtools-1.10.tar.bz2 && cd samtools-1.10 && \
-    ./configure --with-htslib=/opt/htslib-1.10 && make && make install && make clean
+    ./configure --with-htslib=/opt/htslib-1.10.2 && make && make install && make clean
 
 # STAR v2.7.5a
 RUN cd /opt && \
