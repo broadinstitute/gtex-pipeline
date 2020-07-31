@@ -99,6 +99,12 @@ RUN pip3 install tables numpy pandas
 # numpy dependencies:
 RUN pip3 install pyBigWig
 
+# FastQC
+RUN cd /opt && \
+    wget https://www.bioinformatics.babraham.ac.uk/projects/fastqc/fastqc_v0.11.9.zip && \
+    unzip fastqc_v0.11.9.zip && mv FastQC FastQC-0.11.9 && cd FastQC-0.11.9 && chmod 775 fastqc
+ENV PATH /opt/FastQC-0.11.9:$PATH
+
 # RNA-SeQC
 RUN mkdir /opt/rnaseqc && cd /opt/rnaseqc && \
     wget https://github.com/getzlab/rnaseqc/releases/download/v2.3.6/rnaseqc.v2.3.6.linux.gz && \
