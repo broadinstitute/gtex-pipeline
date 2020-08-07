@@ -45,15 +45,15 @@ RUN cd /opt && \
     tar -xf samtools-1.10.tar.bz2 && rm samtools-1.10.tar.bz2 && cd samtools-1.10 && \
     ./configure --with-htslib=/opt/htslib-1.10.2 && make && make install && make clean
 
-# STAR v2.7.5a
+# STAR v2.7.5b
 RUN cd /opt && \
-    wget --no-check-certificate https://github.com/alexdobin/STAR/archive/2.7.5a.tar.gz && \
-    tar -xf 2.7.5a.tar.gz && rm 2.7.5a.tar.gz
-    # make STAR -C STAR-2.7.5a/source && make STARlong -C STAR-2.7.5a/source && \
-    # mv STAR-2.7.5a/source/STAR* STAR-2.7.5a/bin/Linux_x86_64/
-ENV PATH /opt/STAR-2.7.5a/bin/Linux_x86_64_static:$PATH
+    wget --no-check-certificate https://github.com/alexdobin/STAR/archive/2.7.5b.tar.gz && \
+    tar -xf 2.7.5b.tar.gz && rm 2.7.5b.tar.gz
+    # make STAR -C STAR-2.7.5b/source && make STARlong -C STAR-2.7.5b/source && \
+    # mv STAR-2.7.5b/source/STAR* STAR-2.7.5b/bin/Linux_x86_64/
+ENV PATH /opt/STAR-2.7.5b/bin/Linux_x86_64_static:$PATH
 
-# RSEM v1.3.1
+# RSEM v1.3.3
 RUN cd /opt && \
     wget --no-check-certificate https://github.com/deweylab/RSEM/archive/v1.3.3.tar.gz && \
     tar -xvf v1.3.3.tar.gz && rm v1.3.3.tar.gz && cd RSEM-1.3.3 && make
@@ -95,7 +95,7 @@ ENV PATH /opt/ucsc:$PATH
 
 # python modules
 RUN pip3 install --upgrade pip setuptools
-RUN pip3 install tables numpy pandas
+RUN pip3 install tables numpy pandas scipy matplotlib seaborn
 # numpy dependencies:
 RUN pip3 install pyBigWig
 
@@ -109,6 +109,7 @@ ENV PATH /opt/FastQC-0.11.9:$PATH
 RUN mkdir /opt/rnaseqc && cd /opt/rnaseqc && \
     wget https://github.com/getzlab/rnaseqc/releases/download/v2.3.6/rnaseqc.v2.3.6.linux.gz && \
     gunzip rnaseqc.v2.3.6.linux.gz && mv rnaseqc.v2.3.6.linux rnaseqc && chmod 775 rnaseqc
+RUN pip3 install rnaseqc
 ENV PATH /opt/rnaseqc:$PATH
 
 # gcloud
