@@ -95,7 +95,7 @@ ENV PATH /opt/ucsc:$PATH
 
 # python modules
 RUN pip3 install --upgrade pip setuptools
-RUN pip3 install tables numpy pandas scipy matplotlib seaborn
+RUN pip3 install tables numpy pandas scipy pyarrow matplotlib seaborn
 # numpy dependencies:
 RUN pip3 install pyBigWig
 
