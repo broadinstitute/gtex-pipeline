@@ -14,21 +14,30 @@ task rnaseqc2_aggregate {
 
     command {
         set -euo pipefail
-        echo $(date +"[%b %d %H:%M:%S] Combining TPM GCTs")
-        python3 /src/combine_GCTs.py ${write_lines(tpm_gcts)} "${prefix}.rnaseqc_tpm"
-        echo $(date +"[%b %d %H:%M:%S] Combining count GCTs")
-        python3 /src/combine_GCTs.py ${write_lines(count_gcts)} "${prefix}.rnaseqc_counts"
-        echo $(date +"[%b %d %H:%M:%S] Combining exon count GCTs")
-        python3 /src/combine_GCTs.py ${write_lines(exon_count_gcts)} "${prefix}.rnaseqc_exon_counts"
-        echo $(date +"[%b %d %H:%M:%S] Combining metrics")
-        python3 /src/aggregate_rnaseqc_metrics.py ${write_lines(metrics_tsvs)} ${prefix}
+        echo $(date +"[%b %d %H:%M:%S] Aggregating RNA-SeQC outputs")
+        mkdir individual_outputs
+        mv ${sep=' ' tpm_gcts} individual_outputs/
+        mv ${sep=' ' count_gcts} individual_outputs/
+        mv ${sep=' ' exon_count_gcts} individual_outputs/
+        mv ${sep=' ' metrics_tsvs} individual_outputs/
+        if [ -n '${sep=',' insertsize_hists}' ]; then
+            mv ${sep=' ' insertsize_hists} individual_outputs/
+        fi
+        touch ${prefix}.insert_size_hists.txt.gz
+        python3 -m rnaseqc aggregate \
+            --parquet \
+            -o . \
+            individual_outputs \
+            ${prefix}
+        echo $(date +"[%b %d %H:%M:%S] done")
     }
 
     output {
-        File tpm_gct="${prefix}.rnaseqc_tpm.gct.gz"
-        File count_gct="${prefix}.rnaseqc_counts.gct.gz"
-        File exon_count_gct="${prefix}.rnaseqc_exon_counts.gct.gz"
-        File metrics="${prefix}.metrics.tsv"
+        File metrics="${prefix}.metrics.txt.gz"
+        File insert_size_hists="${prefix}.insert_size_hists.txt.gz"
+        File tpm_gct="${prefix}.gene_tpm.parquet"
+        File count_gct="${prefix}.gene_reads.parquet"
+        File exon_count_gct="${prefix}.exon_reads.parquet"
     }
 
     runtime {
