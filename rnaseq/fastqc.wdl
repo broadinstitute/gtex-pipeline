@@ -8,8 +8,8 @@ task fastqc {
     Int num_threads
     Int num_preempt
 
-    String fastq1_name = sub(basename(fastq1), "\\.fastq.gz$", "")
-    String fastq2_name = sub(basename(fastq2), "\\.fastq.gz$", "")
+    String fastq1_name = sub(sub(basename(fastq1), "\\.fastq.gz$", ""), "\\.fq.gz$", "" )
+    String fastq2_name = sub(sub(basename(fastq2), "\\.fastq.gz$", ""), "\\.fq.gz$", "" )
 
     command <<<
         set -euo pipefail
