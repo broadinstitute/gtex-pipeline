@@ -45,13 +45,13 @@ RUN cd /opt && \
     tar -xf samtools-1.10.tar.bz2 && rm samtools-1.10.tar.bz2 && cd samtools-1.10 && \
     ./configure --with-htslib=/opt/htslib-1.10.2 && make && make install && make clean
 
-# STAR v2.7.5b
+# STAR v2.7.5c
 RUN cd /opt && \
-    wget --no-check-certificate https://github.com/alexdobin/STAR/archive/2.7.5b.tar.gz && \
-    tar -xf 2.7.5b.tar.gz && rm 2.7.5b.tar.gz
-    # make STAR -C STAR-2.7.5b/source && make STARlong -C STAR-2.7.5b/source && \
-    # mv STAR-2.7.5b/source/STAR* STAR-2.7.5b/bin/Linux_x86_64/
-ENV PATH /opt/STAR-2.7.5b/bin/Linux_x86_64_static:$PATH
+    wget --no-check-certificate https://github.com/alexdobin/STAR/archive/2.7.5c.tar.gz && \
+    tar -xf 2.7.5c.tar.gz && rm 2.7.5c.tar.gz
+    # make STAR -C STAR-2.7.5c/source && make STARlong -C STAR-2.7.5c/source && \
+    # mv STAR-2.7.5c/source/STAR* STAR-2.7.5c/bin/Linux_x86_64/
+ENV PATH /opt/STAR-2.7.5c/bin/Linux_x86_64_static:$PATH
 
 # RSEM v1.3.3
 RUN cd /opt && \
