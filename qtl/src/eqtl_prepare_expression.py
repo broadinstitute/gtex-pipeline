@@ -8,44 +8,8 @@ import subprocess
 import scipy.stats as stats
 import argparse
 import os
-import feather
-
-import rnaseqnorm
-
-
-def gtf_to_bed(annotation_gtf, feature='gene', exclude_chrs=[]):
-    """
-    Parse genes from GTF, create placeholder DataFrame for BED output
-    """
-    chrom = []
-    start = []
-    end = []
-    gene_id = []
-    with open(annotation_gtf, 'r') as gtf:
-        for row in gtf:
-            row = row.strip().split('\t')
-            if row[0][0]=='#' or row[2]!=feature: continue # skip header
-            chrom.append(row[0])
-
-            # TSS: gene start (0-based coordinates for BED)
-            if row[6]=='+':
-                start.append(np.int64(row[3])-1)
-                end.append(np.int64(row[3]))
-            elif row[6]=='-':
-                start.append(np.int64(row[4])-1)  # last base of gene
-                end.append(np.int64(row[4]))
-            else:
-                raise ValueError('Strand not specified.')
-
-            gene_id.append(row[8].split(';',1)[0].split(' ')[1].replace('"',''))
-
-    bed_df = pd.DataFrame(data={'chr':chrom, 'start':start, 'end':end, 'gene_id':gene_id}, columns=['chr', 'start', 'end', 'gene_id'], index=gene_id)
-    # drop rows corresponding to excluded chromosomes
-    mask = np.ones(len(chrom), dtype=bool)
-    for k in exclude_chrs:
-        mask = mask & (bed_df['chr']!=k)
-    bed_df = bed_df[mask]
-    return bed_df
+import qtl.io
+import qtl.norm
 
 
 def prepare_bed(df, bed_template_df, chr_subset=None):
@@ -56,51 +20,6 @@ def prepare_bed(df, bed_template_df, chr_subset=None):
         # subset chrs from VCF
         bed_df = bed_df[bed_df.chr.isin(chr_subset)]
     return bed_df
-
-
-def write_bed(bed_df, output_name):
-    """
-    Write DataFrame to BED format
-    """
-    assert bed_df.columns[0]=='chr' and bed_df.columns[1]=='start' and bed_df.columns[2]=='end'
-    # header must be commented in BED format
-    header = bed_df.columns.values.copy()
-    header[0] = '#chr'
-    bed_df.to_csv(output_name, sep='\t', index=False, header=header)
-    subprocess.check_call('bgzip -f '+output_name, shell=True, executable='/bin/bash')
-    subprocess.check_call('tabix -f '+output_name+'.gz', shell=True, executable='/bin/bash')
-
-
-def read_gct(gct_file, sample_ids=None, dtype=None):
-    """
-    Load GCT as DataFrame. The first two columns must be 'Name' and 'Description'.
-    """
-    if sample_ids is not None:
-        sample_ids = ['Name']+list(sample_ids)
-
-    if gct_file.endswith('.gct.gz') or gct_file.endswith('.gct'):
-        if dtype is not None:
-            with gzip.open(gct_file, 'rt') as gct:
-                gct.readline()
-                gct.readline()
-                sample_ids = gct.readline().strip().split()
-            dtypes = {i:dtype for i in sample_ids[2:]}
-            dtypes['Name'] = str
-            dtypes['Description'] = str
-            df = pd.read_csv(gct_file, sep='\t', skiprows=2, usecols=sample_ids, index_col=0, dtype=dtypes)
-        else:
-            df = pd.read_csv(gct_file, sep='\t', skiprows=2, usecols=sample_ids, index_col=0)
-    elif gct_file.endswith('.parquet'):
-        df = pd.read_parquet(gct_file, columns=sample_ids)
-    elif gct_file.endswith('.ft'):  # feather format
-        df = feather.read_dataframe(gct_file, columns=sample_ids)
-        df = df.set_index('Name')
-    else:
-        raise ValueError('Unsupported input format.')
-    df.index.name = 'gene_id'
-    if 'Description' in df.columns:
-        df = df.drop('Description', axis=1)
-    return df
 
 
 def prepare_expression(counts_df, tpm_df, vcf_lookup_s, sample_frac_threshold=0.2, count_threshold=6, tpm_threshold=0.1, mode='tmm'):
@@ -129,11 +48,11 @@ def prepare_expression(counts_df, tpm_df, vcf_lookup_s, sample_frac_threshold=0.
 
     # apply normalization
     if mode.lower()=='tmm':
-        tmm_counts_df = rnaseqnorm.edgeR_cpm(counts_df, normalized_lib_sizes=True)
-        norm_df = rnaseqnorm.inverse_normal_transform(tmm_counts_df[mask])
+        tmm_counts_df = qtl.norm.edger_cpm(counts_df, normalized_lib_sizes=True)
+        norm_df = qtl.norm.inverse_normal_transform(tmm_counts_df[mask])
     elif mode.lower()=='qn':
-        qn_df = rnaseqnorm.normalize_quantiles(tpm_df.loc[mask])
-        norm_df = rnaseqnorm.inverse_normal_transform(qn_df)
+        qn_df = qtl.norm.normalize_quantiles(tpm_df.loc[mask])
+        norm_df = qtl.norm.inverse_normal_transform(qn_df)
     else:
         raise ValueError('Unsupported mode {}'.format(mode))
 
@@ -166,8 +85,9 @@ if __name__=='__main__':
             sample_ids = f.read().strip().split('\n')
             print('  * Loading {} samples'.format(len(sample_ids)), flush=True)
 
-    counts_df = read_gct(args.counts_gct, sample_ids)
-    tpm_df = read_gct(args.tpm_gct, sample_ids)
+    counts_df = qtl.io.read_gct(args.counts_gct, sample_ids=sample_ids, load_description=False)
+    tpm_df = qtl.io.read_gct(args.tpm_gct, sample_ids=sample_ids, load_description=False)
+
     sample_participant_lookup_s = pd.read_csv(args.sample_participant_lookup, sep='\t', index_col=0, dtype=str, squeeze=True)
 
     # check inputs
@@ -189,13 +109,13 @@ if __name__=='__main__':
     # change sample IDs to participant IDs
     norm_df.rename(columns=sample_participant_lookup_s.to_dict(), inplace=True)
 
-    bed_template_df = gtf_to_bed(args.annotation_gtf, feature='transcript')
+    bed_template_df = qtl.io.gtf_to_tss_bed(args.annotation_gtf, feature='transcript')
     with open(args.vcf_chr_list) as f:
         chr_list = f.read().strip().split('\n')
     norm_bed_df = prepare_bed(norm_df, bed_template_df, chr_subset=chr_list)
     print('  * {} genes remain after removing contigs absent from VCF.'.format(norm_bed_df.shape[0]), flush=True)
     print('Writing BED file', flush=True)
-    write_bed(norm_bed_df, os.path.join(args.output_dir, args.prefix+'.expression.bed'))
+    qtl.io.write_bed(norm_bed_df, os.path.join(args.output_dir, args.prefix+'.expression.bed'))
 
     if args.legacy_mode:
         # for consistency with v6/v6p pipeline results, write unsorted expression file for PEER factor calculation
