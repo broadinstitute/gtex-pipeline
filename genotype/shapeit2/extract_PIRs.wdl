@@ -22,7 +22,7 @@ task extract_PIRs {
     }
 
     runtime {
-        docker: "xiaoli/shapeit2:latest"
+        docker: "gcr.io/broad-cga-francois-gtex/shapeit2:latest"
         memory: "${memory}GB"
         disks: "local-disk ${disk_space} HDD"
         cpu: "${num_threads}"
