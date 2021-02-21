@@ -115,7 +115,7 @@ if __name__=='__main__':
     norm_bed_df = prepare_bed(norm_df, bed_template_df, chr_subset=chr_list)
     print('  * {} genes remain after removing contigs absent from VCF.'.format(norm_bed_df.shape[0]), flush=True)
     print('Writing BED file', flush=True)
-    qtl.io.write_bed(norm_bed_df, os.path.join(args.output_dir, args.prefix+'.expression.bed'))
+    qtl.io.write_bed(norm_bed_df, os.path.join(args.output_dir, args.prefix+'.expression.bed.gz'))
 
     if args.legacy_mode:
         # for consistency with v6/v6p pipeline results, write unsorted expression file for PEER factor calculation
