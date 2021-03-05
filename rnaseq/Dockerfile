@@ -105,8 +105,8 @@ ENV PATH /opt/FastQC-0.11.9:$PATH
 
 # RNA-SeQC
 RUN mkdir /opt/rnaseqc && cd /opt/rnaseqc && \
-    wget https://github.com/getzlab/rnaseqc/releases/download/v2.4.0/rnaseqc.v2.4.0.linux.gz && \
-    gunzip rnaseqc.v2.4.0.linux.gz && mv rnaseqc.v2.4.0.linux rnaseqc && chmod 775 rnaseqc
+    wget https://github.com/getzlab/rnaseqc/releases/download/v2.4.2/rnaseqc.v2.4.2.linux.gz && \
+    gunzip rnaseqc.v2.4.2.linux.gz && mv rnaseqc.v2.4.2.linux rnaseqc && chmod 775 rnaseqc
 RUN pip3 install rnaseqc
 ENV PATH /opt/rnaseqc:$PATH
 
