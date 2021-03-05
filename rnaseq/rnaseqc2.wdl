@@ -3,8 +3,10 @@ task rnaseqc2 {
     File bam_file
     File genes_gtf
     String sample_id
-    String? strandedness 
+    String? strandedness
     File? intervals_bed
+    File? reference_fasta
+    File? reference_fasta_index
     String? flags
 
     Int memory
@@ -16,7 +18,8 @@ task rnaseqc2 {
         set -euo pipefail
         echo $(date +"[%b %d %H:%M:%S] Running RNA-SeQC 2")
         touch ${sample_id}.fragmentSizes.txt
-        rnaseqc ${genes_gtf} ${bam_file} . -s ${sample_id} ${"--bed " + intervals_bed} ${"--stranded " + strandedness} -vv ${flags}
+        touch ${sample_id}.gc_content.tsv
+        rnaseqc ${genes_gtf} ${bam_file} . -s ${sample_id} ${"--bed " + intervals_bed} ${"--stranded " + strandedness} ${"--fasta " + reference_fasta} -vv ${flags}
         echo "  * compressing outputs"
         gzip *.gct
         echo $(date +"[%b %d %H:%M:%S] done")
@@ -27,6 +30,7 @@ task rnaseqc2 {
         File gene_counts = "${sample_id}.gene_reads.gct.gz"
         File exon_counts = "${sample_id}.exon_reads.gct.gz"
         File metrics = "${sample_id}.metrics.tsv"
+        File gc_content = "${sample_id}.gc_content.tsv"
         File insertsize_distr = "${sample_id}.fragmentSizes.txt"
     }
 
