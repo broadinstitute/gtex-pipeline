@@ -4,8 +4,9 @@ task rnaseqc2_aggregate {
     Array[File] count_gcts
     Array[File] exon_count_gcts
     Array[File] metrics_tsvs
-    Array[File]? insertsize_hists
     String prefix
+    Array[File]? insertsize_hists
+    String? flags
 
     Int memory
     Int disk_space
@@ -25,19 +26,19 @@ task rnaseqc2_aggregate {
         fi
         touch ${prefix}.insert_size_hists.txt.gz
         python3 -m rnaseqc aggregate \
-            --parquet \
             -o . \
             individual_outputs \
-            ${prefix}
+            ${prefix} \
+            ${flags}
         echo $(date +"[%b %d %H:%M:%S] done")
     }
 
     output {
         File metrics="${prefix}.metrics.txt.gz"
         File insert_size_hists="${prefix}.insert_size_hists.txt.gz"
-        File tpm_gct="${prefix}.gene_tpm.parquet"
-        File count_gct="${prefix}.gene_reads.parquet"
-        File exon_count_gct="${prefix}.exon_reads.parquet"
+        File tpm_gct=glob("${prefix}.gene_tpm.*")[0]
+        File count_gct=glob("${prefix}.gene_reads.*")[0]
+        File exon_count_gct=glob("${prefix}.exon_reads.*")[0]
     }
 
     runtime {
