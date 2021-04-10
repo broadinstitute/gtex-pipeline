@@ -76,7 +76,7 @@ if __name__=='__main__':
     parser.add_argument('--count_threshold', type=np.int32, default=6, help='Selects genes with >= count_threshold reads in at least sample_frac_threshold samples')
     parser.add_argument('--sample_frac_threshold', type=np.double, default=0.2, help='Minimum fraction of samples that must satisfy thresholds')
     parser.add_argument('--normalization_method', default='tmm', help='Normalization method: TMM or quantile normalization (qn)')
-    parser.add_argument('--ignore_version', action='store_true', help='Ignore ENSEMBL gene version (splits gene_id at ".")')
+    parser.add_argument('--ignore_version', action='store_true', help='Ignore ENSEMBL gene version when merging BED template with norm counts (keep version from BED)')
     args = parser.parse_args()
 
     print('Loading expression data', flush=True)
