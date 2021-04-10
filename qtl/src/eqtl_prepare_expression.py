@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # Author: Francois Aguet
-# Contributor: Chris Dampier
+
 
 import numpy as np
 import pandas as pd
