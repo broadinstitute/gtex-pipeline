@@ -10,6 +10,8 @@ Gene-level expression and eQTLs from the GTEx project are calculated based on a 
 2. The union of all exon intervals of each gene is calculated.
 3. Overlapping intervals between genes are excluded from all genes.
 
+The purpose of step 3 is primarily to exclude overlapping regions from genes annotated on both strands, which can't be unambiguously quantified from unstranded RNA-seq (GTEx samples were sequenced using an unstranded protocol). For stranded protocols, this step can be skipped by adding the `--collapse_only` flag.
+
 Command:
 ```bash
 python3 collapse_annotation.py gencode.v26.GRCh38.annotation.gtf gencode.v26.GRCh38.genes.gtf
