@@ -37,6 +37,8 @@ For hg19-based analyses, the GENCODE annotation should be patched to use Ensembl
 ```
 zcat gencode.v19.annotation.gtf.gz | \
     sed 's/chrM/chrMT/;s/chr//' > gencode.v19.annotation.patched_contigs.gtf
+python collapse_annotation.py --transcript_blacklist gencode19_unannotated_readthrough_blacklist.txt \
+    gencode.v19.annotation.patched_contigs.gtf gencode.v19.annotation.patched_contigs.collapsed.gtf
 ```
 
 #### Building the indexes
