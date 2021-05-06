@@ -38,6 +38,11 @@ For hg19-based analyses, the GENCODE annotation should be patched to use Ensembl
 zcat gencode.v19.annotation.gtf.gz | \
     sed 's/chrM/chrMT/;s/chr//' > gencode.v19.annotation.patched_contigs.gtf
 ```
+The collapsed version for RNA-SeQC was generated with:
+```
+python collapse_annotation.py --transcript_blacklist gencode19_unannotated_readthrough_blacklist.txt \
+    gencode.v19.annotation.patched_contigs.gtf gencode.v19.annotation.patched_contigs.collapsed.gtf
+```
 
 #### Building the indexes
 The STAR index should be built to match the sequencing read length, specified by the `sjdbOverhang` parameter. GTEx samples were sequenced using a 2x76 bp paired-end sequencing protocol, and the matching `sjdbOverhang` is 75.
