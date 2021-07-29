@@ -6,24 +6,28 @@ import os
 import pandas as pd
 from datetime import datetime
 
-def shapeit(vcf, pir, prefix, seed=1, num_threads=1, start=None, end=None, sex=None):
+def shapeit(vcf, pir, prefix, seed=1, num_threads=1, start=None, end=None, sex=None, force=True):
     """
     Wrapper for SHAPEIT
-    
+
     start, end: limit to this interval if provided
     sex: required for NONPAR region
+
+    https://mathgen.stats.ox.ac.uk/genetics_software/shapeit/shapeit.html
     """
     # shapeit assemble
-    cmd = 'shapeit -assemble --input-vcf '+vcf+' --input-pir '+pir+' -O '+prefix+' -T {} --seed {}'.format(num_threads, seed)
+    cmd = f'shapeit -assemble --input-vcf {vcf} --input-pir {pir} -O {prefix} -T {num_threads} --seed {seed}'
     if start is not None and end is not None:
-        cmd += ' --input-from {} --input-to {}'.format(start, end)
+        cmd += f' --input-from {start} --input-to {end}'
     if sex is not None:
-        cmd += ' --chrX --input-sex {}'.format(sex)
+        cmd += f' --chrX --input-sex {sex}'
+    if force:
+        cmd += ' --force'
     subprocess.check_call(cmd, shell=True)
 
     # shapeit convert: convert to VCF
     phased_vcf = prefix+'.phased.vcf.gz'
-    subprocess.check_call('shapeit -convert --input-haps {} --output-vcf {} --seed {}'.format(prefix, phased_vcf, seed), shell=True)
+    subprocess.check_call(f'shapeit -convert --input-haps {prefix} --output-vcf {phased_vcf} --seed {seed}', shell=True)
 
 
 if __name__ == '__main__':
@@ -39,17 +43,16 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # get chromosome name from VCF
-    chrom = subprocess.check_output('tabix --list-chroms {}'.format(args.vcf), shell=True).decode().strip().split('\n')
+    chrom = subprocess.check_output(f'tabix --list-chroms {args.vcf}', shell=True).decode().strip().split('\n')
     if len(chrom)!=1:
         raise ValueError('Input VCF must contain a single chromosome.')
     else:
         chrom = chrom[0]
 
-    print('['+datetime.now().strftime("%b %d %H:%M:%S")+'] Running SHAPEIT on chromosome {}'.format(chrom), flush=True)
-
+    print(f"[{datetime.now().strftime('%b %d %H:%M:%S')}] Running SHAPEIT on chromosome {chrom}", flush=True)
     prefix = os.path.join(args.output_dir, args.prefix+'.'+chrom)
 
-    if chrom=='X' or chrom=='chrX':
+    if chrom.endswith('X'):
         if args.sex is None:
             raise ValueError('Sex annotation must be provided for chrX.')
         if args.par_bed is None:
@@ -60,11 +63,14 @@ if __name__ == '__main__':
         par_df['end'] += 1
 
         print('  * Processing PAR1', flush=True)
-        shapeit(args.vcf, args.pir, prefix+'.PAR1', start=par_df.loc['PAR1', 'start'], end=par_df.loc['PAR1', 'end'], num_threads=args.num_threads, seed=args.seed)
+        shapeit(args.vcf, args.pir, prefix+'.PAR1', start=par_df.loc['PAR1', 'start'],
+                end=par_df.loc['PAR1', 'end'], num_threads=args.num_threads, seed=args.seed, force=True)
         print('  * Processing NONPAR', flush=True)
-        shapeit(args.vcf, args.pir, prefix+'.NONPAR', start=par_df.loc['NONPAR', 'start'], end=par_df.loc['NONPAR', 'end'], sex=args.sex, num_threads=args.num_threads, seed=args.seed)
+        shapeit(args.vcf, args.pir, prefix+'.NONPAR', start=par_df.loc['NONPAR', 'start'],
+                end=par_df.loc['NONPAR', 'end'], sex=args.sex, num_threads=args.num_threads, seed=args.seed, force=True)
         print('  * Processing PAR2', flush=True)
-        shapeit(args.vcf, args.pir, prefix+'.PAR2', start=par_df.loc['PAR2', 'start'], end=par_df.loc['PAR2', 'end'], num_threads=args.num_threads, seed=args.seed)
+        shapeit(args.vcf, args.pir, prefix+'.PAR2', start=par_df.loc['PAR2', 'start'],
+                end=par_df.loc['PAR2', 'end'], num_threads=args.num_threads, seed=args.seed, force=True)
 
         # concatenate VCFs
         print('  * Concatenating PAR1, NONPAR, PAR2', flush=True)
@@ -77,6 +83,6 @@ if __name__ == '__main__':
         subprocess.check_call('tabix {0}.phased.vcf.gz'.format(prefix), shell=True)
         subprocess.check_call('rm {0}.PAR1.* {0}.NONPAR.* {0}.PAR2.*'.format(prefix), shell=True)
     else:
-        shapeit(args.vcf, args.pir, prefix, num_threads=args.num_threads, seed=args.seed)
+        shapeit(args.vcf, args.pir, prefix, num_threads=args.num_threads, seed=args.seed, force=True)
 
     print('[' + datetime.now().strftime("%b %d %H:%M:%S") + '] done.', flush=True)

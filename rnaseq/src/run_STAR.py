@@ -33,6 +33,7 @@ parser.add_argument('--alignIntronMax', default='1000000')
 parser.add_argument('--alignMatesGapMax', default='1000000')
 parser.add_argument('--outFilterType', default='BySJout')
 parser.add_argument('--outFilterScoreMinOverLread', default='0.33')
+parser.add_argument('--outFilterMatchNmin', default='0')
 parser.add_argument('--outFilterMatchNminOverLread', default='0.33')
 parser.add_argument('--limitSjdbInsertNsj', default='1200000')
 parser.add_argument('--outSAMstrandField', default='intronMotif')
@@ -62,39 +63,52 @@ else:
     starcmd = 'STAR'
 
 # set up command
-cmd = starcmd+' --runMode alignReads --runThreadN '+args.threads+' --genomeDir '+args.index
+cmd = f'{starcmd} --runMode alignReads --runThreadN {args.threads} --genomeDir {args.index}'
 if args.annotation_gtf is not None:  # only needed if genome index was built w/o annotation
-    cmd += ' --sjdbGTFfile '+args.annotation_gtf
+    cmd += f' --sjdbGTFfile {args.annotation_gtf}'
 if args.sjdbFileChrStartEnd is None:
     cmd += ' --twopassMode Basic'
-cmd +=' --outFilterMultimapNmax '+args.outFilterMultimapNmax\
-    +' --alignSJoverhangMin '+args.alignSJoverhangMin+' --alignSJDBoverhangMin '+args.alignSJDBoverhangMin\
-    +' --outFilterMismatchNmax '+args.outFilterMismatchNmax+' --outFilterMismatchNoverLmax '+args.outFilterMismatchNoverLmax\
-    +' --alignIntronMin '+args.alignIntronMin+' --alignIntronMax '+args.alignIntronMax+' --alignMatesGapMax '+args.alignMatesGapMax\
-    +' --outFilterType '+args.outFilterType\
-    +' --outFilterScoreMinOverLread '+args.outFilterScoreMinOverLread+' --outFilterMatchNminOverLread '+args.outFilterMatchNminOverLread\
-    +' --limitSjdbInsertNsj '+args.limitSjdbInsertNsj\
-    +' --readFilesIn '+' '.join(args.fastq)
+cmd += f' --outFilterMultimapNmax {args.outFilterMultimapNmax}'\
+    + f' --alignSJoverhangMin {args.alignSJoverhangMin}'\
+    + f' --alignSJDBoverhangMin {args.alignSJDBoverhangMin}'\
+    + f' --outFilterMismatchNmax {args.outFilterMismatchNmax}'\
+    + f' --outFilterMismatchNoverLmax {args.outFilterMismatchNoverLmax}'\
+    + f' --alignIntronMin {args.alignIntronMin}'\
+    + f' --alignIntronMax {args.alignIntronMax}'\
+    + f' --alignMatesGapMax {args.alignMatesGapMax}'\
+    + f' --outFilterType {args.outFilterType}'\
+    + f' --outFilterScoreMinOverLread {args.outFilterScoreMinOverLread}'\
+    + f' --outFilterMatchNmin {args.outFilterMatchNmin}'\
+    + f' --outFilterMatchNminOverLread {args.outFilterMatchNminOverLread}'\
+    + f' --limitSjdbInsertNsj {args.limitSjdbInsertNsj}'\
+    + f" --readFilesIn {' '.join(args.fastq)}"
 if args.fastq[0].endswith('.gz'):
     cmd += ' --readFilesCommand zcat'
-cmd += ' --outFileNamePrefix '+os.path.join(args.output_dir, args.prefix)+'.'\
-    +' --outSAMstrandField '+args.outSAMstrandField+' --outFilterIntronMotifs '+args.outFilterIntronMotifs\
-    +' --alignSoftClipAtReferenceEnds '+args.alignSoftClipAtReferenceEnds+' --quantMode '+' '.join(args.quantMode)\
-    +' --outSAMtype '+' '.join(args.outSAMtype)+' --outSAMunmapped '+args.outSAMunmapped+' --genomeLoad '+args.genomeLoad
+cmd += f' --outFileNamePrefix {os.path.join(args.output_dir, args.prefix)}.'\
+    + f' --outSAMstrandField {args.outSAMstrandField}'\
+    + f' --outFilterIntronMotifs {args.outFilterIntronMotifs}'\
+    + f' --alignSoftClipAtReferenceEnds {args.alignSoftClipAtReferenceEnds}'\
+    + f" --quantMode {' '.join(args.quantMode)}"\
+    + f" --outSAMtype {' '.join(args.outSAMtype)}"\
+    + f' --outSAMunmapped {args.outSAMunmapped}'\
+    + f' --genomeLoad {args.genomeLoad}'
 if args.waspOutputMode=='SAMtag' and args.varVCFfile is not None:
     assert args.varVCFfile.endswith('.vcf.gz')
     # only SNVs are currently supported
-    cmd += ' --waspOutputMode SAMtag --varVCFfile <(zcat {})'.format(args.varVCFfile)
+    cmd += f' --waspOutputMode SAMtag --varVCFfile <(zcat {args.varVCFfile})'
     if 'vw' not in args.outSAMattributes:
         args.outSAMattributes.append('vW')
         print("  * adding 'vW' tag to outSAMattributes", flush=True)
 if int(args.chimSegmentMin)>0:
-    cmd += ' --chimSegmentMin '+args.chimSegmentMin+' --chimJunctionOverhangMin '+args.chimJunctionOverhangMin\
-        +' --chimOutType '+' '.join(args.chimOutType)+' --chimMainSegmentMultNmax '+args.chimMainSegmentMultNmax\
-        +' --chimOutJunctionFormat {}'.format(args.chimOutJunctionFormat)
-cmd += ' --outSAMattributes '+' '.join(args.outSAMattributes)+' --outSAMattrRGline '+' '.join(args.outSAMattrRGline)
+    cmd += f' --chimSegmentMin {args.chimSegmentMin}'\
+        + f' --chimJunctionOverhangMin {args.chimJunctionOverhangMin}'\
+        + f" --chimOutType {' '.join(args.chimOutType)}"\
+        + f' --chimMainSegmentMultNmax {args.chimMainSegmentMultNmax}'\
+        + f' --chimOutJunctionFormat {args.chimOutJunctionFormat}'
+cmd += f" --outSAMattributes {' '.join(args.outSAMattributes)}"\
+     + f" --outSAMattrRGline {' '.join(args.outSAMattrRGline)}"
 if args.sjdbFileChrStartEnd is not None:
-    cmd += ' --sjdbFileChrStartEnd '+args.sjdbFileChrStartEnd
+    cmd += f' --sjdbFileChrStartEnd {args.sjdbFileChrStartEnd}'
 
 if not os.path.exists(args.output_dir):
     os.makedirs(args.output_dir)
@@ -105,43 +119,43 @@ subprocess.check_call(cmd, shell=True, executable='/bin/bash')
 # postprocessing
 with cd(args.output_dir):
     # set permissions
-    for r,d,f in os.walk(args.prefix+'._STARpass1'):
+    for r,d,f in os.walk(f'{args.prefix}._STARpass1'):
         os.chmod(r, 0o755)
 
     # delete unneeded files
-    shutil.rmtree(args.prefix+'._STARgenome')
-    if os.path.exists(args.prefix+'._STARtmp'):
-        shutil.rmtree(args.prefix+'._STARtmp')
+    shutil.rmtree(f'{args.prefix}._STARgenome')
+    if os.path.exists(f'{args.prefix}._STARtmp'):
+        shutil.rmtree(f'{args.prefix}._STARtmp')
 
     # sort BAM (use samtools to get around the memory gluttony of STAR)
-    print('['+datetime.now().strftime("%b %d %H:%M:%S")+'] Sorting BAM', flush=True)
-    cmd = 'samtools sort --threads '+args.threads+' -o '+args.prefix+'.Aligned.sortedByCoord.out.bam '+args.prefix+'.Aligned.out.bam'
+    print(f'[{datetime.now().strftime("%b %d %H:%M:%S")}] Sorting BAM', flush=True)
+    cmd = f'samtools sort --threads {args.threads} -o {args.prefix}.Aligned.sortedByCoord.out.bam {args.prefix}.Aligned.out.bam'
     subprocess.check_call(cmd, shell=True, executable='/bin/bash')
-    os.remove(args.prefix+'.Aligned.out.bam')
-    print('['+datetime.now().strftime("%b %d %H:%M:%S")+'] Finished sorting BAM', flush=True)
+    os.remove(f'{args.prefix}.Aligned.out.bam')
+    print(f'[{datetime.now().strftime("%b %d %H:%M:%S")}] Finished sorting BAM', flush=True)
 
     # index BAM
-    print('['+datetime.now().strftime("%b %d %H:%M:%S")+'] Indexing BAM', flush=True)
-    cmd = 'samtools index '+args.prefix+'.Aligned.sortedByCoord.out.bam'
+    print(f'[{datetime.now().strftime("%b %d %H:%M:%S")}] Indexing BAM', flush=True)
+    cmd = f'samtools index {args.prefix}.Aligned.sortedByCoord.out.bam'
     subprocess.check_call(cmd, shell=True, executable='/bin/bash')
-    print('['+datetime.now().strftime("%b %d %H:%M:%S")+'] Finished indexing BAM', flush=True)
+    print(f'[{datetime.now().strftime("%b %d %H:%M:%S")}] Finished indexing BAM', flush=True)
 
     # rename and compress outputs
-    subprocess.check_call('gzip '+args.prefix+'.SJ.out.tab', shell=True, executable='/bin/bash')
-    with cd(args.prefix+'._STARpass1'):
-        os.rename('SJ.out.tab', args.prefix+'.SJ.pass1.out.tab')
-        subprocess.check_call('gzip '+args.prefix+'.SJ.pass1.out.tab', shell=True, executable='/bin/bash')
+    subprocess.check_call(f'gzip {args.prefix}.SJ.out.tab', shell=True, executable='/bin/bash')
+    with cd(f'{args.prefix}._STARpass1'):
+        os.rename('SJ.out.tab', f'{args.prefix}.SJ.pass1.out.tab')
+        subprocess.check_call(f'gzip {args.prefix}.SJ.pass1.out.tab', shell=True, executable='/bin/bash')
 
-    if os.path.exists(args.prefix+'.ReadsPerGene.out.tab'):
-        subprocess.check_call('gzip '+args.prefix+'.ReadsPerGene.out.tab', shell=True, executable='/bin/bash')
+    if os.path.exists(f'{args.prefix}.ReadsPerGene.out.tab'):
+        subprocess.check_call(f'gzip {args.prefix}.ReadsPerGene.out.tab', shell=True, executable='/bin/bash')
 
     # sort and index chimeric BAM
-    if os.path.exists(args.prefix+'.Chimeric.out.sam'):
-        cmd = 'samtools sort --threads '+args.threads+' -o '+args.prefix+'.Chimeric.out.sorted.bam '+args.prefix+'.Chimeric.out.sam'
+    if os.path.exists(f'{args.prefix}.Chimeric.out.sam'):
+        cmd = f'samtools sort --threads {args.threads} -o {args.prefix}.Chimeric.out.sorted.bam {args.prefix}.Chimeric.out.sam'
         subprocess.check_call(cmd, shell=True, executable='/bin/bash')
-        cmd = 'samtools index '+args.prefix+'.Chimeric.out.sorted.bam'
+        cmd = f'samtools index {args.prefix}.Chimeric.out.sorted.bam'
         subprocess.check_call(cmd, shell=True, executable='/bin/bash')
-        os.remove(args.prefix+'.Chimeric.out.sam')
+        os.remove(f'{args.prefix}.Chimeric.out.sam')
 
-    if os.path.exists(args.prefix+'.Chimeric.out.junction'):
-        subprocess.check_call('gzip '+args.prefix+'.Chimeric.out.junction', shell=True, executable='/bin/bash')
+    if os.path.exists(f'{args.prefix}.Chimeric.out.junction'):
+        subprocess.check_call(f'gzip {args.prefix}.Chimeric.out.junction', shell=True, executable='/bin/bash')

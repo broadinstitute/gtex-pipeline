@@ -5,6 +5,8 @@ task rnaseqc2_aggregate {
     Array[File] exon_count_gcts
     Array[File] metrics_tsvs
     String prefix
+    Array[File]? insertsize_hists
+    String? flags
 
     Int memory
     Int disk_space
@@ -13,25 +15,34 @@ task rnaseqc2_aggregate {
 
     command {
         set -euo pipefail
-        echo $(date +"[%b %d %H:%M:%S] Combining TPM GCTs")
-        python3 /src/combine_GCTs.py ${write_lines(tpm_gcts)} "${prefix}.rnaseqc_tpm"
-        echo $(date +"[%b %d %H:%M:%S] Combining count GCTs")
-        python3 /src/combine_GCTs.py ${write_lines(count_gcts)} "${prefix}.rnaseqc_counts"
-        echo $(date +"[%b %d %H:%M:%S] Combining exon count GCTs")
-        python3 /src/combine_GCTs.py ${write_lines(exon_count_gcts)} "${prefix}.rnaseqc_exon_counts"
-        echo $(date +"[%b %d %H:%M:%S] Combining metrics")
-        python3 /src/aggregate_rnaseqc_metrics.py ${write_lines(metrics_tsvs)} ${prefix}
+        echo $(date +"[%b %d %H:%M:%S] Aggregating RNA-SeQC outputs")
+        mkdir individual_outputs
+        mv ${sep=' ' tpm_gcts} individual_outputs/
+        mv ${sep=' ' count_gcts} individual_outputs/
+        mv ${sep=' ' exon_count_gcts} individual_outputs/
+        mv ${sep=' ' metrics_tsvs} individual_outputs/
+        if [ -n '${sep=',' insertsize_hists}' ]; then
+            mv ${sep=' ' insertsize_hists} individual_outputs/
+        fi
+        touch ${prefix}.insert_size_hists.txt.gz
+        python3 -m rnaseqc aggregate \
+            -o . \
+            individual_outputs \
+            ${prefix} \
+            ${flags}
+        echo $(date +"[%b %d %H:%M:%S] done")
     }
 
     output {
-        File tpm_gct="${prefix}.rnaseqc_tpm.gct.gz"
-        File count_gct="${prefix}.rnaseqc_counts.gct.gz"
-        File exon_count_gct="${prefix}.rnaseqc_exon_counts.gct.gz"
-        File metrics="${prefix}.metrics.tsv"
+        File metrics="${prefix}.metrics.txt.gz"
+        File insert_size_hists="${prefix}.insert_size_hists.txt.gz"
+        File tpm_gct=glob("${prefix}.gene_tpm.*")[0]
+        File count_gct=glob("${prefix}.gene_reads.*")[0]
+        File exon_count_gct=glob("${prefix}.exon_reads.*")[0]
     }
 
     runtime {
-        docker: "gcr.io/broad-cga-francois-gtex/gtex_rnaseq:V9"
+        docker: "gcr.io/broad-cga-francois-gtex/gtex_rnaseq:V10"
         memory: "${memory}GB"
         disks: "local-disk ${disk_space} HDD"
         cpu: "${num_threads}"

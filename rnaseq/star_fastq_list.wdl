@@ -1,7 +1,7 @@
-task star {
+task star_fastq_list {
 
-    File fastq1
-    File? fastq2
+    Array[File] fastq1
+    Array[File]? fastq2
     String prefix
     File star_index
 
@@ -41,28 +41,6 @@ task star {
     command {
         set -euo pipefail
 
-        if [[ ${fastq1} == *".tar" || ${fastq1} == *".tar.gz" ]]; then
-            tar -xvvf ${fastq1}
-            fastq1_abs=$(for f in *_1.fastq*; do echo "$(pwd)/$f"; done | paste -s -d ',')
-            fastq2_abs=$(for f in *_2.fastq*; do echo "$(pwd)/$f"; done | paste -s -d ',')
-            if [[ $fastq1_abs == *"*_1.fastq*" ]]; then  # no paired-end FASTQs found; check for single-end FASTQ
-                fastq1_abs=$(for f in *.fastq*; do echo "$(pwd)/$f"; done | paste -s -d ',')
-                fastq2_abs=''
-            fi
-        else
-            # make sure paths are absolute
-            fastq1_abs=${fastq1}
-            fastq2_abs=${fastq2}
-            if [[ $fastq1_abs != /* ]]; then
-                fastq1_abs=$PWD/$fastq1_abs
-                fastq2_abs=$PWD/$fastq2_abs
-            fi
-        fi
-
-        echo "FASTQs:"
-        echo $fastq1_abs
-        echo $fastq2_abs
-
         # extract index
         echo $(date +"[%b %d %H:%M:%S] Extracting STAR index")
         mkdir star_index
@@ -76,7 +54,7 @@ task star {
         touch star_out/${prefix}.ReadsPerGene.out.tab  # run_STAR.py will gzip
 
         /src/run_STAR.py \
-            star_index $fastq1_abs $fastq2_abs ${prefix} \
+            star_index ${sep=',' fastq1} ${sep=',' fastq2} ${prefix} \
             --output_dir star_out \
             ${"--outFilterMultimapNmax " + outFilterMultimapNmax} \
             ${"--alignSJoverhangMin " + alignSJoverhangMin} \
@@ -134,6 +112,6 @@ task star {
 }
 
 
-workflow star_workflow {
-    call star
+workflow star_fastq_list_workflow {
+    call star_fastq_list
 }
