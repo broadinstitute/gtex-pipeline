@@ -56,8 +56,10 @@ RUN pip install --upgrade pip && pip install numpy tables pandas scipy scikit-le
 
 # LeafCutter
 RUN cd /opt && \
-    wget https://github.com/davidaknowles/leafcutter/archive/v0.2.7.tar.gz && \
-    tar -xf v0.2.7.tar.gz && rm v0.2.7.tar.gz && ln -s leafcutter-0.2.7 leafcutter
+    wget https://github.com/davidaknowles/leafcutter/archive/3f875f1ac05a0f0413884c0d016b3c7ae17713c9.tar.gz && \
+    tar -xf 3f875f1ac05a0f0413884c0d016b3c7ae17713c9.tar.gz && \
+    rm 3f875f1ac05a0f0413884c0d016b3c7ae17713c9.tar.gz && \
+    ln -s leafcutter-3f875f1ac05a0f0413884c0d016b3c7ae17713c9 leafcutter
 
 # regtools
 RUN cd /opt && \
