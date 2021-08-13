@@ -52,7 +52,7 @@ class Annotation:
             for row in gtf:
                 row = row.strip().split('\t')
 
-                if row[0][0]=='#': continue # skip header
+                if row[0][0] == '#': continue # skip header
 
                 chrom = row[0]
                 annot_type = row[2]
@@ -60,26 +60,27 @@ class Annotation:
                 end_pos  = int(row[4])
                 strand = row[6]
 
-                attributes = defaultdict()
+                attributes = defaultdict(list)
                 for a in row[8].replace('"', '').replace('_biotype', '_type').split(';')[:-1]:
                     kv = a.strip().split(' ')
                     if kv[0]!='tag':
                         attributes[kv[0]] = kv[1]
                     else:
-                        attributes.setdefault('tags', []).append(kv[1])
+                        attributes['tags'].append(kv[1])
 
-                if annot_type=='gene':
+                if annot_type == 'gene':
                     assert 'gene_id' in attributes
                     if 'gene_name' not in attributes:
                         attributes['gene_name'] = attributes['gene_id']
                     gene_id = attributes['gene_id']
-                    g = Gene(gene_id, attributes['gene_name'], attributes['gene_type'], chrom, strand, start_pos, end_pos)
+                    g = Gene(gene_id, attributes['gene_name'], attributes['gene_type'],
+                             chrom, strand, start_pos, end_pos)
                     g.source = row[1]
                     g.phase = row[7]
                     g.attributes_string = row[8].replace('_biotype', '_type')
                     self.genes.append(g)
 
-                elif annot_type=='transcript':
+                elif annot_type == 'transcript':
                     assert 'transcript_id' in attributes
                     if 'transcript_name' not in attributes:
                         attributes['transcript_name'] = attributes['transcript_id']
@@ -89,16 +90,16 @@ class Annotation:
                     t.attributes = attributes
                     g.transcripts.append(t)
 
-                elif annot_type=='exon':
+                elif annot_type == 'exon':
                     if 'exon_id' in attributes:
                         e = Exon(attributes['exon_id'], attributes['exon_number'], t, start_pos, end_pos)
                     else:
                         e = Exon(str(len(t.exons)+1), len(t.exons)+1, t, start_pos, end_pos)
                     t.exons.append(e)
 
-                if np.mod(len(self.genes),1000)==0:
-                    print('Parsing GTF: {0:d} genes processed\r'.format(len(self.genes)), end='\r')
-            print('Parsing GTF: {0:d} genes processed\r'.format(len(self.genes)))
+                if len(self.genes) % 1000 == 0:
+                    print(f'\rParsing GTF: {len(self.genes)} genes processed', end='')
+            print(f'\rParsing GTF: {len(self.genes)} genes processed')
 
         self.genes = np.array(self.genes)
 
@@ -149,7 +150,8 @@ def add_transcript_attributes(attributes_string):
                            'transcript_type', 'transcript_status', 'transcript_name']
         add_list = ['transcript_id', 'transcript_type', 'transcript_status', 'transcript_name']
     else:
-        attribute_order = ['gene_id', 'transcript_id', 'gene_type', 'gene_name', 'transcript_type', 'transcript_name']
+        attribute_order = ['gene_id', 'transcript_id', 'gene_type',
+                           'gene_name', 'transcript_type', 'transcript_name']
         add_list = ['transcript_id', 'transcript_type', 'transcript_name']
     if 'level' in attributes_string:
         attribute_order += ['level']
@@ -174,19 +176,26 @@ def add_transcript_attributes(attributes_string):
     return '; '.join([k+' '+attr_dict[k] for k in attribute_order] + opt)+';'
 
 
-def collapse_annotation(annot, transcript_gtf, collapsed_gtf, blacklist=set(), collapse_only=False):
+def collapse_annotation(annot, transcript_gtf, collapsed_gtf, blacklist=set(),
+                        collapse_only=False, stranded=False):
     """
     Collapse transcripts into a single gene model; remove overlapping intervals
+
+    Options:
+      collapse_only: only collapses transcripts of each gene, does not remove overlaps
+      stranded: only considers genes on the same strand when removing overlaps
     """
 
     exclude = set(['retained_intron', 'readthrough_transcript'])
 
-    # 1) 1st pass: collapse each gene, excluding blacklisted transcript types
+    # 1) collapse each gene, excluding blacklisted transcript types
     merged_coord_dict = {}
     for g in annot.genes:
         exon_coords = []
         for t in g.transcripts:
-            if (t.id not in blacklist) and (t.type!='retained_intron') and (('tags' not in t.attributes) or len(set(t.attributes['tags']).intersection(exclude))==0):
+            if ((t.id not in blacklist) and
+                (t.type != 'retained_intron') and
+                (('tags' not in t.attributes) or len(set(t.attributes['tags']).intersection(exclude)) == 0)):
                 for e in t.exons:
                     exon_coords.append([e.start_pos, e.end_pos])
         if exon_coords:
@@ -194,12 +203,15 @@ def collapse_annotation(annot, transcript_gtf, collapsed_gtf, blacklist=set(), c
 
     if not collapse_only:
         # 2) build interval tree with merged domains
-        interval_trees = defaultdict()
+        interval_trees = defaultdict(IntervalTree)
         for g in annot.genes:
             if g.id in merged_coord_dict:
                 for i in merged_coord_dict[g.id]:
                     # half-open intervals [a,b)
-                    interval_trees.setdefault(g.chr, IntervalTree()).add(i[0], i[1]+1, [i, g.id])
+                    if stranded:
+                        interval_trees[g.chr, g.strand].add(i[0], i[1]+1, [i, g.id])
+                    else:
+                        interval_trees[g.chr].add(i[0], i[1]+1, [i, g.id])
 
         # 3) query intervals of each gene, remove overlaps
         new_coord_dict = {}
@@ -207,9 +219,12 @@ def collapse_annotation(annot, transcript_gtf, collapsed_gtf, blacklist=set(), c
             if g.id in merged_coord_dict:
                 new_intervals = []
                 for i in merged_coord_dict[g.id]:  # loop merged exons
-                    ints = interval_trees[g.chr].find(i[0], i[1]+1)
+                    if stranded:
+                        ints = interval_trees[g.chr, g.strand].find(i[0], i[1]+1)
+                    else:
+                        ints = interval_trees[g.chr].find(i[0], i[1]+1)
                     # remove self
-                    ints = [r[0] for r in ints if r[1]!=g.id]
+                    ints = [r[0] for r in ints if r[1] != g.id]
                     m = set([tuple(i)])
                     for v in ints:
                         m = [subtract_segment(mx, v) for mx in m]
@@ -229,7 +244,7 @@ def collapse_annotation(annot, transcript_gtf, collapsed_gtf, blacklist=set(), c
         for g in annot.genes:
             if g.id in new_coord_dict:
                 exon_lengths = np.array([i[1]-i[0]+1 for i in new_coord_dict[g.id]])
-                if np.all(exon_lengths==1):
+                if np.all(exon_lengths == 1):
                     new_coord_dict.pop(g.id)
     else:
         new_coord_dict = merged_coord_dict
@@ -243,7 +258,7 @@ def collapse_annotation(annot, transcript_gtf, collapsed_gtf, blacklist=set(), c
     with open(collapsed_gtf, 'w') as output_gtf, opener as input_gtf:
         # copy header
         for line in input_gtf:
-            if line[:2]=='##' or line[:2]=='#!':
+            if line[0] == '#':
                 output_gtf.write(line)
             else:
                 break
@@ -258,21 +273,22 @@ def collapse_annotation(annot, transcript_gtf, collapsed_gtf, blacklist=set(), c
                     attr = add_transcript_attributes(g.attributes_string)
                 output_gtf.write('\t'.join([g.chr, g.source, 'gene', start_pos, end_pos, '.', g.strand, g.phase, attr])+'\n')
                 output_gtf.write('\t'.join([g.chr, g.source, 'transcript', start_pos, end_pos, '.', g.strand, g.phase, attr])+'\n')
-                if g.strand=='-':
+                if g.strand == '-':
                     new_coord_dict[g.id] = new_coord_dict[g.id][::-1]
                 for k,i in enumerate(new_coord_dict[g.id], 1):
                     output_gtf.write('\t'.join([
                         g.chr, g.source, 'exon', str(i[0]), str(i[1]), '.', g.strand, g.phase,
-                        attr+' exon_id "'+g.id+'_{0:d}; exon_number {0:d}";'.format(k)])+'\n')
+                        attr+f' exon_id "{g.id}_{k}; exon_number {k}";'])+'\n')
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Collapse isoforms into single transcript per gene and remove overlapping intervals between genes')
     parser.add_argument('transcript_gtf', help='Transcript annotation in GTF format')
     parser.add_argument('output_gtf', help='Name of the output file')
     parser.add_argument('--transcript_blacklist', help='List of transcripts to exclude (e.g., unannotated readthroughs)')
-    parser.add_argument('--collapse_only', action='store_true', help='')
+    parser.add_argument('--collapse_only', action='store_true', help='Only collapse transcripts of each gene, do not remove overlaps.')
+    parser.add_argument('--stranded', action='store_true', help='Only consider genes on the same strand when removing overlaps.')
     args = parser.parse_args()
 
     annotation = Annotation(args.transcript_gtf)
@@ -284,4 +300,5 @@ if __name__=='__main__':
         blacklist = set()
 
     print('Collapsing transcripts')
-    collapse_annotation(annotation, args.transcript_gtf, args.output_gtf, blacklist=blacklist, collapse_only=args.collapse_only)
+    collapse_annotation(annotation, args.transcript_gtf, args.output_gtf,
+                        blacklist=blacklist, collapse_only=args.collapse_only, stranded=args.stranded)
