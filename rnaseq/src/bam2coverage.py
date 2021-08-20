@@ -14,7 +14,7 @@ parser.add_argument('chr_sizes', help='Chromosome sizes for the reference genome
 parser.add_argument('prefix', help='Prefix for output file names')
 parser.add_argument('--intersect', default=None, type=str, help='BED file containing intervals to calculate coverage on')
 parser.add_argument('-f', '--format', default=['bigwig'], type=str.lower, nargs='+', choices=['bigwig', 'bedgraph'])
-parser.add_argument('--sam_flags', default='-F 768', help='Flags for samtools. Default: filter out secondary and QC-failed reads')
+parser.add_argument('--sam_flags', default='-q 255 -F 768', help='Flags for samtools. Default: filter out secondary and QC-failed reads')
 parser.add_argument('--stranded', action='store_true', help='Generate a track for each strand')
 parser.add_argument('--output_dir', default='.', help='Output directory')
 args = parser.parse_args()
@@ -33,7 +33,6 @@ if args.stranded:
     cmd = f'samtools view {args.sam_flags} -b {args.bam_file} | bedtools genomecov -bga -split -strand - -ibam - | sort -k1,1 -k2,2n > {bgpath_minus}'
     subprocess.call(cmd, shell=True)
     bedgraph_files = [bgpath_plus, bgpath_minus]
-    print(cmd)
 else:
     bgpath = os.path.join(args.output_dir, f'{args.prefix}.bedGraph')
     cmd = f'samtools view {args.sam_flags} -b {args.bam_file} | bedtools genomecov -bga -split -ibam - | sort -k1,1 -k2,2n > {bgpath}'
