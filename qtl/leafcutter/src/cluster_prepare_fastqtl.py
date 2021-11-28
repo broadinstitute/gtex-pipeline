@@ -95,7 +95,7 @@ if __name__=='__main__':
         print(f'    ** dropping {np.sum(mask & mask2)} introns with low variation')
     mask = mask & ~mask2
 
-    filtered_counts_df = counts_df.loc[mask]
+    filtered_counts_df = counts_df.loc[mask].copy()
     cluster_ids = np.unique(counts_df.index.map(lambda x: x.split(':')[-1]))
     filtered_cluster_ids = np.unique(filtered_counts_df.index.map(lambda x: x.split(':')[-1]))
     print('    ** dropping {} introns with counts in fewer than 50% of samples\n'
@@ -103,7 +103,13 @@ if __name__=='__main__':
                counts_df.shape[0]-filtered_counts_df.shape[0], filtered_counts_df.shape[0],
                counts_df.shape[0], len(filtered_cluster_ids), len(cluster_ids))
         )
-    filtered_counts_file = os.path.join(args.output_dir, args.prefix+'_perind.counts.filtered.gz')
+    col_dict = {i:i.split('.')[0] for i in filtered_counts_df.columns}
+    filtered_counts_df.rename(columns=col_dict, inplace=True)
+    sample_participant_lookup_s = pd.read_csv(args.sample_participant_lookup,
+                                              sep='\t', index_col=0, dtype=str, squeeze=True)
+    assert filtered_counts_df.columns.isin(sample_participant_lookup_s.index).all()
+
+    filtered_counts_file = os.path.join(args.output_dir, f'{args.prefix}_perind.counts.filtered.gz')
     filtered_counts_df.to_csv(filtered_counts_file, sep=' ')
 
     print('  * preparing phenotype table')
@@ -124,6 +130,7 @@ if __name__=='__main__':
     bed_df.sort_values(['chr_ix', 'start', 'end'], inplace=True)
     bed_df.drop('chr_ix', axis=1, inplace=True)
     bed_df.rename(columns={'#Chr':'#chr'}, inplace=True)
+    bed_df.rename(columns=col_dict, inplace=True)
     print('    ** writing merged BED')
     bed_file = os.path.join(args.output_dir, f'{args.prefix}.perind.counts.filtered.qqnorm.bed.gz')
     qtl.io.write_bed(bed_df, bed_file)
@@ -156,13 +163,14 @@ if __name__=='__main__':
     # sort by TSS
     gene_bed_df = gene_bed_df.groupby('#chr', sort=False, group_keys=False).apply(lambda x: x.sort_values('start'))
     # change sample IDs to participant IDs
-    sample_participant_lookup_s = pd.read_csv(args.sample_participant_lookup,
-                                              sep='\t', index_col=0, dtype=str, squeeze=True)
     gene_bed_df.rename(columns=sample_participant_lookup_s, inplace=True)
     qtl.io.write_bed(gene_bed_df, os.path.join(args.output_dir, f'{args.prefix}.leafcutter.bed.gz'))
+    gene_bed_df[['start', 'end']] = gene_bed_df[['start', 'end']].astype(np.int32)
+    gene_bed_df[gene_bed_df.columns[4:]] = gene_bed_df[gene_bed_df.columns[4:]].astype(np.float32)
+    gene_bed_df.to_parquet(os.path.join(args.output_dir, f'{args.prefix}.leafcutter.bed.parquet'))
     pd.Series(group_s).sort_values().to_csv(
         os.path.join(args.output_dir, f'{args.prefix}.leafcutter.phenotype_groups.txt'),
-        sep='\t')
+        sep='\t', header=False)
 
     print('  * calculating PCs')
     pca = PCA(n_components=args.num_pcs)
