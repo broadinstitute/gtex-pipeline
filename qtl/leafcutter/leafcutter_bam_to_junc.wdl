@@ -2,6 +2,7 @@ task leafcutter_bam_to_junc {
 
     File bam_file
     String sample_id
+    Int? strand_specificity = 0
 
     Int memory
     Int disk_space
@@ -10,15 +11,12 @@ task leafcutter_bam_to_junc {
 
     command {
         set -euo pipefail
-        PATH=/opt/leafcutter/scripts:$PATH
-        echo $(date +"[%b %d %H:%M:%S] LeafCutter: extracting junctions for sample ${sample_id}")
-        # modified /opt/leafcutter/scripts/bam2junc.sh to incorporate WASP filters:
-        # sh /opt/leafcutter/scripts/bam2junc.sh ${bam_file} ${sample_id}.leafcutter.junc
-        bed_file=${bam_file}.bed
-        junc_file=${sample_id}.leafcutter.junc
-        samtools view ${bam_file} | grep -v "vW:i:[2-7]" | filter_cs.py | sam2bed.pl --use-RNA-strand - $bed_file
-        bed2junc.pl $bed_file $junc_file
-        gzip $junc_file
+        echo $(date +"[%b %d %H:%M:%S] Extracting junctions for sample ${sample_id}")
+        # select uniquely mapped reads that pass WASP filters
+        filtered_bam=${bam_file}.filtered.bam
+        samtools view -h -q 255 ${bam_file} | grep -v "vW:i:[2-7]" | samtools view -b > $filtered_bam
+        samtools index $filtered_bam
+        regtools junctions extract -a 8 -m 50 -M 500000 ${"-s " + strand_specificity} $filtered_bam | gzip -c > ${sample_id}.regtools_junc.txt.gz
         echo $(date +"[%b %d %H:%M:%S] Done")
     }
 
@@ -31,7 +29,7 @@ task leafcutter_bam_to_junc {
     }
 
     output {
-        File junc_file="${sample_id}.leafcutter.junc.gz"
+        File junc_file="${sample_id}.regtools_junc.txt.gz"
     }
 
     meta {
