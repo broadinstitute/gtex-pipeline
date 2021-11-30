@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # Author: Francois Aguet
 
+
 import numpy as np
 import pandas as pd
 import gzip
@@ -12,7 +13,11 @@ import qtl.io
 import qtl.norm
 
 
-def prepare_bed(df, bed_template_df, chr_subset=None):
+def prepare_bed(df, bed_template_df, chr_subset=None, ignore_version=False):
+    ## in case gene models are different versions
+    if ignore_version:
+        bed_template_df.index = [i.split('.')[0] for i in list(bed_template_df.index)]
+        df.index = [i.split('.')[0] for i in list(df.index)]
     bed_df = pd.merge(bed_template_df, df, left_index=True, right_index=True)
     # sort by start position
     bed_df = bed_df.groupby('chr', sort=False, group_keys=False).apply(lambda x: x.sort_values('start'))
@@ -27,25 +32,22 @@ def prepare_expression(counts_df, tpm_df, vcf_lookup_s, sample_frac_threshold=0.
     Genes are thresholded based on the following expression rules:
       TPM >= tpm_threshold in >= sample_frac_threshold*samples
       read counts >= count_threshold in sample_frac_threshold*samples
-    
+
     vcf_lookup: lookup table mapping sample IDs to VCF IDs
-    
+
     Between-sample normalization modes:
       tmm: TMM from edgeR
       qn:  quantile normalization
     """
-
-    ix = np.intersect1d(counts_df.columns, vcf_lookup_s.index)
+    ix = np.intersect1d(counts_df.columns, vcf_lookup_s.index.astype(str))
     tpm_df = tpm_df[ix]
     counts_df = counts_df[ix]
     ns = tpm_df.shape[1]
-
     # expression thresholds
     mask = (
         (np.sum(tpm_df>=tpm_threshold,axis=1)>=sample_frac_threshold*ns) &
         (np.sum(counts_df>=count_threshold,axis=1)>=sample_frac_threshold*ns)
     ).values
-
     # apply normalization
     if mode.lower()=='tmm':
         tmm_counts_df = qtl.norm.edger_cpm(counts_df, normalized_lib_sizes=True)
@@ -55,9 +57,7 @@ def prepare_expression(counts_df, tpm_df, vcf_lookup_s, sample_frac_threshold=0.
         norm_df = qtl.norm.inverse_normal_transform(qn_df)
     else:
         raise ValueError('Unsupported mode {}'.format(mode))
-
     return norm_df
-
 
 
 if __name__=='__main__':
@@ -76,6 +76,7 @@ if __name__=='__main__':
     parser.add_argument('--count_threshold', type=np.int32, default=6, help='Selects genes with >= count_threshold reads in at least sample_frac_threshold samples')
     parser.add_argument('--sample_frac_threshold', type=np.double, default=0.2, help='Minimum fraction of samples that must satisfy thresholds')
     parser.add_argument('--normalization_method', default='tmm', help='Normalization method: TMM or quantile normalization (qn)')
+    parser.add_argument('--ignore_version', action='store_true', help='Ignore ENSEMBL gene version when merging BED template with norm counts (keep version from BED)')
     args = parser.parse_args()
 
     print('Loading expression data', flush=True)
@@ -93,7 +94,7 @@ if __name__=='__main__':
     # check inputs
     if not np.all(counts_df.columns == tpm_df.columns):
         raise ValueError('Sample IDs in the TPM and read counts files must match.')
-    if not np.all(counts_df.columns.isin(sample_participant_lookup_s.index)):
+    if not np.all(counts_df.columns.isin(sample_participant_lookup_s.index.astype(str))):
         raise ValueError('Sample IDs in expression files and participant lookup table must match.')
 
     if args.convert_tpm:
@@ -107,12 +108,14 @@ if __name__=='__main__':
     print('  * {} genes remain after thresholding.'.format(norm_df.shape[0]), flush=True)
 
     # change sample IDs to participant IDs
-    norm_df.rename(columns=sample_participant_lookup_s.to_dict(), inplace=True)
+    map = sample_participant_lookup_s.to_dict()
+    map = {str(k): map[k] for k in map}
+    norm_df.rename(columns=map, inplace=True)
 
     bed_template_df = qtl.io.gtf_to_tss_bed(args.annotation_gtf, feature='transcript')
     with open(args.vcf_chr_list) as f:
         chr_list = f.read().strip().split('\n')
-    norm_bed_df = prepare_bed(norm_df, bed_template_df, chr_subset=chr_list)
+    norm_bed_df = prepare_bed(norm_df, bed_template_df, chr_subset=chr_list, ignore_version=args.ignore_version)
     print('  * {} genes remain after removing contigs absent from VCF.'.format(norm_bed_df.shape[0]), flush=True)
     print('Writing BED file', flush=True)
     qtl.io.write_bed(norm_bed_df, os.path.join(args.output_dir, args.prefix+'.expression.bed.gz'))
