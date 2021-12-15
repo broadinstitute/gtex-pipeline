@@ -1,7 +1,7 @@
 version 1.0
 
-import "genotype/participant_vcfs.wdl" as participant_vcfs
-import "rnaseq/star.wdl" as rnaseq
+import "../genotype/participant_vcfs.wdl" as participant_vcfs
+import "../rnaseq/star.wdl" as rnaseq
 
 workflow sQTLAnalysis{
 	input {
@@ -14,6 +14,4 @@ workflow sQTLAnalysis{
 		input: 
 		varVCFfile=get_het_vcfs.snps_vcf
 	}
-
-
 }
