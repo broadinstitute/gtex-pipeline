@@ -1,0 +1,7 @@
+version: 1.2
+workflows:
+  - name: sQTLAnalysis
+    subclass: WDL
+    primaryDescriptorPath: /sqtl/sQTL.wdl
+
+    
