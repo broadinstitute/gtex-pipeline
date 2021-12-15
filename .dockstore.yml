@@ -4,4 +4,4 @@ workflows:
     subclass: WDL
     primaryDescriptorPath: /sqtl/sQTL.wdl
 
-    
+     
