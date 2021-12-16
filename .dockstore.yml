@@ -3,5 +3,8 @@ workflows:
   - name: sQTLAnalysis
     subclass: WDL
     primaryDescriptorPath: /sqtl/sQTL.wdl
+  - name: CrossCheckSample
+    subclass: WDL
+    primaryDescriptorPath: /utils/Fingerprinting.wdl
 
      
