@@ -13,17 +13,23 @@ task ConvertPlinkToVcf{
 
 		# make sure that the files all have the same basename
 		# will not work if names have spaces in them
-		
-		bim_base=$(basename ~{bim} .bim)
-		bed_base=$(basename ~{bed} .bed)
-		fam_base=$(basename ~{fam} .fam)
+
+		# the difference between using basename and using substitution is that substitution will 
+		# maintain the leading path, which is desirable sometimes.
+
+		bim_bash=~{bim}
+		bed_bash=~{bed}
+		fam_bash=~{fam}
+
+		bim_base=${bim_bash%.bim}
+		bed_base=${bed_bash%.bed}
+		fam_base=${fam_bash%.fam}
 
 		lines=$(echo $bim_base $bed_base $fam_base | tr ' ' '\n'| uniq | wc -l)
 
 		if [ "${lines}" -eq "1" ]; then
 			bim_bash=~{bim}
-			base=${bim_bash%.bim}
-			plink --bfile ${base} --recode vcf --out ~{bim_base}
+			plink --bfile ${bim_base} --recode vcf --out $(basename "~{bim}" .bim}
 		else
 			echo "Error, found too many basenames in the input: $lines" 
 			exit 1
