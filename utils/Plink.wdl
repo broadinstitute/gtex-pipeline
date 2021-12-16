@@ -12,6 +12,8 @@ task ConvertPlinkToVcf{
 		set -euo pipefail
 
 		# make sure that the files all have the same basename
+		# will not work if names have spaces in them
+		
 		bim_base=$(basename ~{bim} .bim)
 		bed_base=$(basename ~{bed} .bed)
 		fam_base=$(basename ~{fam} .fam)
@@ -21,7 +23,7 @@ task ConvertPlinkToVcf{
 		if [ "${lines}" -eq "1" ]; then
 			bim_bash=~{bim}
 			base=${bim_bash%.bim}
-			plink --bfile ${base} --recode vcf 
+			plink --bfile ${base} --recode vcf --out ~{bim_base}
 		else
 			echo "Error, found too many basenames in the input: $lines" 
 			exit 1
