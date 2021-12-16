@@ -35,7 +35,7 @@ task ConvertPlinkToVcf{
 	runtime {
             docker: "dnastack/plink:1.9"
             preemptible: 0
-            disks: "local-disk " + size([bim,bed,fam],"GiB")+20 + " HDD"
+            disks: "local-disk " + ceil(size([bim,bed,fam],"GiB")+20) + " HDD"
             bootDiskSizeGb: "16"
             memory: 20 + " GB"
     }
