@@ -8,4 +8,4 @@ workflows:
     primaryDescriptorPath: /utils/Fingerprinting.wdl
   - name: ConvertPlinkToVcf
     subclass: WDL
-    primaryDescriptorPath: /utils/ConvertPlinkToVcfWF.wdl
+    primaryDescriptorPath: /utils/Plink.wdl
