@@ -18,7 +18,7 @@ task ConvertPlinkToVcf{
 
 		lines=$(echo $bim_base $bed_base $fam_base | tr ' ' '\n'| uniq | wc -l)
 
-		if [ "${lines}" -eq "1" ]; do
+		if [ "${lines}" -eq "1" ]; then
 			bim_bash=~{bim}
 			base=${bim_bash%.bim}
 			plink --bfile ${base} --recode vcf 
