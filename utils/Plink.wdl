@@ -43,4 +43,9 @@ task ConvertPlinkToVcf{
 
 workflow ConvertPlinkToVcfWF{
 	call ConvertPlinkToVcf{}
+
+
+    output {
+        File vcf=ConvertPlinkToVcf.vcf
+    }
 }
