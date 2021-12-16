@@ -59,4 +59,10 @@ task CrossCheckSample {
 
 workflow CrosscheckFingerprints {
     call CrossCheckSample
+
+
+    output {
+        File fingerprinting_metrics=CrossCheckSample.metrics
+
+    }
 }
