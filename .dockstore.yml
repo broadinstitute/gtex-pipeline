@@ -6,5 +6,6 @@ workflows:
   - name: CrossCheckSample
     subclass: WDL
     primaryDescriptorPath: /utils/Fingerprinting.wdl
-
-     
+  - name: ConvertPlinkToVcf
+    subclass: WDL
+    primaryDescriptorPath: /utils/ConvertPlinkToVcfWF.wdl
