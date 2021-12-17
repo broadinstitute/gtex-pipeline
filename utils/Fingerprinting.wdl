@@ -40,8 +40,21 @@ task CrossCheckSample {
             -H ~{hapMap} \
             --CROSSCHECK_MODE CHECK_ALL_OTHERS \
             --CROSSCHECK_BY FILE \
-            --EXPECT_ALL_GROUPS_TO_MATCH
+            --EXPECT_ALL_GROUPS_TO_MATCH \
             --OUTPUT sample.crosscheck_metrics 
+    >>>
+    output {
+        File metrics="sample.crosscheck_metrics"
+    }
+
+    runtime {
+            docker: "broadinstitute/gatk:" + gatkTag
+            preemptible: select_first([preemptible, 0])
+            disks: "local-disk " + disk_size + " HDD"
+            bootDiskSizeGb: "16"
+            memory: memoryRam + " GB"
+    }
+}
 
     >>>
     output {
