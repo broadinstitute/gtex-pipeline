@@ -29,7 +29,7 @@ task ConvertPlinkToVcf{
 
 		if [ "${lines}" -eq "1" ]; then
 			bim_bash=~{bim}
-			plink --bfile ${bim_base} --recode vcf --out $(basename "~{bim}" .bim}
+			plink --bfile ${bim_base} --recode vcf --out "$(basename ~{bim} .bim)"
 		else
 			echo "Error, found too many basenames in the input: $lines" 
 			exit 1
