@@ -47,7 +47,7 @@ task LoadPicardMetrics{
 }
 
 workflow LoadPicardMetricsWF{
-	call LoadPicardMetricsWF
+	call LoadPicardMetrics
 
 	output {
 		Map[String,Array[String]] values_map= LoadPicardMetrics.values_map
