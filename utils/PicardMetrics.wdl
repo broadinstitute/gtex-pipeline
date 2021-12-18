@@ -40,7 +40,7 @@ task LoadPicardMetrics{
 	}
 
 	runtime {
-		docker: "python3:latest"
+		docker: "python:latest"
 		memory: "2GB"
 		disks: "local-disk  ~{disk_space} HDD"
 	}
