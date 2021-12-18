@@ -3,10 +3,11 @@ version 1.0
 import "../genotype/participant_vcfs.wdl" as participant_vcfs
 import "../rnaseq/star.wdl" as rnaseq
 import "../utils/Fingerprinting.wdl" as fp
+import "../utils/IdentifySample.wdl" as id
 
 workflow sQTLAnalysis{
 	input {
-
+		File hapMap
 	}	
 
 	call participant_vcfs.participant_vcfs as get_het_vcfs{} 
@@ -16,13 +17,22 @@ workflow sQTLAnalysis{
 		varVCFfile=get_het_vcfs.snps_vcf
 	}
 
-	call fp.CrossCheckSample as fingerprint{
+	call fp.CrossCheckSample as fingerprint {
 		input:
 		first=star.bam_file,
 		first_index=star.bam_index,
 		second=get_het_vcfs.snps_vcf,
-		second_index=get_het_vcfs.snps_vcf_index
+		second_index=get_het_vcfs.snps_vcf_index,
+		hapMap = hapMap	
 	}
+
+	call id.IdentifySample as identifySample{
+		input:
+		sample=star.bam_file,
+        sample_index=star.bam_index,
+        hapMap=hapMap
+	}
+
 
 	output {
 		File snps_vcf = get_het_vcfs.snps_vcf
@@ -42,5 +52,7 @@ workflow sQTLAnalysis{
 		Array[File] star_logs = star.logs
 
 		File fingerprint_metrics=fingerprint.metrics
+
+		File metrics=identifySample.metrics
 	}
 }

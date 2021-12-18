@@ -11,9 +11,9 @@ task IdentifySample {
         File hapMap
         Int? preemptible
         Int? memoryMaybe
-         String? gatkTag
+        String? gatkTag
     }
-    Boolean gatkTag_final = select_first([gatkTag, "4.2.4.0"])
+    String gatkTag_final = select_first([gatkTag, "4.2.4.0"])
 
 
     Int memoryDefault=16
