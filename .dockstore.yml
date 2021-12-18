@@ -12,3 +12,6 @@ workflows:
   - name: ConvertPlinkToVcf
     subclass: WDL
     primaryDescriptorPath: /utils/Plink.wdl
+  - name: LoadPicardMetrics
+    subclass: WDL
+    primaryDescriptorPath: /utils/PicardMetrics.wdl

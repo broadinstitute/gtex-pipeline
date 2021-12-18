@@ -24,8 +24,12 @@ workflow sQTLAnalysis{
 		second_index=get_het_vcfs.snps_vcf_index
 	}
 
-
 	output {
+		File snps_vcf = get_het_vcfs.snps_vcf
+		File snps_vcf_index = get_het_vcfs.snps_vcf_index
+		File snps_het_vcf = get_het_vcfs.snps_het_vcf
+		File snps_het_vcf_index = get_het_vcfs.snps_het_vcf_index
+
 		File bam_file = star.bam_file 
 		File bam_index = star.bam_index 
 		File transcriptome_bam = star.transcriptome_bam 

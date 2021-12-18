@@ -74,7 +74,7 @@ task ReheaderVcf{
 
 	command <<<
 		set -euo pipefail
-		
+
 		java -jar picard.jar UpdateVcfSequenceDictionary \
 			-R ~{ref_fasta} \
 		 	-I ~{vcf} \
@@ -96,7 +96,6 @@ task ReheaderVcf{
             bootDiskSizeGb: "16"
             memory: 20 + " GB"
     }
-
 }
 
 workflow ConvertPlinkToVcfWF{
