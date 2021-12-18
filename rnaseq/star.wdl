@@ -62,23 +62,24 @@ task star {
         fi
 
         echo "FASTQs:"
-        echo $fastq1_abs
-        echo $fastq2_abs
+        echo "$fastq1_abs"
+        echo "$fastq2_abs"
 
         # extract index
-        echo $(date +"[%b %d %H:%M:%S] Extracting STAR index")
+        date +"[%b %d %H:%M:%S] Extracting STAR index"
+
         mkdir star_index
-        tar -xvvf ~{star_index} -C star_index --strip-components=1
+        tar -xvvf "~{star_index}" -C star_index --strip-components=1
 
         mkdir star_out
         # placeholders for optional outputs
-        touch star_out/~{prefix}.Aligned.toTranscriptome.out.bam
-        touch star_out/~{prefix}.Chimeric.out.sorted.bam
-        touch star_out/~{prefix}.Chimeric.out.sorted.bam.bai
-        touch star_out/~{prefix}.ReadsPerGene.out.tab  # run_STAR.py will gzip
+        touch "star_out/~{prefix}.Aligned.toTranscriptome.out.bam"
+        touch "star_out/~{prefix}.Chimeric.out.sorted.bam"
+        touch "star_out/~{prefix}.Chimeric.out.sorted.bam.bai"
+        touch "star_out/~{prefix}.ReadsPerGene.out.tab"  # run_STAR.py will gzip
 
         /src/run_STAR.py \
-            star_index $fastq1_abs $fastq2_abs ~{prefix} \
+            star_index "$fastq1_abs" "$fastq2_abs" "~{prefix}" \
             --output_dir star_out \
             ~{"--outFilterMultimapNmax " + outFilterMultimapNmax} \
             ~{"--alignSJoverhangMin " + alignSJoverhangMin} \
