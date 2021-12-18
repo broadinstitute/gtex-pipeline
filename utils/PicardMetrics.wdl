@@ -47,9 +47,15 @@ task LoadPicardMetrics{
 }
 
 workflow LoadPicardMetricsWF{
-	call LoadPicardMetrics
+	input {
+		File picard_metrics
+		String requested_metric
+		Int requested_row
+	}
+	call LoadPicardMetrics{input: picard_metrics=picard_metrics}
 
 	output {
+		String requested_value=LoadPicardMetrics.values_map[requested_metric][requested_row]
 		Map[String,Array[String]] values_map= LoadPicardMetrics.values_map
 		File json_dump = LoadPicardMetrics.json_dump
 	}
