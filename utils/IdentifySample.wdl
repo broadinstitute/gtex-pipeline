@@ -8,12 +8,15 @@ task IdentifySample {
         File vcf
         File vcf_index
 
+        String? expected_sample_name
+
         File hapMap
         Int? preemptible
         Int? memoryMaybe
         String? gatkTag
     }
     String gatkTag_final = select_first([gatkTag, "4.2.4.0"])
+    String expected_sample_name_final = select_first([expected_sample_name, ""])
 
 
     Int memoryDefault=16
@@ -39,16 +42,23 @@ task IdentifySample {
     command <<<
         set -euo pipefail
 
+        if [ "~{expected_sample_name_final}" != "" ]; then
+            printf '~{sample}\t~{expected_sample_name_final}\n' > sample_map.txt
+            extra_arg="--INPUT_SAMPLE_MAP sample_map.txt"
+        else
+            extra_arg=""    
+        fi
+
         gatk --java-options "-Xmx~{memoryJava}G" \
             CrosscheckFingerprints \
             -I ~{sample} \
             -SI ~{vcf} \
+            "${extra_arg}" \
             -H ~{hapMap} \
             --CALCULATE_TUMOR_AWARE_RESULTS false \
             --CROSSCHECK_MODE CHECK_ALL_OTHERS \
             --CROSSCHECK_BY SAMPLE \
             --OUTPUT sample.crosscheck_metrics \
-            --EXIT_CODE_WHEN_MISMATCH 3
     >>>
     output {
         File metrics="sample.crosscheck_metrics"
@@ -60,16 +70,54 @@ task IdentifySample {
             disks: "local-disk " + disk_size + " HDD"
             bootDiskSizeGb: "16"
             memory: memoryRam + " GB"
+    }
+}
+
+task ClusterMetrics {
+    input {
+        File fp_metrics
+        String? gatkTag
+    }
+    String gatkTag_final = select_first([gatkTag, "4.2.4.0"])
+
+
+    Int memoryJava=16
+    Int memoryRam=memoryJava+2
+    Int disk_size = 15 
+
+    
+    command <<<
+        set -euo pipefail
+
+        gatk --java-options "-Xmx~{memoryJava}G" \
+            ClusterFingerprintMetrics \
+            -I ~{fp_metrics} \
+            --OUTPUT sample.clustered.crosscheck_metrics \
+    >>>
+    output {
+        File metrics="sample.crosscheck_metrics"
+    }
+
+    
+
+    runtime {
+            docker: "broadinstitute/gatk:" + gatkTag_final
+            disks: "local-disk " + disk_size + " HDD"
+            bootDiskSizeGb: "16"
+            memory: memoryRam + " GB"
             continueOnReturnCode: [0,3]
 
     }
 }
 
-
-workflow IdentifySampleWF{
-    call IdentifySample{}
-
-    output {
-        File fp_metrics=IdentifySample.metrics
-    }
-}
+#workflow IdentifySampleWF{
+#    call IdentifySample{}
+#
+#    call ClusterMetrics{ input:
+#        fp_metrics=IdentifySample.metrics
+#    }
+#    output {
+#        File fp_metrics=IdentifySample.metrics
+#        File fp_clustered=
+#    }
+#}
