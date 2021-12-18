@@ -9,8 +9,10 @@ task CrossCheckSample {
         File hapMap
         Int? preemptible
         Int? memoryMaybe
-        String gatkTag="4.2.4.0"
+        String? gatkTag
     }
+    Boolean gatkTag_final = select_first([gatkTag, "4.2.4.0"])
+
 
     Int memoryDefault=16
     Int memoryJava=select_first([memoryMaybe,memoryDefault])
@@ -48,14 +50,13 @@ task CrossCheckSample {
     }
 
     runtime {
-            docker: "broadinstitute/gatk:" + gatkTag
+            docker: "broadinstitute/gatk:" + gatkTag_final
             preemptible: select_first([preemptible, 0])
             disks: "local-disk " + disk_size + " HDD"
             bootDiskSizeGb: "16"
             memory: memoryRam + " GB"
     }
 }
-
 
 
 workflow CrosscheckFingerprints {

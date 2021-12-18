@@ -13,9 +13,14 @@ task participant_vcfs {
 
     command <<<
         set -euo pipefail
+        
         date +"[%b %d %H:%M:%S] Generating participant VCF (SNPs only)"
         # select SNPs, filter out missing sites
-        bcftools view --no-update -s ~{participant_id} -v snps ~{vcf_file} | bcftools view --no-update -e 'GT=".|."' -Oz -o ~{participant_id}.snps.vcf.gz
+        
+        bcftools view --no-update -s ~{participant_id} -v snps ~{vcf_file} | \
+            bcftools view --no-update -e 'REF=="-"||ALT=="-" || REF=="."||ALT=="." || GT=".|."' \
+            -Oz -o ~{participant_id}.snps.vcf.gz
+
         tabix ~{participant_id}.snps.vcf.gz
 
         date +"[%b %d %H:%M:%S] Subsetting het sites for ASE"

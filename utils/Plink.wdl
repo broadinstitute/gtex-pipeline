@@ -8,6 +8,7 @@ task ConvertPlinkToVcf{
 		File fam
 
 	}
+	String outbase=basename(bim,'.bim')
 	command <<<
 		set -euo pipefail
 
@@ -29,15 +30,25 @@ task ConvertPlinkToVcf{
 
 		if [ "${lines}" -eq "1" ]; then
 			bim_bash=~{bim}
-			plink --bfile "${bim_base}" --recode vcf --out "$(basename '~{bim}' .bim)"
+			plink --bfile "${bim_base}" --recode vcf --out "~{outbase}"
 		else
 			echo "Error, found too many basenames in the input: $lines" 
 			exit 1
 		fi
+
+		# remove lines that start with '##contig=<ID=' and for the remaining lines that
+		# to not start with '#', replace 23 with X and add 'chr' to the begining of the line.
+		grep -v '^##contig=<ID=' "~{outbase}".vcf | \
+			sed  '/#/!{s/^23\t/X\t/; s/^/chr/}'  | \
+			bcftools view --no-update  -v snps -e 'REF=="-"||ALT=="-" || REF=="."||ALT=="."'  \
+		 	-Oz -o "~{outbase}".snps.vcf.gz 
+
+		tabix "~{outbase}".snps.vcf.gz 
 	>>>
 
 	output {
-		File vcf=basename(bim,'.bim')+".vcf"
+		File vcf="~{outbase}".snps.vcf.gz 
+		File vcf_index="~{outbase}".snps.vcf.gz.tbi
 	}
 
 	runtime {
@@ -47,13 +58,58 @@ task ConvertPlinkToVcf{
             bootDiskSizeGb: "16"
             memory: 20 + " GB"
     }
+
+}
+
+
+task ReheaderVcf{
+	input {
+		File vcf
+		File vcf_index
+		File ref_fasta
+		File ref_dict
+		File ref_index
+		String basename
+	}
+
+	command <<<
+		set -euo pipefail
+		
+		java -jar picard.jar UpdateVcfSequenceDictionary \
+			-R ~{ref_fasta} \
+		 	-I ~{vcf} \
+		 	-O ~{basename}.vcf.gz 
+		 	-SD ~{ref_dict}
+
+		 tabix ~{basename}.vcf.gz 
+	>>>
+
+	output {
+		File vcf=basename+".vcf.gz"
+		File vcf_index=basename+".vcf.gz.tbi"
+	}
+
+	runtime {
+            docker: "broadinstitute/picard:2.26.8"
+            preemptible: 0
+            disks: "local-disk " + ceil(size([vcf,vcf,ref_fasta],"GiB")+20) + " HDD"
+            bootDiskSizeGb: "16"
+            memory: 20 + " GB"
+    }
+
 }
 
 workflow ConvertPlinkToVcfWF{
 	call ConvertPlinkToVcf{}
 
+	call ReheaderVcf{
+		input:
+		vcf=ConvertPlinkToVcf.vcf,
+		vcf_index=ConvertPlinkToVcf.vcf_index
+	}
 
     output {
-        File vcf=ConvertPlinkToVcf.vcf
+        File vcf=ReheaderVcf.vcf
+        File vcf_index=ReheaderVcf.vcf_index
     }
 }

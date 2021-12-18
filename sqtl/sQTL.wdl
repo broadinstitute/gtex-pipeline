@@ -18,9 +18,9 @@ workflow sQTLAnalysis{
 
 	call fp.CrossCheckSample{
 		input:
-		first=star.bam_file
-		first_index=star.bam_file_index
-		second=get_het_vcfs.snps_vcf
+		first=star.bam_file,
+		first_index=star.bam_file_index,
+		second=get_het_vcfs.snps_vcf,
 		second_index=get_het_vcfs.snps_vcf_index
 	}
 }
