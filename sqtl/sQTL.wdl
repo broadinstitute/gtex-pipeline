@@ -36,5 +36,7 @@ workflow sQTLAnalysis{
 		File junctions = star.junctions 
 		File junctions_pass1 = star.junctions_pass1 
 		Array[File] star_logs = star.logs
+
+		File fingerprint_metrics=fingerprint.metrics
 	}
 }
