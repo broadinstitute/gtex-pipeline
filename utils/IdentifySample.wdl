@@ -72,6 +72,7 @@ task IdentifySample {
             disks: "local-disk " + disk_size + " HDD"
             bootDiskSizeGb: "16"
             memory: memoryRam + " GB"
+            continueOnReturnCode: true
     }
 }
 
