@@ -1,6 +1,6 @@
 version 1.0
 
-task LoadPicardMetrics{
+task LoadPicardMetrics {
 	input {
 		File picard_metrics
 	}

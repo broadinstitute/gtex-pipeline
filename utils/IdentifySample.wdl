@@ -1,5 +1,6 @@
 version 1.0
 
+import "PicardMetrics.wdl" as p
 
 task IdentifySample {
     input {
@@ -98,26 +99,38 @@ task ClusterMetrics {
         File metrics="sample.crosscheck_metrics"
     }
 
-    
-
     runtime {
             docker: "broadinstitute/gatk:" + gatkTag_final
             disks: "local-disk " + disk_size + " HDD"
             bootDiskSizeGb: "16"
             memory: memoryRam + " GB"
             continueOnReturnCode: [0,3]
-
     }
 }
 
-#workflow IdentifySampleWF{
-#    call IdentifySample{}
-#
-#    call ClusterMetrics{ input:
-#        fp_metrics=IdentifySample.metrics
-#    }
-#    output {
-#        File fp_metrics=IdentifySample.metrics
-#        File fp_clustered=
-#    }
-#}
+workflow IdentifySampleWF{
+    input {
+        String? gatkTag
+    }
+    call IdentifySample{
+        input:
+        gatkTag=gatkTag
+    }
+
+    call ClusterMetrics{input:
+        gatkTag=gatkTag,
+        fp_metrics=IdentifySample.metrics
+    }
+
+    call p.LoadPicardMetricsWF as picard_metric{
+        input:
+        picard_metrics=ClusterMetrics.metrics,
+        requested_metric="RIGHT_GROUP_VALUE",
+        requested_row=0
+    }
+    output {
+        File fp_metrics=IdentifySample.metrics
+        File fp_clustered=ClusterMetrics.metrics
+        String match_group=picard_metric.requested_value
+    }
+}
