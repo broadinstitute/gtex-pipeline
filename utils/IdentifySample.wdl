@@ -50,11 +50,12 @@ task IdentifySample {
             extra_arg=""    
         fi
 
+        # shellcheck disable=SC2039 # I actually want extra_arg to be split into two.
         gatk --java-options "-Xmx~{memoryJava}G" \
             CrosscheckFingerprints \
             -I ~{sample} \
             -SI ~{vcf} \
-            "${extra_arg}" \
+            ${extra_arg} \
             -H ~{hapMap} \
             --CALCULATE_TUMOR_AWARE_RESULTS false \
             --CROSSCHECK_MODE CHECK_ALL_OTHERS \
