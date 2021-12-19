@@ -53,6 +53,9 @@ workflow sQTLAnalysis{
 
 		File fingerprint_metrics=fingerprint.metrics
 
-		File clustered_metrics=identifySample.metrics
+		File clustered_metrics=identifySample.fp_clustered
+		File fingerprint_matrix=identifySample.fp_metrics
+		String fingerprint_match=identifySample.match_group
+
 	}
 }
