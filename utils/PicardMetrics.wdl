@@ -7,7 +7,7 @@ task LoadPicardMetrics{
 	Int disk_space = 10 + ceil(size(picard_metrics))
 
 	command <<<
-		python <<-EOF 
+		python <<EOF 
 		import json
 
 		with open("~{picard_metrics}","r") as metrics:
