@@ -26,7 +26,7 @@ workflow sQTLAnalysis{
 		hapMap = hapMap	
 	}
 
-	call id.IdentifySample as identifySample{
+	call id.IdentifySampleWF as identifySample{
 		input:
 		sample=star.bam_file,
         sample_index=star.bam_index,
@@ -53,6 +53,6 @@ workflow sQTLAnalysis{
 
 		File fingerprint_metrics=fingerprint.metrics
 
-		File metrics=identifySample.metrics
+		File clustered_metrics=identifySample.metrics
 	}
 }

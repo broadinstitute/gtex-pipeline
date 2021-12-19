@@ -50,7 +50,7 @@ task IdentifySample {
             extra_arg=""    
         fi
 
-        # shellcheck disable=SC2039 # I actually want extra_arg to be split into two.
+        # shellcheck disable=SC2086 # I actually want extra_arg to be split into two.
         gatk --java-options "-Xmx~{memoryJava}G" \
             CrosscheckFingerprints \
             -I ~{sample} \
@@ -111,11 +111,23 @@ task ClusterMetrics {
 
 workflow IdentifySampleWF{
     input {
+        File sample
+        File sample_index
+        File vcf
+        File vcf_index
+        File hapMap
+        
         String? gatkTag
+        
     }
     call IdentifySample{
         input:
-        gatkTag=gatkTag
+        gatkTag=gatkTag,
+        sample=sample,
+        sample_index=sample_index,
+        vcf=vcf,
+        vcf_index=vcf_index,
+        hapMap=hapMap
     }
 
     call ClusterMetrics{input:
