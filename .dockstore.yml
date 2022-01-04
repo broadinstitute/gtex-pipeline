@@ -15,4 +15,7 @@ workflows:
   - name: LoadPicardMetrics
     subclass: WDL
     primaryDescriptorPath: /utils/PicardMetrics.wdl
+  - name: CrosscheckDataWF
+    subclass: WDL
+    primaryDescriptorPath: /utils/CrosscheckData.wdl
     
