@@ -16,7 +16,7 @@ task CrosscheckData {
     Int memoryDefault=16
     Int memoryJava=select_first([memoryMaybe,memoryDefault])
     Int memoryRam=memoryJava+2
-    Int disk_size = 10 + ceil(size([hapMap, vcf], "GB"))
+    Int disk_size = 10 + ceil(size([hapMap], "GB"))
 
     File output_file="samples.crosscheck_metrics"
 
@@ -66,7 +66,7 @@ workflow CrosscheckDataWF {
         String? gatkTag
         
     }
-    call IdentifySample{
+    call CrosscheckData{
         input:
         gatkTag=gatkTag,
         samples=samples,
@@ -75,6 +75,6 @@ workflow CrosscheckDataWF {
     }
 
     output {
-        File fp_metrics=IdentifySample.metrics
+        File fp_metrics=CrosscheckData.metrics
     }
 }
