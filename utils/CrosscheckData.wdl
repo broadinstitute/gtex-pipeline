@@ -18,7 +18,7 @@ task CrosscheckData {
     Int memoryRam=memoryJava+2
     Int disk_size = 10 + ceil(size([hapMap], "GB"))
 
-    File output_file="samples.crosscheck_metrics"
+    String output_name="samples.crosscheck_metrics"
 
     parameter_meta {
         samples: {
@@ -38,10 +38,10 @@ task CrosscheckData {
             -H ~{hapMap} \
             --CALCULATE_TUMOR_AWARE_RESULTS false \
             --CROSSCHECK_BY FILE \
-            --OUTPUT ~{output_file} \
+            --OUTPUT ~{output_name} \
     >>>
     output {
-        File metrics=output_file
+        File metrics=output_name
     }
 
     runtime {
@@ -61,7 +61,6 @@ workflow CrosscheckDataWF {
         Array[File] samples_index
       
         File hapMap
-        
         String? gatkTag
         
     }
