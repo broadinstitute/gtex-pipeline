@@ -32,10 +32,9 @@ task CrosscheckData {
     command <<<
         set -euo pipefail
 
-        # shellcheck disable=SC2086 # I actually want extra_arg to be split into two.
         gatk --java-options "-Xmx~{memoryJava}G" \
             CrosscheckFingerprints \
-            -I ~{samples} \
+            -I ~{sep=" -I " samples} \
             -H ~{hapMap} \
             --CALCULATE_TUMOR_AWARE_RESULTS false \
             --CROSSCHECK_BY FILE \
