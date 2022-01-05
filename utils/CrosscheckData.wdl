@@ -9,6 +9,7 @@ task CrosscheckData {
         Int? preemptible
         Int? memoryMaybe
         String? gatkTag
+        Int threads
     }
     String gatkTag_final = select_first([gatkTag, "4.2.4.0"])
   
@@ -66,7 +67,10 @@ workflow CrosscheckDataWF {
         String? gatkTag
         Int? threads
     }
-    Int threads_final = select_first([threads,min(length(samples),40)])
+    Int length_min_forty = if length(samples) >= 40 then 40 else length(samples) 
+
+    Int threads_final = select_first([threads,length_min_forty])
+
     call CrosscheckData{
         input:
         gatkTag=gatkTag,

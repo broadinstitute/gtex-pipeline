@@ -21,7 +21,7 @@ task IdentifySample {
 
 
     Int memoryDefault=16
-    Int memoryJava=select_first([memoryMaybe,memoryDefault])
+    Int memoryJava=select_first([memoryMaybe, memoryDefault])
     Int memoryRam=memoryJava+2
     Int disk_size = 10 + ceil(size([hapMap, vcf], "GB"))
 
@@ -88,17 +88,17 @@ task ClusterMetrics {
     Int memoryRam=memoryJava+2
     Int disk_size = 15 
 
-    
+    String output_name = "sample.clustered.crosscheck_metrics"
     command <<<
         set -euo pipefail
 
         gatk --java-options "-Xmx~{memoryJava}G" \
             ClusterCrosscheckMetrics \
             -I ~{fp_metrics} \
-            --OUTPUT sample.clustered.crosscheck_metrics \
+            --OUTPUT ~{output_name} \
     >>>
     output {
-        File metrics="sample.crosscheck_metrics"
+        File metrics=output_name
     }
 
     runtime {
