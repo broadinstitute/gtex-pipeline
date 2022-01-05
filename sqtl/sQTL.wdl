@@ -8,6 +8,7 @@ import "../utils/IdentifySample.wdl" as id
 workflow sQTLAnalysis{
 	input {
 		File hapMap
+		Boolean crosscheck=true
 	}	
 
 	call participant_vcfs.participant_vcfs as get_het_vcfs{} 
@@ -16,24 +17,24 @@ workflow sQTLAnalysis{
 		input: 
 		varVCFfile=get_het_vcfs.snps_vcf
 	}
+	if (crosscheck) {
+		call fp.CrossCheckSample as fingerprint {
+			input:
+			first=star.bam_file,
+			first_index=star.bam_index,
+			second=get_het_vcfs.snps_vcf,
+			second_index=get_het_vcfs.snps_vcf_index,
+			hapMap = hapMap	
+		}
 
-	call fp.CrossCheckSample as fingerprint {
-		input:
-		first=star.bam_file,
-		first_index=star.bam_index,
-		second=get_het_vcfs.snps_vcf,
-		second_index=get_het_vcfs.snps_vcf_index,
-		hapMap = hapMap	
+		call id.IdentifySampleWF as identifySample{
+			input:
+			sample=star.bam_file,
+	        sample_index=star.bam_index,
+	        hapMap=hapMap
+		}
+
 	}
-
-	call id.IdentifySampleWF as identifySample{
-		input:
-		sample=star.bam_file,
-        sample_index=star.bam_index,
-        hapMap=hapMap
-	}
-
-
 	output {
 		File snps_vcf = get_het_vcfs.snps_vcf
 		File snps_vcf_index = get_het_vcfs.snps_vcf_index
@@ -51,11 +52,11 @@ workflow sQTLAnalysis{
 		File junctions_pass1 = star.junctions_pass1 
 		Array[File] star_logs = star.logs
 
-		File fingerprint_metrics=fingerprint.metrics
+		File? fingerprint_metrics=fingerprint.metrics
 
-		File clustered_metrics=identifySample.fp_clustered
-		File fingerprint_matrix=identifySample.fp_metrics
-		String fingerprint_match=identifySample.match_group
+		File? clustered_metrics=identifySample.fp_clustered
+		File? fingerprint_matrix=identifySample.fp_metrics
+		String? fingerprint_match=identifySample.match_group
 
 	}
 }
