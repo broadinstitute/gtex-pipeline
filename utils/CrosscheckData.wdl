@@ -35,6 +35,7 @@ task CrosscheckData {
         gatk --java-options "-Xmx~{memoryJava}G" \
             CrosscheckFingerprints \
             -I ~{sep=" -I " samples} \
+            -NUM_THREADS ~{threads}
             -H ~{hapMap} \
             --CALCULATE_TUMOR_AWARE_RESULTS false \
             --CROSSCHECK_BY FILE \
@@ -50,6 +51,7 @@ task CrosscheckData {
             disks: "local-disk " + disk_size + " HDD"
             bootDiskSizeGb: "16"
             memory: memoryRam + " GB"
+            cpu: 2
             continueOnReturnCode: true
     }
 }
@@ -62,12 +64,14 @@ workflow CrosscheckDataWF {
       
         File hapMap
         String? gatkTag
-        
+        Int? threads
     }
+    Int threads_final = select_first([threads,min(length(samples),40)])
     call CrosscheckData{
         input:
         gatkTag=gatkTag,
         samples=samples,
+        threads=threads_final,
         samples_index=samples_index,
         hapMap=hapMap
     }
