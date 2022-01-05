@@ -93,7 +93,7 @@ task ClusterMetrics {
         set -euo pipefail
 
         gatk --java-options "-Xmx~{memoryJava}G" \
-            ClusterFingerprintMetrics \
+            ClusterCrosscheckMetrics \
             -I ~{fp_metrics} \
             --OUTPUT sample.clustered.crosscheck_metrics \
     >>>
@@ -110,7 +110,7 @@ task ClusterMetrics {
     }
 }
 
-workflow IdentifySampleWF{
+workflow IdentifySampleWF {
     input {
         File sample
         File sample_index
