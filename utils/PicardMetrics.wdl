@@ -20,7 +20,7 @@ task LoadPicardMetrics {
 					continue
 				if firstline:
 					headers=[*map(lambda x: x.strip(),line.split("\t"))]
-					print("found headers: " + headers)
+					print("found headers: " + ",".join(headers))
 					for header in headers:
 						data[header]=[]
 					firstline=False
@@ -30,7 +30,7 @@ task LoadPicardMetrics {
 						line_count+=1
 					
 		with open("dump.json","w") as out:
-			json.dump(data,out)
+			json.dump(data, out)
 
 		EOF
 	>>>
