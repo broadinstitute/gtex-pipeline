@@ -6,8 +6,8 @@ task ConvertPlinkToVcf{
 		File bim
 		File bed
 		File fam
-
 	}
+	
 	String outbase=basename(bim,'.bim')
 	command <<<
 		set -euo pipefail
@@ -41,7 +41,7 @@ task ConvertPlinkToVcf{
 		grep -v '^##contig=<ID=' "~{outbase}".vcf | \
 			sed  '/#/!{s/^23\t/X\t/; s/^/chr/}'  | \
 			bcftools view --no-update  -v snps -e 'REF=="-"||ALT=="-" || REF=="."||ALT=="."'  \
-		 	-Oz -o "~{outbase}".snps.vcf.gz 
+			-Oz -o "~{outbase}".snps.vcf.gz 
 
 		tabix "~{outbase}".snps.vcf.gz 
 	>>>
@@ -52,12 +52,12 @@ task ConvertPlinkToVcf{
 	}
 
 	runtime {
-            docker: "dnastack/plink:1.9"
-            preemptible: 0
-            disks: "local-disk " + ceil(size([bim,bed,fam],"GiB")+20) + " HDD"
-            bootDiskSizeGb: "16"
-            memory: 20 + " GB"
-    }
+			docker: "dnastack/plink:1.9"
+			preemptible: 0
+			disks: "local-disk " + ceil(size([bim,bed,fam],"GiB")+20) + " HDD"
+			bootDiskSizeGb: "16"
+			memory: 20 + " GB"
+	}
 
 }
 
@@ -77,9 +77,9 @@ task ReheaderVcf{
 
 		java -jar picard.jar UpdateVcfSequenceDictionary \
 			-R ~{ref_fasta} \
-		 	-I ~{vcf} \
-		 	-O ~{basename}.vcf.gz 
-		 	-SD ~{ref_dict}
+			-I ~{vcf} \
+			-O ~{basename}.vcf.gz 
+			-SD ~{ref_dict}
 
 		 tabix ~{basename}.vcf.gz 
 	>>>
@@ -90,15 +90,15 @@ task ReheaderVcf{
 	}
 
 	runtime {
-            docker: "broadinstitute/picard:2.26.8"
-            preemptible: 0
-            disks: "local-disk " + ceil(size([vcf,vcf,ref_fasta],"GiB")+20) + " HDD"
-            bootDiskSizeGb: "16"
-            memory: 20 + " GB"
-    }
+			docker: "broadinstitute/picard:2.26.8"
+			preemptible: 0
+			disks: "local-disk " + ceil(size([vcf,vcf,ref_fasta],"GiB")+20) + " HDD"
+			bootDiskSizeGb: "16"
+			memory: 20 + " GB"
+	}
 }
 
-workflow ConvertPlinkToVcfWF{
+workflow ConvertPlinkToVcfWF {
 	call ConvertPlinkToVcf{}
 
 	call ReheaderVcf{
@@ -107,8 +107,8 @@ workflow ConvertPlinkToVcfWF{
 		vcf_index=ConvertPlinkToVcf.vcf_index
 	}
 
-    output {
-        File vcf=ReheaderVcf.vcf
-        File vcf_index=ReheaderVcf.vcf_index
-    }
+	output {
+		File vcf=ReheaderVcf.vcf
+		File vcf_index=ReheaderVcf.vcf_index
+	}
 }
