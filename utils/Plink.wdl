@@ -1,14 +1,13 @@
 version 1.0
 
-
-task ConvertPlinkToVcf{
+task ConvertPlinkToVcf {
 	input {
 		File bim
 		File bed
 		File fam
 	}
-	
-	String outbase=basename(bim,'.bim')
+
+	String outbase=basename(bim, '.bim')
 	command <<<
 		set -euo pipefail
 
@@ -47,8 +46,8 @@ task ConvertPlinkToVcf{
 	>>>
 
 	output {
-		File vcf="~{outbase}".snps.vcf.gz 
-		File vcf_index="~{outbase}".snps.vcf.gz.tbi
+		File vcf="~{outbase}.snps.vcf.gz"
+		File vcf_index="~{outbase}.snps.vcf.gz.tbi"
 	}
 
 	runtime {
@@ -58,14 +57,13 @@ task ConvertPlinkToVcf{
 			bootDiskSizeGb: "16"
 			memory: 20 + " GB"
 	}
-
 }
 
 
 task ReheaderVcf{
 	input {
-		File vcf
-		File vcf_index
+		File vcf_in
+		File vcf_index_in
 		File ref_fasta
 		File ref_dict
 		File ref_index
@@ -76,17 +74,17 @@ task ReheaderVcf{
 		set -euo pipefail
 
 		java -jar picard.jar UpdateVcfSequenceDictionary \
-			-R ~{ref_fasta} \
-			-I ~{vcf} \
-			-O ~{basename}.vcf.gz 
-			-SD ~{ref_dict}
+			-R "~{ref_fasta}" \
+			-I "~{vcf_in}" \
+			-O "~{basename}.vcf.gz" \
+			-SD "~{ref_dict}"
 
-		 tabix ~{basename}.vcf.gz 
+		tabix "~{basename}.vcf.gz"
 	>>>
 
 	output {
-		File vcf=basename+".vcf.gz"
-		File vcf_index=basename+".vcf.gz.tbi"
+		File vcf="~{basename}.vcf.gz"
+		File vcf_index="~{basename}.vcf.gz.tbi"
 	}
 
 	runtime {
@@ -103,8 +101,8 @@ workflow ConvertPlinkToVcfWF {
 
 	call ReheaderVcf{
 		input:
-		vcf=ConvertPlinkToVcf.vcf,
-		vcf_index=ConvertPlinkToVcf.vcf_index
+		vcf_in=ConvertPlinkToVcf.vcf,
+		vcf_index_in=ConvertPlinkToVcf.vcf_index
 	}
 
 	output {
