@@ -42,4 +42,8 @@ task leafcutter_bam_to_junc {
 
 workflow leafcutter_bam_to_junc_workflow {
     call leafcutter_bam_to_junc
+
+    output {
+        File junctions=leafcutter_bam_to_junc.junc_file
+    }
 }
