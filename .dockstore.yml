@@ -24,7 +24,7 @@ workflows:
   - name: CreateParticipantSampleSets
     subclass: WDL
     primaryDescriptorPath: /utils/CreateParticipantSampleSets.wdl 
-- name: GetString
+  - name: GetString
     subclass: WDL
     primaryDescriptorPath: /utils/GetString.wdl 
 
