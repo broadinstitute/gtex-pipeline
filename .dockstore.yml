@@ -27,3 +27,5 @@ workflows:
 - name: GetString
     subclass: WDL
     primaryDescriptorPath: /utils/GetString.wdl 
+
+
