@@ -70,17 +70,20 @@ workflow CrosscheckDataWF {
     Int length_min_forty = if length(samples) >= 40 then 40 else length(samples) 
 
     Int threads_final = select_first([threads,length_min_forty])
-
-    call CrosscheckData{
+    Boolean have_data=length(samples)>0
+    if (have_data) {
+        call CrosscheckData {
         input:
-        gatkTag=gatkTag,
-        samples=samples,
-        threads=threads_final,
-        samples_index=samples_index,
-        hapMap=hapMap
+            gatkTag=gatkTag,
+            samples=samples,
+            threads=threads_final,
+            samples_index=samples_index,
+            hapMap=hapMap
+        }
     }
 
+    File? maybe_output=if have_data then CrosscheckData.metrics else write_lines([])
     output {
-        File fp_metrics=CrosscheckData.metrics
+        File fp_metrics=select_first([maybe_output])
     }
 }
