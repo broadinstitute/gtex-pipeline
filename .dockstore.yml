@@ -21,4 +21,6 @@ workflows:
   - name: Bam2Junction
     subclass: WDL
     primaryDescriptorPath: /qtl/leafcutter/leafcutter_bam_to_junc.wdl
-    
+  - name: CreateParticipantSampleSets
+    subclass: WDL
+    primaryDescriptorPath: /utils/CreateParticipantSampleSets.wdl 
