@@ -36,7 +36,7 @@ task CrosscheckData {
         gatk --java-options "-Xmx~{memoryJava}G" \
             CrosscheckFingerprints \
             -I ~{sep=" -I " samples} \
-            -NUM_THREADS ~{threads}
+            -NUM_THREADS ~{threads} \
             -H ~{hapMap} \
             --CALCULATE_TUMOR_AWARE_RESULTS false \
             --CROSSCHECK_BY FILE \
