@@ -40,7 +40,7 @@ task CrosscheckData {
             -H ~{hapMap} \
             --CALCULATE_TUMOR_AWARE_RESULTS false \
             --CROSSCHECK_BY FILE \
-            --OUTPUT ~{output_name} \
+            --OUTPUT ~{output_name}
     >>>
     output {
         File metrics=output_name
