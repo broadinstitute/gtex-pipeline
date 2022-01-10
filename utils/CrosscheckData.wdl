@@ -52,7 +52,7 @@ task CrosscheckData {
             disks: "local-disk " + disk_size + " HDD"
             bootDiskSizeGb: "16"
             memory: memoryRam + " GB"
-            cpu: 2
+            cpu: if threads/2 > 5 then 5 else threads/2
             continueOnReturnCode: true
     }
 }
@@ -67,7 +67,7 @@ workflow CrosscheckDataWF {
         String? gatkTag
         Int? threads
     }
-    Int length_min_forty = if length(samples) >= 40 then 40 else length(samples) 
+    Int length_min_forty = if length(samples) >= 10 then 10 else length(samples) 
 
     Int threads_final = select_first([threads,length_min_forty])
     Boolean have_data=length(samples)>0
@@ -82,8 +82,7 @@ workflow CrosscheckDataWF {
         }
     }
 
-    File? maybe_output=if have_data then CrosscheckData.metrics else write_lines([])
     output {
-        File fp_metrics=select_first([maybe_output])
+        File? fp_metrics=CrosscheckData.metrics
     }
 }
