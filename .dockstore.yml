@@ -23,7 +23,7 @@ workflows:
     primaryDescriptorPath: /qtl/leafcutter/leafcutter_bam_to_junc.wdl
   - name: ClusterJunctions
     subclass: WDL
-    primaryDescriptorPath: /qtl/leafcutter/leafcutter_cluster.wdl.wdl
+    primaryDescriptorPath: /qtl/leafcutter/leafcutter_cluster.wdl
   - name: CreateParticipantSampleSets
     subclass: WDL
     primaryDescriptorPath: /utils/CreateParticipantSampleSets.wdl
