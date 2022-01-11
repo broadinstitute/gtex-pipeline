@@ -11,7 +11,7 @@ task CollapseGeneModel {
 		python3 ~{collapse_annotation_script} ~{gene_annotation_file} ~{output_prefix}.genes.gtf
 	>>>
 	runtime {
-		docker: "python3:latest"
+		docker: "gcr.io/broad-cga-francois-gtex/leafcutter:latest"
 		memory: "4GB"
 		disks: "local-disk 10 HDD"
 		cpu: 1
