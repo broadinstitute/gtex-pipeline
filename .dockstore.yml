@@ -18,6 +18,9 @@ workflows:
   - name: CrosscheckDataWF
     subclass: WDL
     primaryDescriptorPath: /utils/CrosscheckData.wdl
+  - name: PrepareAnnotationFiles
+    subclass: WDL
+    primaryDescriptorPath: /utils/CollapseGeneModel.wdl
   - name: Bam2Junction
     subclass: WDL
     primaryDescriptorPath: /qtl/leafcutter/leafcutter_bam_to_junc.wdl
