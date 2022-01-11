@@ -8,6 +8,9 @@ task CollapseGeneModel {
 		File collapse_annotation_script
 	}
 	command<<<
+		set -euo pipefail
+
+		pip3 install bx-python
 		python3 ~{collapse_annotation_script} ~{gene_annotation_file} ~{output_prefix}.genes.gtf
 	>>>
 	runtime {
