@@ -36,6 +36,7 @@ task ExtractExonList {
 		String output_prefix
 	}
 	command <<<
+	pip3 install qtl
 	python3 <<EOF
 
 	import pandas as pd
