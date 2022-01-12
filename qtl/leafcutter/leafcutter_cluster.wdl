@@ -20,6 +20,7 @@ task leafcutter_cluster {
 
     command <<<
         set -euo pipefail
+        pip3 install qtl # TODO: add this to the docker file
 
         python3 /src/cluster_prepare_fastqtl.py \
             "~{write_lines(junc_files)}" \
