@@ -22,11 +22,19 @@ task leafcutter_cluster {
         set -euo pipefail
         pip3 install qtl # TODO: add this to the docker file
 
+        echo << EOF > temp_map.tsv
+
+        one	one
+        two	two
+        three	three
+        EOF
+
         python3 /src/cluster_prepare_fastqtl.py \
             "~{write_lines(junc_files)}" \
             "~{exon_list}" \
             "~{genes_gtf}" \
             "~{prefix}" \
+            "temp_map.tsv" \
             ~{"--min_clu_reads " + min_clu_reads} \
             ~{"--min_clu_ratio " + min_clu_ratio} \
             ~{"--max_intron_len " + max_intron_len} \
