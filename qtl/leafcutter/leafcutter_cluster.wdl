@@ -31,6 +31,17 @@ task leafcutter_cluster {
         three	three
         EOF
 
+        touch "~{prefix}_per_ind.counts.gz"
+        touch "~{prefix}_per_ind_numbers.counts.gz"
+        touch "~{prefix}_perind.counts.filtered.gz"
+        touch "~{prefix}_pooled.gz"
+        touch "~{prefix}_refined.gz"
+        touch "~{prefix}.leafcutter.clusters_to_genes.txt"
+        touch "~{prefix}.leafcutter.phenotype_groups.txt"
+        touch "~{prefix}.leafcutter.bed.gz"
+        touch "~{prefix}.leafcutter.bed.gz.tbi"
+        touch "~{prefix}.leafcutter.PCs.txt"
+
         python3 /src/cluster_prepare_fastqtl.py \
             "~{write_lines(junc_files)}" \
             "~{exon_list}" \
@@ -54,6 +65,7 @@ task leafcutter_cluster {
     output {
         File counts="~{prefix}_per_ind.counts.gz"
         File counts_numbers="~{prefix}_per_ind_numbers.counts.gz"
+        File counts_numbers_filtered="~{prefix}_perind.counts.filtered.gz"
         File clusters_pooled="~{prefix}_pooled.gz"
         File clusters_refined="~{prefix}_refined.gz"
         File clusters_to_genes="~{prefix}.leafcutter.clusters_to_genes.txt"
@@ -74,6 +86,7 @@ workflow leafcutter_cluster_workflow {
     output {
         File leafcutter_counts=leafcutter_cluster.counts
         File leafcutter_counts_numbers=leafcutter_cluster.counts_numbers
+        File counts_numbers_filtered=leafcutter_cluster.counts_numbers_filtered
         File leafcutter_clusters_pooled=leafcutter_cluster.clusters_pooled
         File leafcutter_clusters_refined=leafcutter_cluster.clusters_refined
         File leafcutter_clusters_to_genes=leafcutter_cluster.clusters_to_genes
