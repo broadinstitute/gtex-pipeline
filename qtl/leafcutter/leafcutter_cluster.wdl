@@ -20,7 +20,9 @@ task leafcutter_cluster {
 
     command <<<
         set -euo pipefail
-        pip3 install qtl # TODO: add this to the docker file
+        pip3 install qtl # TODO: add this to the docker image
+
+        R -e 'install.packages(c("dplyr","foreach"))' #TODO: add this to docker image
 
         echo << EOF > temp_map.tsv
 
