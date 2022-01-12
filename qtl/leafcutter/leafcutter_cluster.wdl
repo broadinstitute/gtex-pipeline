@@ -30,8 +30,8 @@ task leafcutter_cluster {
         three	three
         EOF
 
-        touch "~{prefix}_per_ind.counts.gz"
-        touch "~{prefix}_per_ind_numbers.counts.gz"
+        touch "~{prefix}_perind.counts.gz"
+        touch "~{prefix}_perind_numbers.counts.gz"
         touch "~{prefix}_perind.counts.filtered.gz"
         touch "~{prefix}_pooled.gz"
         touch "~{prefix}_refined.gz"
@@ -62,8 +62,8 @@ task leafcutter_cluster {
     }
 
     output {
-        File counts="~{prefix}_per_ind.counts.gz"
-        File counts_numbers="~{prefix}_per_ind_numbers.counts.gz"
+        File counts="~{prefix}_perind.counts.gz"
+        File counts_numbers="~{prefix}_perind_numbers.counts.gz"
         File counts_numbers_filtered="~{prefix}_perind.counts.filtered.gz"
         File clusters_pooled="~{prefix}_pooled.gz"
         File clusters_refined="~{prefix}_refined.gz"
