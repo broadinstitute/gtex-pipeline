@@ -25,7 +25,6 @@ task leafcutter_cluster {
         R -e 'install.packages(c("dplyr","foreach"))' #TODO: add this to docker image
 
         echo << EOF > temp_map.tsv
-
         one	one
         two	two
         three	three
@@ -73,6 +72,7 @@ task leafcutter_cluster {
         File leafcutter_bed="~{prefix}.leafcutter.bed.gz"
         File leafcutter_bed_index="~{prefix}.leafcutter.bed.gz.tbi"
         File leafcutter_pcs="~{prefix}.leafcutter.PCs.txt"
+        File map="temp_map.tsv"
     }
 
     meta {
