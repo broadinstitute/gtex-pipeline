@@ -21,7 +21,7 @@ task leafcutter_cluster {
     command <<<
         set -euo pipefail
 
-        python /src/cluster_prepare_fastqtl.py \
+        python3 /src/cluster_prepare_fastqtl.py \
             "~{write_lines(junc_files)}" \
             "~{exon_list}" \
             "~{genes_gtf}" \
