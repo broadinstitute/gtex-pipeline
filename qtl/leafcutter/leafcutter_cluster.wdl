@@ -48,9 +48,6 @@ task leafcutter_cluster {
             ~{"--min_clu_ratio " + min_clu_ratio} \
             ~{"--max_intron_len " + max_intron_len} \
             ~{"--num_pcs " + num_pcs} 
-
-        echo "done"
-        
     >>>
 
     runtime {
