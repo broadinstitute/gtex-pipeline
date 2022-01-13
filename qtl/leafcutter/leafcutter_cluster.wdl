@@ -24,7 +24,7 @@ task leafcutter_cluster {
 
         R -e 'install.packages(c("dplyr","foreach"))' #TODO: add this to docker image
 
-        echo << EOF > temp_map.tsv
+        cat << EOF > temp_map.tsv
         one	one
         two	two
         three	three
