@@ -20,10 +20,7 @@ task leafcutter_cluster {
 
     command <<<
         set -euo pipefail
-        pip3 install qtl # TODO: add this to the docker image
-
-        R -e 'install.packages(c("dplyr","foreach"))' #TODO: add this to docker image
-
+       
         cat << EOF > temp_map.tsv
         one	one
         two	two
@@ -54,7 +51,7 @@ task leafcutter_cluster {
     >>>
 
     runtime {
-        docker: "gcr.io/broad-cga-francois-gtex/leafcutter:latest"
+        docker: "farjoun/leafcutter:latest"
         memory: "~{memory}GB"
         disks: "local-disk ~{disk_space} HDD"
         cpu: num_threads
@@ -81,7 +78,14 @@ task leafcutter_cluster {
 }
 
 workflow leafcutter_cluster_workflow {
-    call leafcutter_cluster
+    input {
+        Array[File] junc_files
+    }
+
+    call leafcutter_cluster{input:
+        disk_space=20+ceil(size(junc_files)),
+        junc_files=junc_files
+    }
 
     output {
         File leafcutter_counts=leafcutter_cluster.counts
