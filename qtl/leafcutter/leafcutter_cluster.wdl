@@ -24,11 +24,9 @@ task leafcutter_cluster {
 
         R -e 'install.packages(c("dplyr","foreach"))' #TODO: add this to docker image
 
-        # take the list of files (\n separated)-> take their basename, and replicate the part prior to the regtools ending
+        # the list of files -> take their basename, and replicate the part prior to the regtools ending
         # with a \t separating, and put the results into temp_map.tsv
-        cat << EOF | xargs -n1 basename | sed 's/\(.*\).regtools_junc.txt.gz/\1\t&/' > temp_map.tsv
-        ~{sep="\n" junc_files}
-        EOF
+        cat ~{write_lines(junc)} | xargs -n1 basename | sed 's/\(.*\).regtools_junc.txt.gz/\1\t&/' > temp_map.tsv
 
         touch "~{prefix}_perind.counts.gz"
         touch "~{prefix}_perind_numbers.counts.gz"
