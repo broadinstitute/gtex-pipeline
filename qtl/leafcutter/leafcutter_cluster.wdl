@@ -20,9 +20,9 @@ task leafcutter_cluster {
 
 	command <<<
 		set -exuo pipefail
-		pip3 install qtl # TODO: add this to the docker image
+	#	pip3 install qtl # TODO: add this to the docker image
 
-		R -e 'install.packages(c("dplyr","foreach"))' #TODO: add this to docker image
+	#	R -e 'install.packages(c("dplyr","foreach"))' #TODO: add this to docker image
 
 
 		## The files have to be without a period in the part of the name that is not .regtools
@@ -35,11 +35,10 @@ task leafcutter_cluster {
 		# the list of files -> make links to remove periods, and provide new list of files
 		xargs -n1 -I {} bash ./temp.sh "{}" < ~{write_lines(junc_files)} > file_list.txt
 		
-		ls -l 
-
 		# replicate the part prior to the regtools ending
 		# with a \t separating, and put the results into temp_map.tsv
-		sed 's/\(.*\).regtools_junc.txt.gz/\1\t\1/' file_list.txt > temp_map.tsv
+		echo "sample\tindividual" > temp_map.tsv
+		sed 's/\(.*\).regtools_junc.txt.gz/\1\t\1/' file_list.txt >> temp_map.tsv
 		
 		touch "~{prefix}_perind.counts.gz"
 		touch "~{prefix}_perind_numbers.counts.gz"
@@ -65,7 +64,7 @@ task leafcutter_cluster {
 	>>>
 
 	runtime {
-		docker: "gcr.io/broad-cga-francois-gtex/leafcutter:latest"
+		docker: "richardslab/leafcutter:2022-01-18_master"
 		memory: "~{memory}GB"
 		disks: "local-disk ~{disk_space} HDD"
 		cpu: num_threads
