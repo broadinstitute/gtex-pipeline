@@ -111,7 +111,8 @@ jobs:
         name: Build and push branch
         uses: docker/build-push-action@v2
         with:
-          file: qtl/leafcutter/Dockerfile
+          context: qtl/leafcutter/
+          file: Dockerfile
           push: true
           build-args: |
             GITHUB_PAT=${{ secrets.PAT_GITHUB }} 
