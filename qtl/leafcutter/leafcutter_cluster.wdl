@@ -85,11 +85,12 @@ workflow leafcutter_cluster_workflow {
         Array[File] junc_files
     }
 
-    call leafcutter_cluster{input:
-        disk_space=20+ceil(size(junc_files)),
+    call leafcutter_cluster{
+    input:
+        disk_space=20+ceil(size(junc_files, "GB")),
         junc_files=junc_files
     }
-    
+
     output {
         File leafcutter_counts=leafcutter_cluster.counts
         File leafcutter_counts_numbers=leafcutter_cluster.counts_numbers
