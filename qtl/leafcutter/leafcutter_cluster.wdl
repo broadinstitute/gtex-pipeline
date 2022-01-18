@@ -26,7 +26,7 @@ task leafcutter_cluster {
 
         # the list of files -> take their basename, and replicate the part prior to the regtools ending
         # with a \t separating, and put the results into temp_map.tsv
-        cat ~{write_lines(junc)} | xargs -n1 basename | sed 's/\(.*\).regtools_junc.txt.gz/\1\t&/' > temp_map.tsv
+        cat ~{write_lines(junc_files)} | xargs -n1 basename | sed 's/\(.*\).regtools_junc.txt.gz/\1\t&/' > temp_map.tsv
 
         touch "~{prefix}_perind.counts.gz"
         touch "~{prefix}_perind_numbers.counts.gz"
