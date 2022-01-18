@@ -24,11 +24,7 @@ task leafcutter_cluster {
 
         R -e 'install.packages(c("dplyr","foreach"))' #TODO: add this to docker image
 
-        cat << EOF > temp_map.tsv
-        one	one
-        two	two
-        three	three
-        EOF
+        echo ~{sep="\n" basename(junc_files)} |  sed 's/\(.*\).regtools_junc.txt.gz/\1\t&/'  > temp_map.tsv
 
         touch "~{prefix}_perind.counts.gz"
         touch "~{prefix}_perind_numbers.counts.gz"
