@@ -26,7 +26,7 @@ task leafcutter_cluster {
 
 
         ## The files have to be without a period in the part of the name that is not .regtools
-        cat << EOF > temp.sh
+        cat << "EOF" > temp.sh
 file=$(basename "$1")
 out_file=$(echo "${file}" |sed 's/.regtools_junc.txt.gz//; s/\./_/g; s/$/.regtools_junc.txt.gz/')
 ln -s "${file}" "${out_file}"
