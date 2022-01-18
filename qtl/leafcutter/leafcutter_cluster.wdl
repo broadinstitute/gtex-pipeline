@@ -26,17 +26,17 @@ task leafcutter_cluster {
 
 
         ## The files have to be without a period in the part of the name that is not .regtools
-        function link_no_period(){
-            file=$(basename $1)
-
-            out_file=$(basename $file | sed 's/.regtools_junc.txt.gz//; s/\./_/g; s/$/.regtools_junc.txt.gz/')
-            ln -s $file $out_file
-            echo $out_file
-        }
-
+        cat << EOF > temp.sh
+file=$(basename "$1")
+out_file=$(echo "${file}" |sed 's/.regtools_junc.txt.gz//; s/\./_/g; s/$/.regtools_junc.txt.gz/')
+ln -s "${file}" "${out_file}"
+echo ${out_file}
+EOF
         # the list of files -> make links to remove periods, and replicate the part prior to the regtools ending
         # with a \t separating, and put the results into temp_map.tsv
-        cat ~{write_lines(junc_files)} | xargs -n1 link_no_name | sed 's/\(.*\).regtools_junc.txt.gz/\1\t&/' > temp_map.tsv
+        xargs -n1 -I {} bash ./temp.sh "{}" <~{write_lines(junc_files)} | \
+            sed 's/\(.*\).regtools_junc.txt.gz/\1\t&/' > \
+            temp_map.tsv
         
 
         touch "~{prefix}_perind.counts.gz"
