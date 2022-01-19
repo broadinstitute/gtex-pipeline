@@ -124,7 +124,7 @@ if __name__=='__main__':
     for f in bed_files:
         bed_df.append(pd.read_csv(f, sep='\t', dtype=str))
     bed_df = pd.concat(bed_df, axis=0)
-    bed_df['chr_ix'] = bed_df['#Chr'].str.replace('chr','').replace('X','23').replace('Y','24').astype(np.int32)
+    bed_df['chr_ix'] = bed_df['#Chr'].str.replace('chr','').str.replace('X','23').str.replace('Y','24').astype(np.int32)
     for c in ['start', 'end']:
         bed_df[c] = bed_df[c].astype(np.int32)
     bed_df.sort_values(['chr_ix', 'start', 'end'], inplace=True)

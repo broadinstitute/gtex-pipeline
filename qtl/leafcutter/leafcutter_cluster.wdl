@@ -20,8 +20,6 @@ task leafcutter_cluster {
 		File? cluster_prepare_fastqtl_override
 	}
 	
-	String cluster_prepare_script=select_first([cluster_prepare_fastqtl_override, "/src/cluster_prepare_fastqtl.py"])
-	
 	command <<<
 		set -exuo pipefail
 
@@ -51,7 +49,7 @@ task leafcutter_cluster {
 		touch "~{prefix}.leafcutter.bed.gz.tbi"
 		touch "~{prefix}.leafcutter.PCs.txt"
 
-		python3 ~{cluster_prepare_script} \
+		python3 ~{select_first([cluster_prepare_fastqtl_override, "/src/cluster_prepare_fastqtl.py"])} \
 			"file_list.txt" \
 			"~{exon_list}" \
 			"~{genes_gtf}" \
