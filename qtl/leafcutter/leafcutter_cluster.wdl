@@ -20,7 +20,7 @@ task leafcutter_cluster {
 		File? cluster_prepare_fastqtl_override
 	}
 	
-	File cluster_prepare_script=select_first([cluster_prepare_fastqtl_override,"/src/cluster_prepare_fastqtl.py"])
+	String cluster_prepare_script=select_first([cluster_prepare_fastqtl_override,"/src/cluster_prepare_fastqtl.py"])
 	
 	command <<<
 		set -exuo pipefail
