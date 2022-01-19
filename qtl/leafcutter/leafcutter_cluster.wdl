@@ -16,8 +16,12 @@ task leafcutter_cluster {
 		Int disk_space
 		Int num_threads
 		Int num_preempt
-	}
 
+		File? cluster_prepare_fastqtl_override
+	}
+	
+	File cluster_prepare_script=select_first([cluster_prepare_fastqtl_override,"/src/cluster_prepare_fastqtl.py"])
+	
 	command <<<
 		set -exuo pipefail
 
@@ -33,7 +37,7 @@ task leafcutter_cluster {
 		
 		# replicate the part prior to the regtools ending
 		# with a \t separating, and put the results into temp_map.tsv
-		echo "sample\tindividual" > temp_map.tsv
+		printf "sample\tindividual" > temp_map.tsv
 		sed 's/\(.*\).regtools_junc.txt.gz/\1\t\1/' file_list.txt >> temp_map.tsv
 		
 		touch "~{prefix}_perind.counts.gz"
@@ -47,7 +51,7 @@ task leafcutter_cluster {
 		touch "~{prefix}.leafcutter.bed.gz.tbi"
 		touch "~{prefix}.leafcutter.PCs.txt"
 
-		python3 /src/cluster_prepare_fastqtl.py \
+		python3 ~{cluster_prepare_script} \
 			"file_list.txt" \
 			"~{exon_list}" \
 			"~{genes_gtf}" \
