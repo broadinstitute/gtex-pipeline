@@ -20,10 +20,6 @@ task leafcutter_cluster {
 
 	command <<<
 		set -exuo pipefail
-	#	pip3 install qtl # TODO: add this to the docker image
-
-	#	R -e 'install.packages(c("dplyr","foreach"))' #TODO: add this to docker image
-
 
 		## The files have to be without a period in the part of the name that is not .regtools
 		cat <<- "EOF" > temp.sh
@@ -84,6 +80,7 @@ task leafcutter_cluster {
 		File leafcutter_pcs="~{prefix}.leafcutter.PCs.txt"
 		File file_list="file_list.txt"
 		File map="temp_map.tsv"
+		Array[File]=glob("*_perind.counts.filtered.gz.qqnorm_*")
 	}
 
 	meta {
