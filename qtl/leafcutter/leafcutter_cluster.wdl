@@ -64,7 +64,7 @@ task leafcutter_cluster {
 	>>>
 
 	runtime {
-		docker: "richardslab/leafcutter:2022-01-18_master"
+		docker: "richardslab/leafcutter:2022-01-19_yf_add_qtl_package_to_docker_image"
 		memory: "~{memory}GB"
 		disks: "local-disk ~{disk_space} HDD"
 		cpu: num_threads
