@@ -80,7 +80,7 @@ task leafcutter_cluster {
 		File leafcutter_pcs="~{prefix}.leafcutter.PCs.txt"
 		File file_list="file_list.txt"
 		File map="temp_map.tsv"
-		Array[File]=glob("*_perind.counts.filtered.gz.qqnorm_*")
+		Array[File] bed_files=glob("*_perind.counts.filtered.gz.qqnorm_*")
 	}
 
 	meta {
