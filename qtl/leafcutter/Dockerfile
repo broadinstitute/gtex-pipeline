@@ -53,7 +53,7 @@ RUN cd /opt && \
 
 # Python 3
 RUN pip3 install --upgrade pip setuptools
-RUN pip3 install numpy tables pandas scipy scikit-learn matplotlib qtl
+RUN pip3 install numpy tables pandas scipy scikit-learn matplotlib qtl pyarrow
 
 # LeafCutter
 RUN cd /opt && \
