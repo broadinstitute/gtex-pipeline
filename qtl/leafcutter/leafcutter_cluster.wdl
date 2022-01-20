@@ -78,6 +78,7 @@ task leafcutter_cluster {
 		File counts_numbers_filtered="~{prefix}_perind.counts.filtered.gz"
 		File clusters_pooled="~{prefix}_pooled.gz"
 		File clusters_refined="~{prefix}_refined.gz"
+#		File clusters_to_genes="~{prefix}.leafcutter.clusters_to_genes.txt"
 		File phenotype_groups="~{prefix}.leafcutter.phenotype_groups.txt"
 		File leafcutter_bed="~{prefix}.leafcutter.bed.gz"
 		File leafcutter_bed_index="~{prefix}.leafcutter.bed.gz.tbi"
@@ -106,7 +107,7 @@ workflow leafcutter_cluster_workflow {
 		File counts_numbers_filtered=leafcutter_cluster.counts_numbers_filtered
 		File leafcutter_clusters_pooled=leafcutter_cluster.clusters_pooled
 		File leafcutter_clusters_refined=leafcutter_cluster.clusters_refined
-		File leafcutter_clusters_to_genes=leafcutter_cluster.clusters_to_genes
+#		File leafcutter_clusters_to_genes=leafcutter_cluster.clusters_to_genes
 		File leafcutter_phenotype_groups=leafcutter_cluster.phenotype_groups
 		File leafcutter_bed=leafcutter_cluster.leafcutter_bed
 		File leafcutter_bed_index=leafcutter_cluster.leafcutter_bed_index
