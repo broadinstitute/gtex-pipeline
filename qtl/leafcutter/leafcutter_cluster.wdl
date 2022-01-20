@@ -49,10 +49,12 @@ task leafcutter_cluster {
 		touch "~{prefix}.leafcutter.bed.gz.tbi"
 		touch "~{prefix}.leafcutter.PCs.txt"
 
+		gunzip -c ~{genes_gtf} > genes.gtf
+
 		python3 ~{select_first([cluster_prepare_fastqtl_override, "/src/cluster_prepare_fastqtl.py"])} \
 			"file_list.txt" \
 			"~{exon_list}" \
-			"~{genes_gtf}" \
+			genes_gtf \
 			"~{prefix}" \
 			"temp_map.tsv" \
 			~{"--min_clu_reads " + min_clu_reads} \
