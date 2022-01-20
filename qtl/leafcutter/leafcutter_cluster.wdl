@@ -23,8 +23,6 @@ task leafcutter_cluster {
 	command <<<
 		set -exuo pipefail
 
-		pip3 install pyarrow
-
 		## The files have to be without a period in the part of the name that is not .regtools
 		cat <<- "EOF" > temp.sh
 		file="$1"
@@ -67,7 +65,7 @@ task leafcutter_cluster {
 	>>>
 
 	runtime {
-		docker: "richardslab/leafcutter:2022-01-19_yf_add_qtl_package_to_docker_image"
+		docker: "richardslab/leafcutter:2022-01-20_yf_add_qtl_package_to_docker_image"
 		memory: "~{memory}GB"
 		disks: "local-disk ~{disk_space} HDD"
 		cpu: num_threads
@@ -80,14 +78,10 @@ task leafcutter_cluster {
 		File counts_numbers_filtered="~{prefix}_perind.counts.filtered.gz"
 		File clusters_pooled="~{prefix}_pooled.gz"
 		File clusters_refined="~{prefix}_refined.gz"
-		File clusters_to_genes="~{prefix}.leafcutter.clusters_to_genes.txt"
 		File phenotype_groups="~{prefix}.leafcutter.phenotype_groups.txt"
 		File leafcutter_bed="~{prefix}.leafcutter.bed.gz"
 		File leafcutter_bed_index="~{prefix}.leafcutter.bed.gz.tbi"
 		File leafcutter_pcs="~{prefix}.leafcutter.PCs.txt"
-		File file_list="file_list.txt"
-		File map="temp_map.tsv"
-		Array[File] bed_files=glob("*_perind.counts.filtered.gz.qqnorm_*")
 	}
 
 	meta {
