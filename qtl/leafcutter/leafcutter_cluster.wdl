@@ -23,6 +23,8 @@ task leafcutter_cluster {
 	command <<<
 		set -exuo pipefail
 
+		pip3 install pyarrow
+
 		## The files have to be without a period in the part of the name that is not .regtools
 		cat <<- "EOF" > temp.sh
 		file="$1"
