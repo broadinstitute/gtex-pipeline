@@ -35,20 +35,11 @@ task ConvertPlinkToVcf {
 			exit 1
 		fi
 
-		# remove lines that start with '##contig=<ID=' and for the remaining lines that
-		# to not start with '#', replace 23 with X and add 'chr' to the begining of the line.
-		grep -v '^##contig=<ID=' "~{outbase}".vcf | \
-			sed  '/#/!{s/^23\t/X\t/; s/^/chr/}'  | \
-			bcftools view --no-update  -v snps -e 'REF=="-"||ALT=="-" || REF=="."||ALT=="."'  \
-			-Oz -o "~{outbase}".snps.vcf.gz 
-
-		tabix "~{outbase}".snps.vcf.gz 
 	>>>
-
 	output {
-		File vcf="~{outbase}.snps.vcf.gz"
-		File vcf_index="~{outbase}.snps.vcf.gz.tbi"
+		File vcf="~{outbase}.vcf"
 	}
+
 
 	runtime {
 			docker: "dnastack/plink:1.9"
@@ -59,6 +50,40 @@ task ConvertPlinkToVcf {
 	}
 }
 
+
+task RenameChrXAndSubsetToSNPs {
+
+	input {
+		File vcf_in
+	}
+	String outbase=basename(vcf_in, '.vcf')
+	
+	command <<<
+
+		# remove lines that start with '##contig=<ID=' and for the remaining lines that
+		# to not start with '#', replace 23 with X and add 'chr' to the begining of the line.
+		grep -v '^##contig=<ID=' "~{vcf_in}" | \
+			sed  '/#/!{s/^23\t/X\t/; s/^/chr/}'  | \
+			bcftools view --no-update  -v snps -e 'REF=="-"||ALT=="-" || REF=="."||ALT=="."'  \
+			-Oz -o "~{outbase}".snps.vcf.gz 
+
+		bcftools index "~{outbase}".snps.vcf.gz 
+	>>>
+
+	output {
+		File vcf="~{outbase}.snps.vcf.gz"
+		File vcf_index="~{outbase}.snps.vcf.gz.tbi"
+	}
+
+	runtime {
+			docker: "biocontainers/bcftools:v1.9-1-deb_cv1"
+			preemptible: 0
+			disks: "local-disk " + (2*ceil(size(vcf_in,"GiB"))+20) + " HDD"
+			bootDiskSizeGb: "16"
+			memory: 20 + " GB"
+	}
+
+}
 
 task ReheaderVcf{
 	input {
@@ -90,7 +115,7 @@ task ReheaderVcf{
 	runtime {
 			docker: "broadinstitute/picard:2.26.8"
 			preemptible: 0
-			disks: "local-disk " + ceil(size([vcf,vcf,ref_fasta],"GiB")+20) + " HDD"
+			disks: "local-disk " + (ceil(size([vcf_in,vcf_in,ref_fasta],"GiB"))+20) + " HDD"
 			bootDiskSizeGb: "16"
 			memory: 20 + " GB"
 	}
@@ -99,10 +124,15 @@ task ReheaderVcf{
 workflow ConvertPlinkToVcfWF {
 	call ConvertPlinkToVcf{}
 
+	call RenameChrXAndSubsetToSNPs{
+		input:
+			vcf_in = ConvertPlinkToVcf.vcf
+	}
+
 	call ReheaderVcf{
 		input:
-		vcf_in=ConvertPlinkToVcf.vcf,
-		vcf_index_in=ConvertPlinkToVcf.vcf_index
+		vcf_in=RenameChrXAndSubsetToSNPs.vcf,
+		vcf_index_in=RenameChrXAndSubsetToSNPs.vcf_index
 	}
 
 	output {
