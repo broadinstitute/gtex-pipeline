@@ -59,13 +59,15 @@ task RenameChrXAndSubsetToSNPs {
 	String outbase=basename(vcf_in, '.vcf')
 	
 	command <<<
+		set -euo pipefail 
 
+		mkdir temp
 		# remove lines that start with '##contig=<ID=' and for the remaining lines that
 		# to not start with '#', replace 23 with X and add 'chr' to the begining of the line.
 		grep -v '^##contig=<ID=' "~{vcf_in}" | \
 			sed  '/#/!{s/^23\t/X\t/; s/^/chr/}'  | \
 			bcftools view --no-update  -v snps -e 'REF=="-"||ALT=="-" || REF=="."||ALT=="."'  | \
-			bcftools sort -Oz -o "~{outbase}".snps.vcf.gz 
+			bcftools sort -T ./temp -Oz -o "~{outbase}".snps.vcf.gz 
 
 		bcftools index "~{outbase}".snps.vcf.gz 
 	>>>
@@ -78,7 +80,7 @@ task RenameChrXAndSubsetToSNPs {
 	runtime {
 			docker: "biocontainers/bcftools:v1.9-1-deb_cv1"
 			preemptible: 0
-			disks: "local-disk " + (2*ceil(size(vcf_in,"GiB"))+20) + " HDD"
+			disks: "local-disk " + (4*ceil(size(vcf_in,"GiB"))+20) + " HDD"
 			bootDiskSizeGb: "16"
 			memory: 20 + " GB"
 	}
