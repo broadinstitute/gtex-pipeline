@@ -64,8 +64,8 @@ task RenameChrXAndSubsetToSNPs {
 		# to not start with '#', replace 23 with X and add 'chr' to the begining of the line.
 		grep -v '^##contig=<ID=' "~{vcf_in}" | \
 			sed  '/#/!{s/^23\t/X\t/; s/^/chr/}'  | \
-			bcftools view --no-update  -v snps -e 'REF=="-"||ALT=="-" || REF=="."||ALT=="."'  \
-			-Oz -o "~{outbase}".snps.vcf.gz 
+			bcftools view --no-update  -v snps -e 'REF=="-"||ALT=="-" || REF=="."||ALT=="."'  | \
+			bcftools sort -Oz -o "~{outbase}".snps.vcf.gz 
 
 		bcftools index "~{outbase}".snps.vcf.gz 
 	>>>
