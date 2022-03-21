@@ -34,26 +34,26 @@ RUN echo "r <- getOption('repos'); r['CRAN'] <- 'http://cran.us.r-project.org'; 
 
 # htslib
 RUN cd /opt && \
-    wget --no-check-certificate https://github.com/samtools/htslib/releases/download/1.14/htslib-1.14.tar.bz2 && \
-    tar -xf htslib-1.14.tar.bz2 && rm htslib-1.14.tar.bz2 && cd htslib-1.14 && \
+    wget --no-check-certificate https://github.com/samtools/htslib/releases/download/1.15/htslib-1.15.tar.bz2 && \
+    tar -xf htslib-1.15.tar.bz2 && rm htslib-1.15.tar.bz2 && cd htslib-1.15 && \
     ./configure --enable-libcurl --enable-s3 --enable-plugins --enable-gcs && \
     make && make install && make clean
 
 # samtools
 RUN cd /opt && \
-    wget --no-check-certificate https://github.com/samtools/samtools/releases/download/1.14/samtools-1.14.tar.bz2 && \
-    tar -xf samtools-1.14.tar.bz2 && rm samtools-1.14.tar.bz2 && cd samtools-1.14 && \
-    ./configure --with-htslib=/opt/htslib-1.14 && make && make install && make clean
+    wget --no-check-certificate https://github.com/samtools/samtools/releases/download/1.15/samtools-1.15.tar.bz2 && \
+    tar -xf samtools-1.15.tar.bz2 && rm samtools-1.15.tar.bz2 && cd samtools-1.15 && \
+    ./configure --with-htslib=/opt/htslib-1.15 && make && make install && make clean
 
 # bcftools
 RUN cd /opt && \
-    wget --no-check-certificate https://github.com/samtools/bcftools/releases/download/1.14/bcftools-1.14.tar.bz2 && \
-    tar -xf bcftools-1.14.tar.bz2 && rm bcftools-1.14.tar.bz2 && cd bcftools-1.14 && \
-    ./configure --with-htslib=/opt/htslib-1.14 && make && make install && make clean
+    wget --no-check-certificate https://github.com/samtools/bcftools/releases/download/1.15/bcftools-1.15.tar.bz2 && \
+    tar -xf bcftools-1.15.tar.bz2 && rm bcftools-1.15.tar.bz2 && cd bcftools-1.15 && \
+    ./configure --with-htslib=/opt/htslib-1.15 && make && make install && make clean
 
 # Python 3
 RUN pip3 install --upgrade pip setuptools
-RUN pip3 install numpy tables pandas scipy scikit-learn matplotlib
+RUN pip3 install numpy tables pandas scipy scikit-learn matplotlib qtl
 
 # LeafCutter
 RUN cd /opt && \
