@@ -5,16 +5,13 @@ import argparse
 import subprocess
 import os
 import gzip
-import feather
 
 
 def load_pair_data(path):
     if path.endswith('.txt.gz'):
         return pd.read_csv(path, sep='\t', usecols=['pair_id', 'slope', 'slope_se'], index_col=0, dtype={'pair_id':str, 'slope':np.float32, 'slope_se':np.float32})
-    elif path.endswith('.ft'):
-        df = feather.read_dataframe(path, columns=['pair_id', 'slope', 'slope_se'])
-        df.set_index('pair_id', inplace=True)
-        return df
+    elif path.endswith('.parquet'):
+        return pd.read_parquet(path, columns=['slope', 'slope_se'])
     else:
         raise ValueError('Input format not recognized.')
 

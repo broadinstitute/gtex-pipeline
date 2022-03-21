@@ -14,7 +14,7 @@ task combine_signif_pairs {
     }
 
     runtime {
-        docker: "gcr.io/broad-cga-francois-gtex/gtex_eqtl:V8"
+        docker: "gcr.io/broad-cga-francois-gtex/gtex_eqtl:V10"
         memory: "${memory}GB"
         disks: "local-disk ${disk_space} HDD"
         cpu: "${num_threads}"
@@ -44,7 +44,7 @@ task extract_pairs {
 
     command {
         set -euo pipefail
-        /src/extract_pairs.py ${input_pairs} ${extract_pairs} ${prefix} --feather
+        /src/extract_pairs.py ${input_pairs} ${extract_pairs} ${prefix} --parquet
     }
 
     runtime {
@@ -56,7 +56,7 @@ task extract_pairs {
     }
 
     output {
-        File extracted_pairs="${prefix}.extracted_pairs.ft"
+        File extracted_pairs="${prefix}.extracted_pairs.parquet"
     }
 
     meta {
