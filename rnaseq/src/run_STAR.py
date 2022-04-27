@@ -96,7 +96,7 @@ if args.waspOutputMode=='SAMtag' and args.varVCFfile is not None:
     assert args.varVCFfile.endswith('.vcf.gz')
     # only SNVs are currently supported
     cmd += f' --waspOutputMode SAMtag --varVCFfile <(zcat {args.varVCFfile})'
-    if 'vw' not in args.outSAMattributes:
+    if 'vW' not in args.outSAMattributes:
         args.outSAMattributes.append('vW')
         print("  * adding 'vW' tag to outSAMattributes", flush=True)
 if int(args.chimSegmentMin)>0:
