@@ -7,31 +7,36 @@ The GTEx RNA-seq pipeline is provided as a Docker image, available at https://hu
 
 To download the image, run:
 ```bash
-docker pull broadinstitute/gtex_rnaseq:V8
+docker pull broadinstitute/gtex_rnaseq:V10
 ```
 
 #### Image contents and pipeline components
-The following tools are included in the Docker image (V8 pipeline):
+The following tools are included in the Docker image:
 
 * [SamToFastq](http://broadinstitute.github.io/picard/command-line-overview.html#SamToFastq): BAM to FASTQ conversion
-* [STAR](https://github.com/alexdobin/STAR): spliced alignment of RNA sequence reads (v2.5.3a)
+* [FastQC](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/): sequencing quality control
+* [STAR](https://github.com/alexdobin/STAR): spliced alignment of RNA-seq reads
 * [Picard MarkDuplicates](https://broadinstitute.github.io/picard/command-line-overview.html#MarkDuplicates): mark duplicate reads
-* [RSEM](http://deweylab.github.io/RSEM) transcript expression quantification (v1.3.0)
-* bamsync: utility for transferring QC flags from the input BAM and for re-generating read group IDs
-* [RNA-SeQC](https://github.com/francois-a/rnaseqc): QC metrics and gene-level expression quantification (v1.1.9)
+* [RSEM](http://deweylab.github.io/RSEM): transcript expression quantification
+* [bamsync](bamsync): utility for transferring QC flags and re-generating read group IDs when realigning BAMs
+* [RNA-SeQC](https://github.com/getzlab/rnaseqc): RNA-seq quality control (metrics and gene-level expression quantification)
 
-Version in V7 pipeline:
-* STAR v2.4.2a
-* RSEM v1.2.22
-* RNA-SeQC v1.1.8
+Versions used across GTEx releases*:
+|         | V7      | V8      | V10      |
+| ------- | ------- | ------- | -------- |
+| STAR    | v2.4.2a | v2.5.3a | v2.7.10a |
+| RSEM    | v.1.2.22| v1.3.0  | v1.3.3   |
+| RNA-SeQC| v1.1.8  | v1.1.9  | v2.4.2   |
+| Genome  | GRCh37  | GRCh38  | GRCh38   |
+| GENCODE | [v19](https://www.gencodegenes.org/human/release_19.html) | [v26](https://www.gencodegenes.org/human/release_26.html) | [v39](https://www.gencodegenes.org/human/release_39.html) |
+
+*V9 did not include any RNA-seq updates
 
 ##  Setup steps
 #### Reference genome and annotation
 Reference indexes for STAR and RSEM are needed to run the pipeline. All reference files are available at [gs://gtex-resources](https://console.cloud.google.com/storage/browser/gtex-resources).
 
 GTEx releases from V8 onward are based on the GRCh38/hg38 reference genome. Please see [TOPMed_RNAseq_pipeline.md](https://github.com/broadinstitute/gtex-pipeline/blob/master/TOPMed_RNAseq_pipeline.md) for details and links for this reference. Releases up to V7 were based on the GRCh37/hg19 reference genome ([download](http://www.broadinstitute.org/ftp/pub/seq/references/Homo_sapiens_assembly19.fasta)). 
-
-Release V8 uses the [GENCODE v26](https://www.gencodegenes.org/human/release_26.html) annotation. Releases V6/V6p and V7 used [GENCODE v19](https://www.gencodegenes.org/human/release_19.html).
 
 For hg19-based analyses, the GENCODE annotation should be patched to use Ensembl chromosome names:
 ```
@@ -50,21 +55,21 @@ The STAR index should be built to match the sequencing read length, specified by
 ```bash
 # build the STAR index:
 mkdir $path_to_references/star_index_oh75
-docker run --rm -v $path_to_references:/data -t broadinstitute/gtex_rnaseq:V8 \
+docker run --rm -v $path_to_references:/data -t broadinstitute/gtex_rnaseq:V10 \
     /bin/bash -c "STAR \
         --runMode genomeGenerate \
         --genomeDir /data/star_index_oh75 \
         --genomeFastaFiles /data/Homo_sapiens_assembly38_noALT_noHLA_noDecoy.fasta \
-        --sjdbGTFfile /data/gencode.v26.GRCh38.annotation.gtf \
+        --sjdbGTFfile /data/gencode.v39.GRCh38.annotation.gtf \
         --sjdbOverhang 75 \
         --runThreadN 4"
 
 # build the RSEM index:
-docker run --rm -v $path_to_references:/data -t broadinstitute/gtex_rnaseq:V8 \
+docker run --rm -v $path_to_references:/data -t broadinstitute/gtex_rnaseq:V10 \
     /bin/bash -c "rsem-prepare-reference \
         /data/Homo_sapiens_assembly38_noALT_noHLA_noDecoy.fasta \
         /data/rsem_reference/rsem_reference \
-        --gtf /data/gencode.v26.GRCh38.annotation.gtf \
+        --gtf /data/gencode.v39.GRCh38.annotation.gtf \
         --num-threads 4"
 ```
 
@@ -77,7 +82,7 @@ docker run --rm -v $path_to_data:/data -t broadinstitute/gtex_rnaseq \
     /bin/bash -c "/src/run_SamToFastq.py /data/$input_bam -p ${sample_id} -o /data"
 
 # STAR alignment
-docker run --rm -v $path_to_data:/data -t broadinstitute/gtex_rnaseq:V8 \
+docker run --rm -v $path_to_data:/data -t broadinstitute/gtex_rnaseq:V10 \
     /bin/bash -c "/src/run_STAR.py \
         /data/star_index_oh75 \
         /data/${sample_id}_1.fastq.gz \
@@ -87,21 +92,21 @@ docker run --rm -v $path_to_data:/data -t broadinstitute/gtex_rnaseq:V8 \
         --output_dir /tmp/star_out && mv /tmp/star_out /data/star_out"
 
 # sync BAMs (optional; copy QC flags and read group IDs)
-docker run --rm -v $path_to_data:/data -t broadinstitute/gtex_rnaseq:V8 \
+docker run --rm -v $path_to_data:/data -t broadinstitute/gtex_rnaseq:V10 \
     /bin/bash -c "/src/run_bamsync.sh \
         /data/$input_bam \
         /data/star_out/${sample_id}.Aligned.sortedByCoord.out.bam \
         /data/star_out/${sample_id}"
 
 # mark duplicates (Picard)
-docker run --rm -v $path_to_data:/data -t broadinstitute/gtex_rnaseq:V8 \
+docker run --rm -v $path_to_data:/data -t broadinstitute/gtex_rnaseq:V10 \
     /bin/bash -c "/src/run_MarkDuplicates.py \
         /data/star_out/${sample_id}.Aligned.sortedByCoord.out.patched.bam \
         ${sample_id}.Aligned.sortedByCoord.out.patched.md \
         --output_dir /data"
 
 # RNA-SeQC
-docker run --rm -v $path_to_data:/data -t broadinstitute/gtex_rnaseq:V8 \
+docker run --rm -v $path_to_data:/data -t broadinstitute/gtex_rnaseq:V10 \
     /bin/bash -c "/src/run_rnaseqc.py \
     ${sample_id}.Aligned.sortedByCoord.out.patched.md.bam \
     ${genes_gtf} \
@@ -110,7 +115,7 @@ docker run --rm -v $path_to_data:/data -t broadinstitute/gtex_rnaseq:V8 \
     --output_dir /data"
 
 # RSEM transcript quantification
-docker run --rm -v $path_to_data:/data -t broadinstitute/gtex_rnaseq:V8 \
+docker run --rm -v $path_to_data:/data -t broadinstitute/gtex_rnaseq:V10 \
     /bin/bash -c "/src/run_RSEM.py \
         /data/rsem_reference \
         /data/star_out/${sample_id}.Aligned.toTranscriptome.out.bam \
@@ -121,7 +126,7 @@ docker run --rm -v $path_to_data:/data -t broadinstitute/gtex_rnaseq:V8 \
 #### Aggregating outputs
 Sample-level outputs in GCT format can be concatenated using `combine_GCTs.py`:
 ```
-docker run --rm -v $path_to_data:/data -t broadinstitute/gtex_rnaseq:V8 \
+docker run --rm -v $path_to_data:/data -t broadinstitute/gtex_rnaseq:V10 \
     /bin/bash -c "python3 /src/combine_GCTs.py \
-        ${rnaseqc_rpkm_gcts} ${sample_set_id}.rnaseqc_rpkm"
+        ${rnaseqc_tpm_gcts} ${sample_set_id}.rnaseqc_tpm"
 ```
