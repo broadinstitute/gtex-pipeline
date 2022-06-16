@@ -89,8 +89,9 @@ if __name__ == '__main__':
     # check inputs
     if not counts_df.columns.equals(tpm_df.columns):
         raise ValueError('Sample IDs in the TPM and read counts files must match.')
-    if not np.all(counts_df.columns.isin(sample_to_participant_s.index)):
-        raise ValueError('Sample IDs in expression files and participant lookup table must match.')
+    missing_ids = ~counts_df.columns.isin(sample_to_participant_s.index)
+    if missing_ids.any():
+        raise ValueError(f"Sample IDs in expression files and participant lookup table must match ({missing_ids.sum()} sample IDs missing from {os.path.basename(args.sample_to_participant)}).")
 
     if args.convert_tpm:
         print('  * Converting to TPM', flush=True)
