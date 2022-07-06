@@ -15,8 +15,8 @@ task participant_vcfs {
         bcftools view --no-update -s ${participant_id} -v snps ${vcf_file} | bcftools view --no-update -e 'GT=".|."' -Oz -o ${participant_id}.snps.vcf.gz
         tabix ${participant_id}.snps.vcf.gz
 
-        date +"[%b %d %H:%M:%S] Subsetting het sites for ASE"
-        bcftools view --no-update -i 'GT="het"' -Oz -o ${participant_id}.snps.het.vcf.gz ${participant_id}.snps.vcf.gz
+        date +"[%b %d %H:%M:%S] Subsetting biallelic het sites for ASE"
+        bcftools view --no-update -i 'GT="het"' ${participant_id}.snps.vcf.gz | bcftools norm -m+ | bcftools view -m2 -M2 -Oz -o ${participant_id}.snps.het.vcf.gz
         tabix ${participant_id}.snps.het.vcf.gz
 
         date +"[%b %d %H:%M:%S] Done"
@@ -30,7 +30,7 @@ task participant_vcfs {
     }
 
     runtime {
-        docker: "gcr.io/broad-cga-francois-gtex/gtex_eqtl:V8"
+        docker: "gcr.io/broad-cga-francois-gtex/gtex_eqtl:V10"
         memory: "${memory}GB"
         disks: "local-disk ${disk_space} HDD"
         cpu: "${num_threads}"
