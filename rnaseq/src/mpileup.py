@@ -33,7 +33,7 @@ def samtools_mpileup(bam_file, fasta, region=None, regions_bed=None, variant_ids
 
     cmd = f"samtools mpileup -d {max_depth} --no-BAQ -q {min_mq} -Q {min_bq} --output-MQ"
     if primary_only:
-        cmd += ' --excl-flags 2304'
+        cmd += ' --excl-flags 3328'  # not primary, PCR or optical duplicate, supplementary
     if paired_end:
         cmd += ' --incl-flags 2'
     if output_extra is not None:
@@ -265,6 +265,45 @@ def collapse_strands(df):
             collapse_strands(df[k])
     else:
         raise ValueError(f'Input type {df.__class__} not supported')
+
+
+def get_ase_counts(mpileup_df, sites_vcf, inplace=True):
+    # parse variants from sites VCF
+    variant_dict = {}
+    with gzip.open(sites_vcf, 'rt') as vcf:
+        for line in vcf:
+            if not line.startswith('#'):
+                line = line.strip().split('\t')
+                # store ID, ref, alt
+                variant_dict[f"{line[0]}_{line[1]}_{line[3]}"] = line[2:5]
+
+    # count ref/alt bases only; recompute total count
+    count_dicts = {}
+    for b in 'ACGT':
+        count_dicts[b] = mpileup_df[b].to_dict()
+
+    ref_count = {}
+    alt_count = {}
+    alt_base = {}
+    for i in mpileup_df.index:
+        d = variant_dict[i]
+        ref_count[i] = count_dicts[d[1]][i]
+        alt_count[i] = count_dicts[d[2]][i]
+        alt_base[i] = d[2]
+    ref_count = pd.Series(ref_count, name='ref_count')
+    alt_count = pd.Series(alt_count, name='alt_count')
+    alt_base = pd.Series(alt_base, name='alt_base')
+
+    if not inplace:
+        mpileup_df = mpileup_df.copy()
+    mpileup_df.insert(3, 'alt_base', alt_base)
+    mpileup_df.insert(4, 'ref_count', ref_count)
+    mpileup_df.insert(5, 'alt_count', alt_count)
+    mpileup_df['total_count_multi'] = mpileup_df['total_count']
+    mpileup_df['total_count'] = mpileup_df['ref_count'] + mpileup_df['alt_count']
+    mpileup_df.drop(['A', 'T', 'C', 'G'], axis=1, inplace=True)
+    if not inplace:
+        return mpileup_df
 
 
 if __name__=='__main__':
