@@ -63,6 +63,8 @@ class Annotation:
                 attributes = defaultdict(list)
                 for a in row[8].replace('"', '').replace('_biotype', '_type').split(';')[:-1]:
                     kv = a.strip().split(' ')
+                    if len(kv) < 2:
+                        continue
                     if kv[0]!='tag':
                         attributes[kv[0]] = kv[1]
                     else:
