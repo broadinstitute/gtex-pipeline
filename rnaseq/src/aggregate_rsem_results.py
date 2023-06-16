@@ -36,10 +36,10 @@ def aggregate_rsem_results(file_list, col_ids, rsem_loader):
     return as dict of DataFrames
     """
     df_dict = defaultdict(list)
-    for k,f in enumerate(file_list):
+    for k,f in enumerate(file_list, 1):
         filename = os.path.split(f)[1]
         sample_id = filename.split('.')[0]
-        print('\rProcessing RSEM output {0:d}/{1:d}'.format(k+1, len(file_list)), end='')
+        print(f'\rProcessing RSEM output {k}/{len(file_list)}', end='' if k < len(file_list) else None)
         rsem_df = rsem_loader(f, cols=col_ids)
         for c in col_ids:
             s = rsem_df[c]
@@ -68,11 +68,11 @@ if __name__=='__main__':
     sample_ids = [os.path.split(i)[1].split('.')[0] for i in file_list]
 
     if np.all(['isoform' in os.path.split(i)[1] for i in file_list]):
-        prefix = args.output_prefix+'.rsem_transcripts_'
+        prefix = f'{args.output_prefix}.rsem_transcripts_'
         rsem_loader = load_isoform_results
         index_df = load_isoform_results(file_list[0], cols=['gene_id'])
     elif np.all(['gene' in os.path.split(i)[1] for i in file_list]):
-        prefix = args.output_prefix+'.rsem_genes_'
+        prefix = f'{args.output_prefix}.rsem_genes_'
         rsem_loader = load_gene_results
         index_df = load_gene_results(file_list[0], cols=['transcript_id(s)'])
     else:
@@ -80,33 +80,31 @@ if __name__=='__main__':
 
     # merge outputs in chunks, store to hdf
     tmp_store = tempfile.NamedTemporaryFile(dir=args.output_dir)
-    nchunks = int(np.ceil(len(file_list)/args.chunk_size))
+    nchunks = int(np.ceil(len(file_list) / args.chunk_size))
     iargs = [iter(file_list)] * args.chunk_size
     for k,sub_list in enumerate(itertools.zip_longest(*iargs)):
         sub_list = [j for j in sub_list if j is not None]  # last chunk
-        print('Processing chunk {0:d}/{1:d}'.format(k+1, nchunks))
+        print(f'Processing chunk {k+1}/{nchunks}')
         df_dict = aggregate_rsem_results(sub_list, args.col_ids, rsem_loader)
         for c in args.col_ids:
-            df_dict[c].to_hdf(tmp_store.name, '{0:s}{1:d}'.format(c,k))
-        print()
+            df_dict[c].to_hdf(tmp_store.name, f'{c}{k}')
 
     # aggregate chunks for each output type
     for c in args.col_ids:
         dfs = [index_df]
         for k in range(nchunks):
-            print('\rLoading chunk {0:d}/{1:d}'.format(k+1, nchunks), end='')
-            dfs.append(pd.read_hdf(tmp_store.name, '{0:s}{1:d}'.format(c,k)))
-        print()
+            print(f'\rLoading chunk {k+1}/{nchunks}', end='' if k+1 < nchunks else None)
+            dfs.append(pd.read_hdf(tmp_store.name, f'{c}{k}'))
         dfs = pd.concat(dfs, axis=1)
 
         if args.parquet:
-            fname = prefix+c.lower()+'.parquet'
-            print('Writing {}'.format(fname))
+            fname = f'{prefix}{c.lower()}.parquet'
+            print(f'Writing {fname}')
             dfs.to_parquet(os.path.join(args.output_dir, fname))
 
         else:  # txt.gz
-            fname = prefix+c.lower()+'.txt.gz'
-            print('Writing {}'.format(fname))
+            fname = f'{prefix}{c.lower()}.txt.gz'
+            print(f'Writing {fname}')
             with gzip.open(os.path.join(args.output_dir, fname), 'wt', compresslevel=6) as f:
                 dfs.to_csv(f, sep='\t', float_format='%.5g')
 
