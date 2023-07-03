@@ -86,7 +86,7 @@ For RNA-seq analyses, a reference FASTA excluding ALT, HLA, and Decoy contigs wa
 
 #### Reference annotation
 The reference annotations were prepared as follows:
-1. The [GENCODE 34](https://www.gencodegenes.org/human/release_34.html) annotation was downloaded from the GENCODE  [FTP](ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_34/gencode.v34.annotation.gtf.gz).
+1. The comprehensive gene annotation was downloaded from [GENCODE](https://www.gencodegenes.org/human/release_34.html): [gencode.v34.annotation.gtf.gz](https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_34/gencode.v34.annotation.gtf.gz).
 
 2. For gene-level quantifications, the annotation was collapsed with the [script](https://github.com/broadinstitute/gtex-pipeline/blob/master/gene_model/collapse_annotation.py) used in the [GTEx pipeline](https://github.com/broadinstitute/gtex-pipeline/tree/master/gene_model):
     ```bash
