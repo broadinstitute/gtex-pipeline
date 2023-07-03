@@ -51,7 +51,7 @@ For RNA-seq analyses, a reference FASTA excluding ALT, HLA, and Decoy contigs wa
 *Note: The reference produced after filtering out ALT, HLA, and Decoy contigs is identical to the one used by ENCODE ([FASTA file](https://www.encodeproject.org/files/GRCh38_no_alt_analysis_set_GCA_000001405.15/@@download/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta.gz)). However, the ENCODE reference does not  include ERCC spike-in sequences.*
 
 1. The Broad Institute's [GRCh38 reference](https://gatk.broadinstitute.org/hc/en-us/articles/360035890811-Resource-bundle) can be obtained from the Broad Institute's FTP server (ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/hg38/) or from [Google Cloud](https://console.cloud.google.com/storage/browser/genomics-public-data/resources/broad/hg38/v0).
-2. ERCC spike-in reference annotations were downloaded from [ThermoFisher](https://tools.thermofisher.com/content/sfs/manuals/ERCC92.zip) (the archive contains two files, ERCC92.fa and ERCC92.gtf) and processed as detailed below. The patched ERCC references are also available [here](https://personal.broadinstitute.org/francois/resources/).<br>The ERCC FASTA was patched for compatibility with RNA-SeQC/GATK using
+2. ERCC spike-in reference annotations were downloaded from [ThermoFisher](https://tools.thermofisher.com/content/sfs/manuals/ERCC92.zip) (the archive contains two files, ERCC92.fa and ERCC92.gtf) and processed as detailed below. The patched ERCC references are also available [here](https://github.com/broadinstitute/gtex-pipeline/tree/master/rnaseq/references).<br>The ERCC FASTA was patched for compatibility with RNA-SeQC/GATK using
     ```bash
     sed 's/ERCC-/ERCC_/g' ERCC92.fa > ERCC92.patched.fa
     ```
@@ -96,10 +96,11 @@ The reference annotations were prepared as follows:
     ```
 3. Gene- and transcript-level attributes were added to the ERCC GTF with the following Python code:
     ```python
-    with open('ERCC92.gtf') as exon_gtf, open('ERCC92.genes.patched.gtf', 'w') as gene_gtf:
+    with open('ERCC92.gtf') as exon_gtf, open('ERCC92.patched.gtf', 'w') as gene_gtf:
         for line in exon_gtf:
             f = line.strip().split('\t')
             f[0] = f[0].replace('-', '_')  # required for RNA-SeQC/GATK (no '-' in contig name)
+            f[5] = '.'
     
             attr = f[8]
             if attr[-1] == ';':
@@ -129,9 +130,9 @@ The reference annotations were prepared as follows:
 
 4. The ERCC annotation was appended to the reference GTFs:
     ```bash
-    cat gencode.v34.GRCh38.annotation.gtf ERCC92.genes.patched.gtf \
+    cat gencode.v34.GRCh38.annotation.gtf ERCC92.patched.gtf \
         > gencode.v34.GRCh38.annotation.ERCC.gtf
-    cat gencode.v34.GRCh38.genes.gtf ERCC92.genes.patched.gtf \
+    cat gencode.v34.GRCh38.genes.gtf ERCC92.patched.gtf \
         > gencode.v34.GRCh38.ERCC.genes.gtf
     ```
 
