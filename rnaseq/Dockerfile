@@ -1,5 +1,5 @@
 # Dockerfile for GTEx RNA-seq pipeline
-FROM ubuntu:18.04
+FROM ubuntu:22.04
 MAINTAINER Francois Aguet
 
 RUN apt-get update && apt-get install -y software-properties-common && \
@@ -34,22 +34,22 @@ RUN apt-get update && apt-get install -y software-properties-common && \
 
 # htslib
 RUN cd /opt && \
-    wget --no-check-certificate https://github.com/samtools/htslib/releases/download/1.15.1/htslib-1.15.1.tar.bz2 && \
-    tar -xf htslib-1.15.1.tar.bz2 && rm htslib-1.15.1.tar.bz2 && cd htslib-1.15.1 && \
+    wget --no-check-certificate https://github.com/samtools/htslib/releases/download/1.18/htslib-1.18.tar.bz2 && \
+    tar -xf htslib-1.18.tar.bz2 && rm htslib-1.18.tar.bz2 && cd htslib-1.18 && \
     ./configure --enable-libcurl --enable-s3 --enable-plugins --enable-gcs && \
     make && make install && make clean
 
 # samtools
 RUN cd /opt && \
-    wget --no-check-certificate https://github.com/samtools/samtools/releases/download/1.15.1/samtools-1.15.1.tar.bz2 && \
-    tar -xf samtools-1.15.1.tar.bz2 && rm samtools-1.15.1.tar.bz2 && cd samtools-1.15.1 && \
-    ./configure --with-htslib=/opt/htslib-1.15.1 && make && make install && make clean
+    wget --no-check-certificate https://github.com/samtools/samtools/releases/download/1.18/samtools-1.18.tar.bz2 && \
+    tar -xf samtools-1.18.tar.bz2 && rm samtools-1.18.tar.bz2 && cd samtools-1.18 && \
+    ./configure --with-htslib=/opt/htslib-1.18 && make && make install && make clean
 
-# STAR v2.7.10a
+# STAR v2.7.11a
 RUN cd /opt && \
-    wget --no-check-certificate https://github.com/alexdobin/STAR/archive/2.7.10a.tar.gz && \
-    tar -xf 2.7.10a.tar.gz && rm 2.7.10a.tar.gz
-ENV PATH /opt/STAR-2.7.10a/bin/Linux_x86_64_static:$PATH
+    wget --no-check-certificate https://github.com/alexdobin/STAR/archive/2.7.11a.tar.gz && \
+    tar -xf 2.7.11a.tar.gz && rm 2.7.11a.tar.gz
+ENV PATH /opt/STAR-2.7.11a/bin/Linux_x86_64_static:$PATH
 
 # RSEM v1.3.3
 RUN cd /opt && \
@@ -74,14 +74,14 @@ RUN mkdir /opt/picard-tools && \
 
 # kallisto
 RUN cd /opt && \
-    wget https://github.com/pachterlab/kallisto/releases/download/v0.48.0/kallisto_linux-v0.48.0.tar.gz && \
-    tar -xf kallisto_linux-v0.48.0.tar.gz && rm kallisto_linux-v0.48.0.tar.gz
-ENV PATH $PATH:/opt/kallisto_linux-v0.48.0
+    wget https://github.com/pachterlab/kallisto/releases/download/v0.50.1/kallisto_linux-v0.50.1.tar.gz && \
+    tar -xf kallisto_linux-v0.50.1.tar.gz && rm kallisto_linux-v0.50.1.tar.gz
+ENV PATH $PATH:/opt/kallisto_linux-v0.50.1
 
 # bedtools
 RUN cd /opt && \
-    wget --no-check-certificate https://github.com/arq5x/bedtools2/releases/download/v2.30.0/bedtools-2.30.0.tar.gz && \
-    tar -xf bedtools-2.30.0.tar.gz && rm bedtools-2.30.0.tar.gz && \
+    wget --no-check-certificate https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz && \
+    tar -xf bedtools-2.31.1.tar.gz && rm bedtools-2.31.1.tar.gz && \
     cd bedtools2 && make && make install && make clean
 
 # UCSC tools
@@ -111,9 +111,10 @@ RUN pip3 install rnaseqc
 ENV PATH /opt/rnaseqc:$PATH
 
 # gcloud
-RUN export CLOUD_SDK_REPO="cloud-sdk-$(lsb_release -c -s)" && \
-    echo "deb http://packages.cloud.google.com/apt $CLOUD_SDK_REPO main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list && \
-    curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - && \
+RUN apt-get update && apt-get install -y apt-transport-https ca-certificates gnupg sudo
+RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main" \
+    | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list && \
+    curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg && \
     apt-get update -y && apt-get install google-cloud-sdk -y
 
 # scripts
