@@ -63,10 +63,11 @@ class Annotation:
                 attributes = defaultdict(list)
                 for a in row[8].replace('"', '').replace('_biotype', '_type').split(';')[:-1]:
                     kv = a.strip().split(' ')
-                    if kv[0]!='tag':
-                        attributes[kv[0]] = kv[1]
-                    else:
-                        attributes['tags'].append(kv[1])
+                    if len(kv) == 2:  # ignore attributes without values (e.g. transcript_id "")
+                        if kv[0] != 'tag':
+                            attributes[kv[0]] = kv[1]
+                        else:
+                            attributes['tags'].append(kv[1])
 
                 if annot_type == 'gene':
                     assert 'gene_id' in attributes

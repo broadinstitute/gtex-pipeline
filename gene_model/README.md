@@ -16,6 +16,6 @@ Command:
 ```bash
 python3 collapse_annotation.py gencode.v26.GRCh38.annotation.gtf gencode.v26.GRCh38.genes.gtf
 ```
-where `gencode.v26.GRCh38.annotation.gtf` is the GTF from [GENCODE](https://www.gencodegenes.org/releases/current.html).
+where `gencode.v26.GRCh38.annotation.gtf` is the GTF from [GENCODE](https://www.gencodegenes.org/human/).
 
 Further documentation is available on the [GTEx Portal](https://gtexportal.org/home/documentationPage#staticTextAnalysisMethods).
