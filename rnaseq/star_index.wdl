@@ -11,6 +11,7 @@ task star_index {
     Int num_preempt
 
     command {
+        set -euo pipefail
         mkdir ${prefix}
         STAR \
             --runMode genomeGenerate \
