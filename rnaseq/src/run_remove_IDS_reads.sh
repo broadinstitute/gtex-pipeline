@@ -7,7 +7,7 @@ IFS=$'\n\t'
 input_bam=$1
 prefix=$2
 
-output_bam=${prefix}.Aligned.toTranscriptome_noIDS.out.bam
+output_bam=${prefix}.Aligned.toTranscriptome_noIDS.sortedByCoord.out.bam
 
 samtools view ${input_bam} | awk '{print $1}' | sort | uniq > readids_all
 samtools view ${input_bam} | awk '$6 ~ "I"' | awk '{print $1}' | sort | uniq > readids_flagI
@@ -23,6 +23,6 @@ echo readids for S flag = $(cat readids_flagS | wc -l)
 echo readids for I/D/S flag = $(cat readids_flagIDS | wc -l)
 echo readids for non I/D/S flag = $(cat readids_flagnonIDS | wc -l)
 
-samtools view -N readids_flagnonIDS -hb -o ${output_bam} ${input_bam}
+samtools view -N readids_flagnonIDS -hb -o temp_bam.bam ${input_bam}
+samtools sort temp_bam.bam -o ${output_bam}
 samtools index ${output_bam}
-
