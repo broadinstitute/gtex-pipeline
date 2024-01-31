@@ -45,7 +45,7 @@ parser.add_argument('--outSAMunmapped', default='Within', help='Keep unmapped re
 parser.add_argument('--outSAMattrRGline', default=['ID:rg1', 'SM:sm1'], nargs='+', help='Adds read group line to BAM header; required by GATK')
 parser.add_argument('--outSAMattributes', default=['NH', 'HI', 'AS', 'nM', 'NM', 'MD', 'ha'], nargs='+')
 parser.add_argument('--varVCFfile', default=None, help='VCF for the input sample; currently supports SNPs only')
-parser.add_argument('--waspOutputMode', default=None)
+parser.add_argument('--waspOutputMode', default='SAMtag')
 parser.add_argument('--quantTranscriptomeSAMoutput', default='BanSingleEnd_ExtendSoftclip', help='string: alignment filtering for TranscriptomeSAM output')
 parser.add_argument('--winAnchorMultimapNmax', default='100', help='int>0: max number of loci anchors are allowed to map to')
 parser.add_argument('--genomeTransformOutput', default=['SAM', 'SJ', 'Quant'], nargs='+', help='string(s) which output to transform back to original genome')
