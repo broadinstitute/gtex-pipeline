@@ -34,22 +34,22 @@ RUN apt-get update && apt-get install -y software-properties-common && \
 
 # htslib
 RUN cd /opt && \
-    wget --no-check-certificate https://github.com/samtools/htslib/releases/download/1.18/htslib-1.18.tar.bz2 && \
-    tar -xf htslib-1.18.tar.bz2 && rm htslib-1.18.tar.bz2 && cd htslib-1.18 && \
+    wget --no-check-certificate https://github.com/samtools/htslib/releases/download/1.19.1/htslib-1.19.1.tar.bz2 && \
+    tar -xf htslib-1.19.1.tar.bz2 && rm htslib-1.19.1.tar.bz2 && cd htslib-1.19.1 && \
     ./configure --enable-libcurl --enable-s3 --enable-plugins --enable-gcs && \
     make && make install && make clean
 
 # samtools
 RUN cd /opt && \
-    wget --no-check-certificate https://github.com/samtools/samtools/releases/download/1.18/samtools-1.18.tar.bz2 && \
-    tar -xf samtools-1.18.tar.bz2 && rm samtools-1.18.tar.bz2 && cd samtools-1.18 && \
+    wget --no-check-certificate https://github.com/samtools/samtools/releases/download/1.19.2/samtools-1.19.2.tar.bz2 && \
+    tar -xf samtools-1.19.2.tar.bz2 && rm samtools-1.19.2.tar.bz2 && cd samtools-1.19.2 && \
     ./configure --with-htslib=/opt/htslib-1.18 && make && make install && make clean
 
-# STAR v2.7.11a
+# STAR v2.7.11b
 RUN cd /opt && \
-    wget --no-check-certificate https://github.com/alexdobin/STAR/archive/2.7.11a.tar.gz && \
-    tar -xf 2.7.11a.tar.gz && rm 2.7.11a.tar.gz
-ENV PATH /opt/STAR-2.7.11a/bin/Linux_x86_64_static:$PATH
+    wget --no-check-certificate https://github.com/alexdobin/STAR/archive/2.7.11b.tar.gz && \
+    tar -xf 2.7.11b.tar.gz && rm 2.7.11b.tar.gz
+ENV PATH /opt/STAR-2.7.11b/bin/Linux_x86_64_static:$PATH
 
 # RSEM v1.3.3
 RUN cd /opt && \
