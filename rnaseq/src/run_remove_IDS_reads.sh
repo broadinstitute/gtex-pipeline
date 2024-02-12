@@ -1,5 +1,5 @@
 #!/bin/bash
-# Author: Francois Aguet
+# Author: Abhishek Choudhary
 
 set -euo pipefail
 IFS=$'\n\t'
