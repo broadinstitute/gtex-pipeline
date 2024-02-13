@@ -32,6 +32,9 @@ task star {
     Int? chimMainSegmentMultNmax
     Int? chimOutJunctionFormat
     File? sjdbFileChrStartEnd
+    String? quantTranscriptomeSAMoutput
+    Int? winAnchorMultimapNmax
+    String? genomeTransformOutput
 
     Int memory
     Int disk_space
@@ -104,6 +107,9 @@ task star {
             ${"--chimMainSegmentMultNmax " + chimMainSegmentMultNmax} \
             ${"--chimOutJunctionFormat " + chimOutJunctionFormat} \
             ${"--sjdbFileChrStartEnd " + sjdbFileChrStartEnd} \
+            ${"--quantTranscriptomeSAMoutput " + quantTranscriptomeSAMoutput} \
+            ${"--winAnchorMultimapNmax " + winAnchorMultimapNmax} \
+            ${"--genomeTransformOutput " + genomeTransformOutput} \
             --threads ${num_threads}
     }
 
