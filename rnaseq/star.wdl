@@ -32,6 +32,9 @@ task star {
     Int? chimMainSegmentMultNmax
     Int? chimOutJunctionFormat
     File? sjdbFileChrStartEnd
+    String? quantTranscriptomeSAMoutput
+    Int? winAnchorMultimapNmax
+    String? genomeTransformOutput
 
     Int memory
     Int disk_space
@@ -104,6 +107,9 @@ task star {
             ${"--chimMainSegmentMultNmax " + chimMainSegmentMultNmax} \
             ${"--chimOutJunctionFormat " + chimOutJunctionFormat} \
             ${"--sjdbFileChrStartEnd " + sjdbFileChrStartEnd} \
+            ${"--quantTranscriptomeSAMoutput " + quantTranscriptomeSAMoutput} \
+            ${"--winAnchorMultimapNmax " + winAnchorMultimapNmax} \
+            ${"--genomeTransformOutput " + genomeTransformOutput} \
             --threads ${num_threads}
     }
 
@@ -111,9 +117,9 @@ task star {
         File bam_file = "star_out/${prefix}.Aligned.sortedByCoord.out.bam"
         File bam_index = "star_out/${prefix}.Aligned.sortedByCoord.out.bam.bai"
         File transcriptome_bam = "star_out/${prefix}.Aligned.toTranscriptome.out.bam"
-        File chimeric_junctions = "star_out/${prefix}.Chimeric.out.junction.gz"
-        File chimeric_bam_file = "star_out/${prefix}.Chimeric.out.sorted.bam"
-        File chimeric_bam_index = "star_out/${prefix}.Chimeric.out.sorted.bam.bai"
+        # File chimeric_junctions = "star_out/${prefix}.Chimeric.out.junction.gz"
+        # File chimeric_bam_file = "star_out/${prefix}.Chimeric.out.sorted.bam"
+        # File chimeric_bam_index = "star_out/${prefix}.Chimeric.out.sorted.bam.bai"
         File read_counts = "star_out/${prefix}.ReadsPerGene.out.tab.gz"
         File junctions = "star_out/${prefix}.SJ.out.tab.gz"
         File junctions_pass1 = "star_out/${prefix}._STARpass1/${prefix}.SJ.pass1.out.tab.gz"
