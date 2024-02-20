@@ -4,6 +4,9 @@ task star_index {
     File annotation_gtf
     String prefix
     Int overhang
+    Int? suffix_lengthmax
+    String? transform_type
+    File? transform_vcf
 
     Int memory
     Int disk_space
@@ -19,12 +22,15 @@ task star_index {
             --genomeFastaFiles ${reference_fasta} \
             --sjdbGTFfile ${annotation_gtf} \
             --sjdbOverhang ${overhang} \
+            ${"--genomeSuffixLengthMax " + suffix_lengthmax} \
+            ${"--genomeTransformType " + transform_type} \
+            ${"--genomeTransformVCF " + transform_vcf} \
             --runThreadN ${num_threads}
-        tar -cvzf ${prefix}.tar.gz ${prefix}
+        tar -cvzf genome_index_${prefix}.tar.gz ${prefix}
     }
 
     output {
-        File star_index = "${prefix}.tar.gz"
+        File star_index = "genome_index_${prefix}.tar.gz"
     }
 
     runtime {
