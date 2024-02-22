@@ -27,7 +27,7 @@ task remove_IDS_reads {
     }
 
     meta {
-        author: "Francois Aguet"
+        author: "Abhishek Choudhary"
     }
 }
 
