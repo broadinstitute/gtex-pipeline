@@ -26,11 +26,11 @@ task star_index {
             ${"--genomeTransformType " + transform_type} \
             ${"--genomeTransformVCF " + transform_vcf} \
             --runThreadN ${num_threads}
-        tar -cvzf genome_index_${prefix}.tar.gz ${prefix}
+        tar -cvzf ${prefix}.tar.gz ${prefix}
     }
 
     output {
-        File star_index = "genome_index_${prefix}.tar.gz"
+        File star_index = "${prefix}.tar.gz"
     }
 
     runtime {
