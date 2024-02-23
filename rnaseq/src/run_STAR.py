@@ -165,5 +165,4 @@ with cd(args.output_dir):
         os.remove(f'{args.prefix}.Chimeric.out.sam')
 
     if os.path.exists(f'{args.prefix}.Chimeric.out.junction'):
-        os.remove(f'{args.prefix}.Chimeric.out.junction.gz')
-        subprocess.check_call(f'gzip {args.prefix}.Chimeric.out.junction', shell=True, executable='/bin/bash')
+        subprocess.check_call(f'gzip -f {args.prefix}.Chimeric.out.junction', shell=True, executable='/bin/bash')
