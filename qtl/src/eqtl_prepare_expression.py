@@ -12,16 +12,6 @@ import qtl.io
 import qtl.norm
 
 
-def prepare_bed(df, bed_template_df, chr_subset=None):
-    bed_df = pd.merge(bed_template_df, df, left_index=True, right_index=True)
-    # sort by start position
-    bed_df = bed_df.groupby('chr', sort=False, group_keys=False).apply(lambda x: x.sort_values('start'))
-    if chr_subset is not None:
-        # subset chrs from VCF
-        bed_df = bed_df[bed_df.chr.isin(chr_subset)]
-    return bed_df.reset_index(drop=True)
-
-
 def prepare_expression(counts_df, tpm_df, sample_frac_threshold=0.2,
                        count_threshold=6, tpm_threshold=0.1, mode='tmm'):
     """
@@ -103,13 +93,11 @@ if __name__ == '__main__':
                                  count_threshold=args.count_threshold,
                                  tpm_threshold=args.tpm_threshold,
                                  mode=args.normalization_method)
-    print(f'  * {counts_df.shape[0]} genes in input tables.', flush=True)
-    print(f'  * {norm_df.shape[0]} genes remain after thresholding.', flush=True)
+    print(f'  * {counts_df.shape[0]} genes in input tables', flush=True)
+    print(f'  * {norm_df.shape[0]} genes remain after thresholding', flush=True)
 
     # change sample IDs to participant IDs
     norm_df.rename(columns=sample_to_participant_s, inplace=True)
-
-    bed_template_df = qtl.io.gtf_to_tss_bed(args.annotation_gtf, feature='transcript')
 
     if args.chrs is not None:
         with open(args.chrs) as f:
@@ -117,11 +105,15 @@ if __name__ == '__main__':
     else:
         chrs = [f'chr{i}' for i in range(1,23)] + ['chrX']
 
-    norm_bed_df = prepare_bed(norm_df, bed_template_df, chr_subset=chrs)
-    print(f'  * {norm_bed_df.shape[0]} genes remain after selecting chromosomes.', flush=True)
+    # prepare BED
+    bed_template_df = qtl.io.gtf_to_tss_bed(args.annotation_gtf, feature='transcript')
+    bed_template_df = bed_template_df[bed_template_df['chr'].isin(chrs)]
+    bed_df = pd.merge(bed_template_df, norm_df, left_index=True, right_index=True)
+    qtl.io.sort_bed(bed_df, inplace=True)
+    print(f'  * {bed_df.shape[0]} genes remain after selecting chromosomes', flush=True)
 
     print('Writing BED file', flush=True)
     if not args.parquet:
-        qtl.io.write_bed(norm_bed_df, os.path.join(args.output_dir, f'{args.prefix}.expression.bed.gz'))
+        qtl.io.write_bed(bed_df, os.path.join(args.output_dir, f'{args.prefix}.expression.bed.gz'))
     else:
-        norm_bed_df.to_parquet(os.path.join(args.output_dir, f'{args.prefix}.expression.bed.parquet'))
+        bed_df.to_parquet(os.path.join(args.output_dir, f'{args.prefix}.expression.bed.parquet'))
