@@ -1,4 +1,4 @@
-task tensorqtl_cis_permutations {
+task tensorqtl_cis_susie {
 
     File plink_pgen
     File plink_pvar
@@ -7,10 +7,10 @@ task tensorqtl_cis_permutations {
     File phenotype_bed
     File covariates
     String prefix
+    File cis_output
 
-    File? phenotype_groups
     Float? fdr
-    Float? qvalue_lambda
+    Int? max_effects
 
     Int memory
     Int disk_space
@@ -22,11 +22,11 @@ task tensorqtl_cis_permutations {
         plink_base=$(echo "${plink_pgen}" | rev | cut -f 2- -d '.' | rev)
         python3 -m tensorqtl \
             $plink_base ${phenotype_bed} ${prefix} \
-            --mode cis \
+            --mode cis_susie \
             --covariates ${covariates} \
-            ${"--phenotype_groups " + phenotype_groups} \
+            --cis_output ${cis_output} \
             ${"--fdr " + fdr} \
-            ${"--qvalue_lambda " + qvalue_lambda}
+            ${"--max_effects " + max_effects}
     }
 
     runtime {
@@ -42,8 +42,9 @@ task tensorqtl_cis_permutations {
     }
 
     output {
-        File cis_qtl="${prefix}.cis_qtl.txt.gz"
-        File log="${prefix}.tensorQTL.cis.log"
+        File susie_summary="${prefix}.SuSiE_summary.parquet"
+        File susie_pickle="${prefix}.SuSiE.pickle"
+        File log="${prefix}.tensorQTL.cis_susie.log"
     }
 
     meta {
@@ -51,6 +52,6 @@ task tensorqtl_cis_permutations {
     }
 }
 
-workflow tensorqtl_cis_permutations_workflow {
-    call tensorqtl_cis_permutations
+workflow tensorqtl_cis_susie_workflow {
+    call tensorqtl_cis_susie
 }
