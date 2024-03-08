@@ -1,5 +1,5 @@
 # Dockerfile for LeafCutter
-FROM ubuntu:18.04
+FROM ubuntu:22.04
 MAINTAINER Francois Aguet
 ENV DEBIAN_FRONTEND noninteractive
 
@@ -29,31 +29,31 @@ RUN apt-get update && apt-get install -y software-properties-common && \
 
 # R
 RUN echo "r <- getOption('repos'); r['CRAN'] <- 'http://cran.us.r-project.org'; options(repos = r);" > ~/.Rprofile && \
-    Rscript -e "install.packages(c('argparser', 'devtools'), dependencies=TRUE)" && \
-    Rscript -e 'source("http://bioconductor.org/biocLite.R"); biocLite("qvalue"); biocLite("sva"); biocLite("edgeR");'
+    Rscript -e "install.packages(c('argparser', 'devtools', 'foreach'), dependencies=TRUE)" && \
+    Rscript -e 'BiocManager::install(c("qvalue", "sva", "edgeR", "dplyr"));'
 
 # htslib
 RUN cd /opt && \
-    wget --no-check-certificate https://github.com/samtools/htslib/releases/download/1.15/htslib-1.15.tar.bz2 && \
-    tar -xf htslib-1.15.tar.bz2 && rm htslib-1.15.tar.bz2 && cd htslib-1.15 && \
+    wget --no-check-certificate https://github.com/samtools/htslib/releases/download/1.19.1/htslib-1.19.1.tar.bz2 && \
+    tar -xf htslib-1.19.1.tar.bz2 && rm htslib-1.19.1.tar.bz2 && cd htslib-1.19.1 && \
     ./configure --enable-libcurl --enable-s3 --enable-plugins --enable-gcs && \
     make && make install && make clean
 
 # samtools
 RUN cd /opt && \
-    wget --no-check-certificate https://github.com/samtools/samtools/releases/download/1.15/samtools-1.15.tar.bz2 && \
-    tar -xf samtools-1.15.tar.bz2 && rm samtools-1.15.tar.bz2 && cd samtools-1.15 && \
-    ./configure --with-htslib=/opt/htslib-1.15 && make && make install && make clean
+    wget --no-check-certificate https://github.com/samtools/samtools/releases/download/1.19.2/samtools-1.19.2.tar.bz2 && \
+    tar -xf samtools-1.19.2.tar.bz2 && rm samtools-1.19.2.tar.bz2 && cd samtools-1.19.2 && \
+    ./configure --with-htslib=/opt/htslib-1.19.1 && make && make install && make clean
 
 # bcftools
 RUN cd /opt && \
-    wget --no-check-certificate https://github.com/samtools/bcftools/releases/download/1.15/bcftools-1.15.tar.bz2 && \
-    tar -xf bcftools-1.15.tar.bz2 && rm bcftools-1.15.tar.bz2 && cd bcftools-1.15 && \
-    ./configure --with-htslib=/opt/htslib-1.15 && make && make install && make clean
+    wget --no-check-certificate https://github.com/samtools/bcftools/releases/download/1.19/bcftools-1.19.tar.bz2 && \
+    tar -xf bcftools-1.19.tar.bz2 && rm bcftools-1.19.tar.bz2 && cd bcftools-1.19 && \
+    ./configure --with-htslib=/opt/htslib-1.19.1 && make && make install && make clean
 
 # Python 3
 RUN pip3 install --upgrade pip setuptools
-RUN pip3 install numpy tables pandas scipy scikit-learn matplotlib qtl
+RUN pip3 install numpy pyarrow pandas scipy scikit-learn matplotlib qtl
 
 # LeafCutter
 RUN cd /opt && \
