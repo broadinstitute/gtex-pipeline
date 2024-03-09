@@ -11,6 +11,7 @@ task tensorqtl_cis_permutations {
     File? phenotype_groups
     Float? fdr
     Float? qvalue_lambda
+    String? flags
 
     Int memory
     Int disk_space
@@ -26,7 +27,8 @@ task tensorqtl_cis_permutations {
             --covariates ${covariates} \
             ${"--phenotype_groups " + phenotype_groups} \
             ${"--fdr " + fdr} \
-            ${"--qvalue_lambda " + qvalue_lambda}
+            ${"--qvalue_lambda " + qvalue_lambda} \
+            ${flags}
     }
 
     runtime {

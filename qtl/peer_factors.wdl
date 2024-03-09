@@ -1,6 +1,6 @@
-task eqtl_peer_factors {
+task peer_factors {
 
-    File expression_file
+    File phenotype_file
     String prefix
     Int num_peer
 
@@ -14,12 +14,13 @@ task eqtl_peer_factors {
 
     command {
         set -euo pipefail
-        Rscript /src/run_PEER.R ${expression_file} ${prefix} ${num_peer}
+        Rscript /src/run_PEER.R ${phenotype_file} ${prefix} ${num_peer}
         /src/combine_covariates.py ${prefix}.PEER_covariates.txt ${prefix} ${"--genotype_pcs " + genotype_pcs} ${"--add_covariates " + add_covariates}
+        gzip *.PEER_residuals.txt
     }
 
     runtime {
-        docker: "gcr.io/broad-cga-francois-gtex/gtex_eqtl:V8"
+        docker: "gcr.io/broad-cga-francois-gtex/gtex_eqtl:V10"
         memory: "${memory}GB"
         disks: "local-disk ${disk_space} HDD"
         cpu: "${num_threads}"
@@ -29,6 +30,7 @@ task eqtl_peer_factors {
     output {
         File combined_covariates="${prefix}.combined_covariates.txt"
         File alpha="${prefix}.PEER_alpha.txt"
+        File residuals="${prefix}.PEER_residuals.txt.gz"
     }
 
     meta {
@@ -36,6 +38,6 @@ task eqtl_peer_factors {
     }
 }
 
-workflow eqtl_peer_factors_workflow {
-    call eqtl_peer_factors
+workflow peer_factors_workflow {
+    call peer_factors
 }
