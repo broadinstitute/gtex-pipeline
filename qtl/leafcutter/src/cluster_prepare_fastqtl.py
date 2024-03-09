@@ -153,7 +153,7 @@ if __name__=='__main__':
         os.mkdir(args.output_dir)
 
     sample_participant_lookup_s = pd.read_csv(args.sample_participant_lookup,
-                                              sep='\t', index_col=0, dtype=str).squeeze('columns')
+                                              sep='\t', index_col=0, header=None, dtype=str).squeeze('columns')
 
     run_leafcutter_clustering(args.junc_files_list, args.leafcutter_dir, args.prefix, output_dir=args.output_dir,
                               min_clu_reads=args.min_clu_reads, min_clu_ratio=args.min_clu_ratio, max_intron_len=args.max_intron_len)
