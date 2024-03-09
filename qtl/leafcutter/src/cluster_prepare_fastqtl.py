@@ -30,20 +30,42 @@ def get_introns(intron_counts_df):
     return intron_df
 
 
-def map_cluster_to_genes(intron_df, exon_df):
+def map_cluster_to_genes(intron_df, exon_df, strict=True, verbose=False):
     matches_df = []
+    num_unmatched = 0
+    num_unpaired = 0
     for c in sorted(intron_df['chr'].unique()):
         introns_chr = intron_df[intron_df['chr'] == c]
         exons_chr = exon_df[exon_df['chr'] == c]
-        three_prime_matches = introns_chr.merge(exons_chr, left_on='end', right_on='start', how='inner')
         five_prime_matches = introns_chr.merge(exons_chr, left_on='start', right_on='end', how='inner')
+        three_prime_matches = introns_chr.merge(exons_chr, left_on='end', right_on='start', how='inner')
+        # clusters without any matches
+        num_unmatched += introns_chr.loc[~introns_chr['clu'].isin(five_prime_matches['clu'])
+                                       & ~introns_chr['clu'].isin(three_prime_matches['clu']), 'clu'].nunique()
 
-        all_matches = pd.concat([three_prime_matches, five_prime_matches])[['clu', 'gene_id']].drop_duplicates()
+        if strict:
+            # only assign clusters that have both 5' and 3' matches to the same gene
+            set5 = set([tuple(i) for i in five_prime_matches[['clu', 'gene_id']].drop_duplicates().values])
+            set3 = set([tuple(i) for i in three_prime_matches[['clu', 'gene_id']].drop_duplicates().values])
+            all_matches = pd.DataFrame(set5 & set3, columns=['clu', 'gene_id'])
+            unpaired_matches = sorted([i for i in set5 ^ set3 if i[0] not in all_matches['clu'].values])
+            num_unpaired += len(np.unique([i[0] for i in unpaired_matches]))
+        else:
+            all_matches = pd.concat([three_prime_matches, five_prime_matches])[['clu', 'gene_id']].drop_duplicates()
+
         all_matches['clu'] = c + ':' + all_matches['clu']
         matches_df.append(all_matches)
     matches_df = pd.concat(matches_df).reset_index(drop=True)
     clu_s = matches_df.groupby('clu', sort=True).apply(
         lambda x: ','.join(x['gene_id']), include_groups=False).rename('genes')
+
+    if verbose:
+        total_clusters = intron_df['clu'].nunique()
+        print(f"Total clusters: {total_clusters}")
+        print(f"  * with ≥1 match: {matches_df['clu'].nunique()} ({matches_df['clu'].nunique()/total_clusters*100:.2f}%)")
+        print(f"  * unpaired: {num_unpaired} ({num_unpaired/total_clusters*100:.2f}%)")
+        print(f"  * unmatched: {num_unmatched} ({num_unmatched/total_clusters*100:.2f}%)")
+
     return clu_s
 
 
@@ -145,7 +167,7 @@ if __name__=='__main__':
     print('  * mapping clusters to genes')
     intron_df = get_introns(counts_df)
     exon_df = pd.read_csv(args.exons, sep='\t')
-    clu_s = map_cluster_to_genes(intron_df, exon_df)
+    clu_s = map_cluster_to_genes(intron_df, exon_df, strict=True, verbose=True)
     clu_s.to_csv(os.path.join(args.output_dir, f'{args.prefix}.leafcutter.clusters_to_genes.txt'), sep='\t')
     cluster2gene_dict = clu_s.to_dict()
 
