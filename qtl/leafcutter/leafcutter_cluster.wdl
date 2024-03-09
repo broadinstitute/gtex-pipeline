@@ -4,6 +4,7 @@ task leafcutter_cluster {
     File exon_list
     File genes_gtf
     String prefix
+    File sample_participant_lookup
 
     Int? min_clu_reads
     Float? min_clu_ratio
@@ -17,11 +18,12 @@ task leafcutter_cluster {
 
     command {
         set -euo pipefail
-        python /src/cluster_prepare_fastqtl.py \
+        python3 /src/cluster_prepare_fastqtl.py \
             ${write_lines(junc_files)} \
             ${exon_list} \
             ${genes_gtf} \
             ${prefix} \
+            ${sample_participant_lookup} \
             ${"--min_clu_reads " + min_clu_reads} \
             ${"--min_clu_ratio " + min_clu_ratio} \
             ${"--max_intron_len " + max_intron_len} \
@@ -41,8 +43,8 @@ task leafcutter_cluster {
         File counts_numers="${prefix}_perind_numers.counts.gz"
         File clusters_pooled="${prefix}_pooled.gz"
         File clusters_refined="${prefix}_refined.gz"
-        File clusters_to_genes="${prefix}.leafcutter.clusters_to_genes.txt"
         File phenotype_groups="${prefix}.leafcutter.phenotype_groups.txt"
+        File leafcutter_bed_parquet="${prefix}.leafcutter.bed.parquet"
         File leafcutter_bed="${prefix}.leafcutter.bed.gz"
         File leafcutter_bed_index="${prefix}.leafcutter.bed.gz.tbi"
         File leafcutter_pcs="${prefix}.leafcutter.PCs.txt"
