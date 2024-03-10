@@ -7,9 +7,9 @@ task tensorqtl_cis_independent {
     File phenotype_bed
     File covariates
     String prefix
-
     File cis_output
     File? phenotype_groups
+    Int? seed
 
     Int memory
     Int disk_space
@@ -24,6 +24,7 @@ task tensorqtl_cis_independent {
             --mode cis_independent \
             --covariates ${covariates} \
             --cis_output ${cis_output} \
+            ${"--seed " + seed} \
             ${"--phenotype_groups " + phenotype_groups}
     }
 
