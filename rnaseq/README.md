@@ -123,6 +123,11 @@ docker run --rm -v $path_to_data:/data -t broadinstitute/gtex_rnaseq:V10 \
         --threads 4"
 ```
 
+### Running on a cloud workbench
+The following cloud-native workbench platforms support running the GTEx RNA-seq pipeline
+- [Terra](https://portal.firecloud.org/?return=terra#methods/broadinstitute_gtex/rnaseq_fastq_star_rsem_rnaseqc_v1-2_BETA/7)
+- [Truwl](https://truwl.com/workflows/library/GTEx/)
+
 #### Aggregating outputs
 Sample-level outputs in GCT format can be concatenated using `combine_GCTs.py`:
 ```
