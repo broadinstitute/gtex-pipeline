@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y software-properties-common && \
         libcurl3-dev \
         libgsl-dev \
         libhdf5-serial-dev \
-        openjdk-8-jdk \
+        openjdk-17-jdk \
         python3 \
         python3-pip \
         r-base-core \
@@ -37,7 +37,7 @@ RUN apt-get update \
     && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-5 50 --slave /usr/bin/g++ g++ /usr/bin/g++-5
 
 # R
-RUN wget https://github.com/downloads/PMBio/peer/R_peer_source_1.3.tgz && \
+RUN wget https://raw.githubusercontent.com/broadinstitute/gtex-pipeline/master/qtl/R_peer_source_1.3.tgz && \
     R CMD INSTALL R_peer_source_1.3.tgz && \
     rm R_peer_source_1.3.tgz && \
     echo "r <- getOption('repos'); r['CRAN'] <- 'http://cran.us.r-project.org'; options(repos = r);" > ~/.Rprofile && \
@@ -74,7 +74,7 @@ RUN mkdir /opt/metasoft && cd /opt/metasoft && \
 
 # Python
 RUN pip3 install --upgrade pip setuptools
-RUN pip3 install numpy tables pandas scipy matplotlib h5py pysam statsmodels scikits.bootstrap qtl
+RUN pip3 install numpy tables pyarrow pandas scipy matplotlib h5py pysam statsmodels scikits.bootstrap qtl
 # numpy dependencies:
 RUN pip3 install pyBigWig
 
