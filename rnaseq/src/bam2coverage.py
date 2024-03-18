@@ -14,7 +14,7 @@ parser.add_argument('chr_sizes', help='Chromosome sizes for the reference genome
 parser.add_argument('prefix', help='Prefix for output file names')
 parser.add_argument('--intersect', default=None, type=str, help='BED file containing intervals to calculate coverage on')
 parser.add_argument('-f', '--format', default=['bigwig'], type=str.lower, nargs='+', choices=['bigwig', 'bedgraph'])
-parser.add_argument('--sam_flags', default='-q 255 -F 768', help='Flags for samtools. Default: filter out secondary and QC-failed reads')
+parser.add_argument('--sam_flags', default='-q 255 -F 2816', help='Flags for samtools. Default: filter out secondary, supplementary and QC-failed reads')
 parser.add_argument('--stranded', action='store_true', help='Generate a track for each strand')
 parser.add_argument('--output_dir', default='.', help='Output directory')
 args = parser.parse_args()
