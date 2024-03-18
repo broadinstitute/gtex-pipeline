@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y software-properties-common && \
         liblzma-dev \
         libncurses5-dev \
         libssl-dev \
-        openjdk-8-jdk \
+        openjdk-17-jdk \
         python3 \
         python3-pip \
         unzip \
