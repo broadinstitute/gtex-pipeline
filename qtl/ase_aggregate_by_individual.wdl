@@ -37,7 +37,7 @@ CODE
     }
 
     runtime {
-        docker: "gcr.io/broad-cga-francois-gtex/gtex_eqtl:V8"
+        docker: "gcr.io/broad-cga-francois-gtex/gtex_eqtl:V10"
         memory: "${memory}GB"
         disks: "local-disk ${disk_space} HDD"
         cpu: "${num_threads}"

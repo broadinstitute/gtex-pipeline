@@ -9,19 +9,7 @@ import subprocess
 import io
 import gzip
 import pickle
-
-
-def padjust_bh(p):
-    """
-    Benjamini-Hochberg ajdusted p-values
-    
-    Replicates p.adjust(p, method="BH") from R
-    """
-    n = len(p)
-    i = np.arange(n,0,-1)
-    o = np.argsort(p)[::-1]
-    ro = np.argsort(o)
-    return np.minimum(1, np.minimum.accumulate(np.float(n)/i * np.array(p)[o]))[ro]
+import qtl.stats
 
 
 parser = argparse.ArgumentParser(description='ASE')
@@ -41,7 +29,7 @@ args = parser.parse_args()
 
 
 print('Parsing inputs')
-tissue2abrv = pd.read_csv(args.tissue_abbreviations, sep='\t', index_col=0, squeeze=True).to_dict()
+tissue2abrv = pd.read_csv(args.tissue_abbreviations, sep='\t', index_col=0).squeeze('columns').to_dict()
 readcount_file_df = pd.read_csv(args.read_count_file_list, sep='\t', index_col=0)
 df = pd.read_csv(args.simulation_bias_file, sep='\t', header=None, dtype=str)
 simulation_bias_set = set(df[0]+':'+df[1])
@@ -116,11 +104,11 @@ for readcount_df in readcount_df_list:
 
 
 print('Calculating statistics')
-lamp = pd.read_csv(args.lamp_values, sep='\t', index_col=0, squeeze=True).median()
+lamp = pd.read_csv(args.lamp_values, sep='\t', index_col=0).squeeze('columns').median()
 ref = vcf_snp_id_df['mono_refcount']
 tot = vcf_snp_id_df['mono_totalcount']
 monop_list = scipy.stats.binom.cdf(tot-ref, tot, 1-lamp) + scipy.stats.binom.cdf(ref, tot, 1-lamp)  # monoallelic_p
-monop_adj_list = padjust_bh(monop_list)
+monop_adj_list = qtl.stats.padjust_bh(monop_list)
 vcf_snp_id_df['monoflag'] = (monop_adj_list > args.mono_cutoff) * 1
 
 indiv_cov75_counts = []
@@ -158,7 +146,7 @@ for readcount_df in readcount_df_list:
     readcount_df['binom_p'] = [scipy.stats.binom_test(i, j, genomewide_bias_value) for i,j in zip(readcount_df['refcount'], readcount_df['totalcount'])]
     readcount_df['nullratio'] = genomewide_bias_value
     idx = (readcount_df[['covflag', 'otherflag']].sum(axis=1) + vcf_snp_id_df.loc[readcount_df.index, ['mapbias', 'mapflag', 'monoflag']].sum(axis=1))==0
-    readcount_df.loc[idx, 'binom_p_adj'] = padjust_bh(readcount_df.loc[idx, 'binom_p'])
+    readcount_df.loc[idx, 'binom_p_adj'] = qtl.stats.padjust_bh(readcount_df.loc[idx, 'binom_p'])
     readcount_df.loc[~idx, 'binom_p_adj'] = 'NA'
 
 

@@ -9,7 +9,7 @@
     File bam_file
     File bam_index
     String prefix
-    Boolean? filter_wasp = false
+    Boolean? filter_wasp = true
 
     Int memory
     Int disk_space
