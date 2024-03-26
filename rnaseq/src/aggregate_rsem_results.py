@@ -87,14 +87,14 @@ if __name__=='__main__':
         print(f'Processing chunk {k+1}/{nchunks}')
         df_dict = aggregate_rsem_results(sub_list, args.col_ids, rsem_loader)
         for c in args.col_ids:
-            df_dict[c].to_hdf(tmp_store.name, f'{c}{k}')
+            df_dict[c].to_hdf(tmp_store.name, key=f'{c}{k}')
 
     # aggregate chunks for each output type
     for c in args.col_ids:
         dfs = [index_df]
         for k in range(nchunks):
             print(f'\rLoading chunk {k+1}/{nchunks}', end='' if k+1 < nchunks else None)
-            dfs.append(pd.read_hdf(tmp_store.name, f'{c}{k}'))
+            dfs.append(pd.read_hdf(tmp_store.name, key=f'{c}{k}'))
         dfs = pd.concat(dfs, axis=1)
 
         if args.parquet:
