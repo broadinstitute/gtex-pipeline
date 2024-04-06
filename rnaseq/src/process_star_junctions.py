@@ -50,7 +50,7 @@ assert not reference_df.index.duplicated().any(), "Junction annotation must not 
 
 # use unique-mapping reads
 gct_df = reference_df[['gene_id']].join(junctions_df['n_unique'])
-gct_df['n_unique'] = gct_df['n_unique'].fillna(0).astype(int)
+gct_df['n_unique'] = gct_df['n_unique'].fillna(0).astype(np.int32)
 # write as GCT
 gct_df.rename(columns={'gene_id':'Description', 'n_unique':args.prefix}, inplace=True)
 gct_df.index.name = 'Name'
