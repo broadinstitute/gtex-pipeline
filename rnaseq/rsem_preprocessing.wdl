@@ -32,6 +32,6 @@ task remove_IDS_reads {
 }
 
 
-workflow pre_RSEM_processing_workflow {
+workflow rsem_preprocessing_workflow {
     call remove_IDS_reads
 }
