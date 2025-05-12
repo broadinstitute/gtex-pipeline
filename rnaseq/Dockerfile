@@ -45,11 +45,11 @@ RUN cd /opt && \
     tar -xf samtools-1.19.2.tar.bz2 && rm samtools-1.19.2.tar.bz2 && cd samtools-1.19.2 && \
     ./configure --with-htslib=/opt/htslib-1.18 && make && make install && make clean
 
-# STAR v2.7.11b
+# STAR v2.7.10a
 RUN cd /opt && \
-    wget --no-check-certificate https://github.com/alexdobin/STAR/archive/2.7.11b.tar.gz && \
-    tar -xf 2.7.11b.tar.gz && rm 2.7.11b.tar.gz
-ENV PATH /opt/STAR-2.7.11b/bin/Linux_x86_64_static:$PATH
+    wget --no-check-certificate https://github.com/alexdobin/STAR/archive/2.7.10a.tar.gz && \
+    tar -xf 2.7.10a.tar.gz && rm 2.7.10a.tar.gz
+ENV PATH /opt/STAR-2.7.10a/bin/Linux_x86_64_static:$PATH
 
 # RSEM v1.3.3
 RUN cd /opt && \
