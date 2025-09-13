@@ -22,13 +22,13 @@ The following tools are included in the Docker image:
 * [RNA-SeQC](https://github.com/getzlab/rnaseqc): RNA-seq quality control (metrics and gene-level expression quantification)
 
 Versions used across GTEx releases*:
-|         | V7      | V8      | V10      |
-| ------- | ------- | ------- | -------- |
-| STAR    | v2.4.2a | v2.5.3a | v2.7.10a |
-| RSEM    | v.1.2.22| v1.3.0  | v1.3.3   |
-| RNA-SeQC| v1.1.8  | v1.1.9  | v2.4.2   |
-| Genome  | GRCh37  | GRCh38  | GRCh38   |
-| GENCODE | [v19](https://www.gencodegenes.org/human/release_19.html) | [v26](https://www.gencodegenes.org/human/release_26.html) | [v39](https://www.gencodegenes.org/human/release_39.html) |
+|         | V7      | V8      | V10      | V11      |
+| ------- | ------- | ------- | -------- | -------- |
+| STAR    | v2.4.2a | v2.5.3a | v2.7.10a | v2.7.11b |
+| RSEM    | v.1.2.22| v1.3.0  | v1.3.3   | v1.3.3   |
+| RNA-SeQC| v1.1.8  | v1.1.9  | v2.4.2   | v2.4.3   |
+| Genome  | GRCh37  | GRCh38  | GRCh38   | GRCh38   |
+| GENCODE | [v19](https://www.gencodegenes.org/human/release_19.html) | [v26](https://www.gencodegenes.org/human/release_26.html) | [v39](https://www.gencodegenes.org/human/release_39.html) | [v47](https://www.gencodegenes.org/human/release_47.html) |
 
 *V9 did not include any RNA-seq updates
 
